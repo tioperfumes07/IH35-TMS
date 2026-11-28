@@ -54,9 +54,9 @@ function CleanupModal({ onClose, onDone }: { onClose: () => void; onDone: () => 
               { className: "text-left", cellClass: "text-left", key: "list", label: "List", sortable: true, render: (r) => r.list, exportValue: (r) => r.list },
               { className: "text-left", cellClass: "text-left", key: "from", label: "Value now", sortable: true, render: (r) => r.from, exportValue: (r) => r.from },
               { className: "text-left", cellClass: "text-left font-semibold", key: "to", label: "Becomes", sortable: true, render: (r) => r.to, exportValue: (r) => r.to },
-              { className: "text-left", cellClass: "text-left", key: "why", label: "Why", render: (r) => r.why, exportValue: (r) => r.why },
+              { className: "text-left", cellClass: "text-left", key: "why", sortable: true, label: "Why", render: (r) => r.why, exportValue: (r) => r.why },
               { key: "carriers", label: "Items / companies", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => r.carriers.toLocaleString("en-US"), exportValue: (r) => r.carriers },
-              { key: "counted_date", label: "Counted on", cellClass: "text-right tabular-nums", render: (r) => usDate(r.counted_on), exportValue: (r) => r.counted_on },
+              { key: "counted_date", sortable: true, label: "Counted on", cellClass: "text-right tabular-nums", render: (r) => usDate(r.counted_on), exportValue: (r) => r.counted_on },
             ]}
           />
         )}

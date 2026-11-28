@@ -416,7 +416,7 @@ function KycDeskBlock({ companyId }: { companyId: string | null }) {
           { key: "name", label: "Party", sortable: true, render: (r) => <EntityLink kind={r.kind === "customer" ? "customer" : "vendor"} id={r.engine_id} label={r.name} /> },
           { key: "kind", label: "Side", sortable: true, render: (r) => (r.kind === "customer" ? "Customer (A/R)" : "Vendor (A/P)") },
           { key: "status", label: "KYC", sortable: true, render: (r) => <span className={r.status === "complete" ? "text-[#15803D]" : "font-semibold text-[#B45309]"}>{r.status === "complete" ? (r.reviewed_at ? "Complete, reviewed" : "Complete") : r.status === "none" ? "Not started" : "Missing"}</span> },
-          { key: "missing", label: "Missing / expiring", render: (r) => [...r.missing.map((m) => KYC_LABEL[m] ?? m.replace(/_/g, " ")), ...r.warnings.map((w) => w.replace(/_expires_/, " expires ").replace(/_/g, " "))].join(", ") || "—" },
+          { key: "missing", sortable: true, label: "Missing / expiring", render: (r) => [...r.missing.map((m) => KYC_LABEL[m] ?? m.replace(/_/g, " ")), ...r.warnings.map((w) => w.replace(/_expires_/, " expires ").replace(/_/g, " "))].join(", ") || "—" },
           { key: "actions", label: "", render: (r) => <button type="button" className="underline" onClick={() => setOpen(open === `${r.kind}:${r.party_id}` ? null : `${r.kind}:${r.party_id}`)}>{open === `${r.kind}:${r.party_id}` ? "Close" : "Open"}</button> },
         ]}
       />

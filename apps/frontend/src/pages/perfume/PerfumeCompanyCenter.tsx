@@ -77,11 +77,11 @@ export function PerfumeCompanyCenter({ companyId }: { companyId: string }) {
               { className: "text-left", key: "date", label: "Date", sortable: true, render: (t) => (t.date ? usDate(t.date) : DASH), exportValue: (t) => t.date ?? "" },
               { className: "text-left", key: "type", label: "Type", sortable: true, render: (t) => t.type, exportValue: (t) => t.type },
               { className: "text-left", key: "number", label: "No.", render: (t) => <Opener t={t} />, exportValue: (t) => t.number ?? "" },
-              { className: "text-left", key: "side", label: "As", render: (t) => (t.side === "customer" ? "Customer" : "Vendor"), exportValue: (t) => t.side },
-              { className: "text-left", key: "due_date", label: "Due", render: (t) => (t.due_date ? usDate(t.due_date) : DASH), exportValue: (t) => t.due_date ?? "" },
-              { className: "text-left", key: "status", label: "Status", render: (t) => t.status ?? DASH, exportValue: (t) => t.status ?? "" },
+              { className: "text-left", key: "side", sortable: true, label: "As", render: (t) => (t.side === "customer" ? "Customer" : "Vendor"), exportValue: (t) => t.side },
+              { className: "text-left", key: "due_date", sortable: true, label: "Due", render: (t) => (t.due_date ? usDate(t.due_date) : DASH), exportValue: (t) => t.due_date ?? "" },
+              { className: "text-left", key: "status", sortable: true, label: "Status", render: (t) => t.status ?? DASH, exportValue: (t) => t.status ?? "" },
               { key: "amount_cents", label: "Amount", kind: "money", cellClass: "text-right tabular-nums", sortable: true, render: (t) => money(t.amount_cents), exportValue: (t) => t.amount_cents / 100 },
-              { key: "open_cents", label: "Open", kind: "money", cellClass: "text-right tabular-nums", render: (t) => (t.open_cents == null ? DASH : money(t.open_cents)), exportValue: (t) => (t.open_cents == null ? "" : t.open_cents / 100) },
+              { key: "open_cents", sortable: true, label: "Open", kind: "money", cellClass: "text-right tabular-nums", render: (t) => (t.open_cents == null ? DASH : money(t.open_cents)), exportValue: (t) => (t.open_cents == null ? "" : t.open_cents / 100) },
             ]}
           />
         </>

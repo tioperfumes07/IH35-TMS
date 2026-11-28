@@ -133,7 +133,7 @@ export function PerfumeSendListPanel() {
           cardTitle title={tr("perfume.send.preview", "Preview (first 300 lines)")} rows={p?.rows ?? []} rowKey={(r) => r.item_id} loading={preview.isLoading} storageKey="perfume-sendlist-v1"
           exportFilename={title || "TIO price list"} exportExcel emptyText="Nothing on the list with these choices."
           columns={[
-            { key: "as_of", label: "As of", className: "text-left", render: () => asOf, exportValue: () => asOf },
+            { key: "as_of", sortable: true, label: "As of", className: "text-left", render: () => asOf, exportValue: () => asOf },
             ...columns.map((c) => ({
             key: c, label: c === "level_price" && p?.level ? `Price (${p.level})` : COL_TEXT[c],
             ...(c === "my_price" || c === "level_price" || c === "qty" || c === "size" ? { kind: "number" as const, cellClass: "text-right tabular-nums" } : { className: "text-left" }),

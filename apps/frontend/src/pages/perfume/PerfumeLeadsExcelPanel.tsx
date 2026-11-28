@@ -108,10 +108,10 @@ export function PerfumeLeadsExcelPanel() {
             { key: "created_at", label: "Uploaded", sortable: true, render: (u) => when(u.created_at) },
             { key: "file_name", label: "File", sortable: true, render: (u) => <span className="font-semibold">{u.file_name}</span> },
             { key: "status", label: "Status", sortable: true, render: (u) => u.status },
-            { key: "changes", label: "Changes", kind: "number", cellClass: "text-right tabular-nums", render: (u) => n((u.existing?.companies_changed ?? 0) + (u.existing?.people_changed ?? 0)) },
-            { key: "removals", label: "Removals", kind: "number", cellClass: "text-right tabular-nums", render: (u) => n((u.existing?.remove_companies ?? 0) + (u.existing?.remove_people ?? 0)) },
-            { key: "new", label: "New leads", kind: "number", cellClass: "text-right tabular-nums", render: (u) => n(u.new?.records) },
-            { key: "inserted", label: "Added", kind: "number", cellClass: "text-right tabular-nums", render: (u) => (u.result ? n(u.result.inserted) : DASH) },
+            { key: "changes", sortable: true, label: "Changes", kind: "number", cellClass: "text-right tabular-nums", render: (u) => n((u.existing?.companies_changed ?? 0) + (u.existing?.people_changed ?? 0)) },
+            { key: "removals", sortable: true, label: "Removals", kind: "number", cellClass: "text-right tabular-nums", render: (u) => n((u.existing?.remove_companies ?? 0) + (u.existing?.remove_people ?? 0)) },
+            { key: "new", sortable: true, label: "New leads", kind: "number", cellClass: "text-right tabular-nums", render: (u) => n(u.new?.records) },
+            { key: "inserted", sortable: true, label: "Added", kind: "number", cellClass: "text-right tabular-nums", render: (u) => (u.result ? n(u.result.inserted) : DASH) },
             { key: "applied_at", label: "Applied", sortable: true, render: (u) => when(u.applied_at) },
           ]}
         />
@@ -190,7 +190,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
             { key: "company", label: "Company", sortable: true, render: (c) => <span className="font-semibold">{c.company}</span> },
             { key: "person", label: "Person", sortable: true, render: (c) => c.person ?? DASH },
             { key: "field", label: "Field", sortable: true, render: (c) => FIELD_TEXT[c.field] ?? c.field },
-            { key: "from", label: "Now", render: (c) => c.from ?? DASH },
+            { key: "from", sortable: true, label: "Now", render: (c) => c.from ?? DASH },
             { key: "to", label: "Becomes", render: (c) => <span className="font-semibold">{c.to ?? tr("perfume.leadsx.blank", "(blank)")}</span> },
           ]}
         />
@@ -212,7 +212,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
           columns={[
             { key: "scope", label: "Remove", sortable: true, render: (c) => (c.scope === "company" ? "Whole company" : "Person only") },
             { key: "company", label: "Company", sortable: true, render: (c) => <span className="font-semibold">{c.company}</span> },
-            { key: "person", label: "Person", render: (c) => c.person ?? DASH },
+            { key: "person", sortable: true, label: "Person", render: (c) => c.person ?? DASH },
           ]}
         />
         </div>
@@ -251,7 +251,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
               { key: "k", label: "Category", sortable: true, render: (c) => <span className="font-semibold">{c.k}</span> },
               { key: "records", label: "Leads", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (c) => n(c.records) },
               { key: "match", label: "Already on file", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (c) => n(c.match) },
-              { key: "new", label: "New", kind: "number", cellClass: "text-right tabular-nums", render: (c) => n(c.records - c.match) },
+              { key: "new", sortable: true, label: "New", kind: "number", cellClass: "text-right tabular-nums", render: (c) => n(c.records - c.match) },
             ]}
           />
           <ParityTable<PerfumeUploadSummary["new"]["samples"][number] & { i: number }> selectable
@@ -269,8 +269,8 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
               { key: "kind", label: "From", sortable: true, render: (x) => KIND_TEXT[x.kind] },
               { key: "leaked_from", label: "Leaked by", sortable: true, render: (x) => x.leaked_from ?? DASH },
               { key: "category", label: "Category", sortable: true, render: (x) => x.category ?? DASH },
-              { key: "email", label: "Email", render: (x) => x.email ?? DASH },
-              { key: "phone", label: "Phone", render: (x) => x.phone ?? DASH },
+              { key: "email", sortable: true, label: "Email", render: (x) => x.email ?? DASH },
+              { key: "phone", sortable: true, label: "Phone", render: (x) => x.phone ?? DASH },
               { key: "country", label: "Country", sortable: true, render: (x) => x.country ?? DASH },
               { key: "match", label: "Joins", sortable: true, render: (x) => x.match ?? tr("perfume.leadsx.new_co", "New company") },
             ]}
@@ -293,7 +293,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
             columns={[
               { key: "scope", label: "Archive", sortable: true, render: (c) => (c.scope === "company" ? "Whole company" : "Person only") },
               { key: "company", label: "Company", sortable: true, render: (c) => <span className="font-semibold">{c.company}</span> },
-              { key: "person", label: "Person", render: (c) => c.person ?? DASH },
+              { key: "person", sortable: true, label: "Person", render: (c) => c.person ?? DASH },
             ]}
           />
           <label className="flex items-center gap-1 text-xs">

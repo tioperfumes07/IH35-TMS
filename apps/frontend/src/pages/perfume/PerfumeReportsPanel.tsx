@@ -125,9 +125,9 @@ export function PerfumeItemInquiryPanel({ initialId }: { initialId?: string | nu
             storageKey="perfume-inquiry-stock-v1" exportFilename={`TIO item inquiry ${it.tio_code ?? it.display_name}`} exportExcel emptyText="Nothing on hand."
             columns={[
               { className: "text-left", key: "location_code", label: "Site", render: (r) => r.site ? `${r.location_code} · ${r.site}` : r.location_code, exportValue: (r) => r.location_code },
-              { key: "qty", label: "On hand", kind: "number", cellClass: "text-right tabular-nums", render: (r) => n(r.qty), exportValue: (r) => r.qty },
-              { key: "avg_cost_cents", label: "Avg cost", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.avg_cost_cents), exportValue: (r) => (r.avg_cost_cents == null ? "" : r.avg_cost_cents / 100) },
-              { key: "value_cents", label: "Value", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.value_cents), exportValue: (r) => r.value_cents / 100 },
+              { key: "qty", sortable: true, label: "On hand", kind: "number", cellClass: "text-right tabular-nums", render: (r) => n(r.qty), exportValue: (r) => r.qty },
+              { key: "avg_cost_cents", sortable: true, label: "Avg cost", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.avg_cost_cents), exportValue: (r) => (r.avg_cost_cents == null ? "" : r.avg_cost_cents / 100) },
+              { key: "value_cents", sortable: true, label: "Value", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.value_cents), exportValue: (r) => r.value_cents / 100 },
             ]} />
         </>
       ) : null}
@@ -281,7 +281,7 @@ export function PerfumePriceBookPanel() {
             exportFilename={`TIO price book ${q.data.level.name}`} exportExcel emptyText="No items match."
             columns={[
               { className: "text-left", key: "tio_code", label: "TIO code", sortable: true, render: (r) => r.tio_code ?? DASH, exportValue: (r) => r.tio_code ?? "" },
-              { className: "text-left", key: "upc", label: "UPC", render: (r) => r.upc ?? DASH, exportValue: (r) => r.upc ?? "" },
+              { className: "text-left", key: "upc", sortable: true, label: "UPC", render: (r) => r.upc ?? DASH, exportValue: (r) => r.upc ?? "" },
               { className: "text-left", key: "display_name", label: "Item", sortable: true, render: (r) => <DocLink tab="items" id={r.id}>{r.display_name}</DocLink>, exportValue: (r) => r.display_name },
               { className: "text-left", key: "family", label: "Family", sortable: true, render: (r) => r.family ?? DASH, exportValue: (r) => r.family ?? "" },
               { key: "on_hand", label: "On hand", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => n(r.on_hand), exportValue: (r) => r.on_hand },

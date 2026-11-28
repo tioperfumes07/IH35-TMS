@@ -126,11 +126,11 @@ function CustomerAccount({ customerId, asOf, days, onChanged }: { customerId: st
           rows={shown.payments} rowKey={(p) => `${p.payment_id}-${p.amount_cents}`} storageKey="perfume-ar-inv-payments-v1" exportFilename="TIO invoice payments" exportExcel emptyText="No payment applied to this invoice."
           columns={[
             { className: "text-left", key: "payment_no", label: "Payment", render: (p) => <Link className="underline" to={`/accounting/payments/${encodeURIComponent(p.payment_id)}`}>{p.payment_no ?? p.payment_id.slice(0, 8)}</Link>, exportValue: (p) => p.payment_no ?? "" },
-            { key: "date", label: "Date", cellClass: "text-right tabular-nums", render: (p) => (p.date ? usDate(p.date) : DASH), exportValue: (p) => p.date ?? "" },
-            { className: "text-left", key: "method", label: "Tender", render: (p) => p.method ?? DASH, exportValue: (p) => p.method ?? "" },
-            { className: "text-left", key: "reference", label: "Reference", render: (p) => p.reference ?? DASH, exportValue: (p) => p.reference ?? "" },
-            { key: "amount_cents", label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (p) => money(p.amount_cents), exportValue: (p) => p.amount_cents / 100 },
-            { className: "text-left", key: "counted", label: "Status", render: (p) => (p.voided ? "Voided" : p.unapplied ? "Unapplied" : "Applied"), exportValue: (p) => (p.voided ? "Voided" : p.unapplied ? "Unapplied" : "Applied") },
+            { key: "date", sortable: true, label: "Date", cellClass: "text-right tabular-nums", render: (p) => (p.date ? usDate(p.date) : DASH), exportValue: (p) => p.date ?? "" },
+            { className: "text-left", key: "method", sortable: true, label: "Tender", render: (p) => p.method ?? DASH, exportValue: (p) => p.method ?? "" },
+            { className: "text-left", key: "reference", sortable: true, label: "Reference", render: (p) => p.reference ?? DASH, exportValue: (p) => p.reference ?? "" },
+            { key: "amount_cents", sortable: true, label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (p) => money(p.amount_cents), exportValue: (p) => p.amount_cents / 100 },
+            { className: "text-left", key: "counted", sortable: true, label: "Status", render: (p) => (p.voided ? "Voided" : p.unapplied ? "Unapplied" : "Applied"), exportValue: (p) => (p.voided ? "Voided" : p.unapplied ? "Unapplied" : "Applied") },
           ]}
         />
       ) : null}
@@ -184,13 +184,13 @@ function PaymentEntry({ acctId, customerId, open, onDone }: { acctId: string; cu
       <ParityTable<ScentsxArInvoice> selectable
         rows={open} rowKey={(r) => r.id} storageKey="perfume-ar-apply-v1" emptyText="No open invoice — a payment would sit as the customer's credit."
         columns={[
-          { className: "text-left", key: "number", label: "Invoice", render: (r) => r.number ?? r.id.slice(0, 8), exportValue: (r) => r.number ?? "" },
-          { key: "issue_date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.issue_date), exportValue: (r) => r.issue_date },
-          { key: "days", label: "Days", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.days.toLocaleString("en-US") },
-          { key: "open_cents", label: "Balance", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.open_cents), exportValue: (r) => r.open_cents / 100 },
+          { className: "text-left", key: "number", sortable: true, label: "Invoice", render: (r) => r.number ?? r.id.slice(0, 8), exportValue: (r) => r.number ?? "" },
+          { key: "issue_date", sortable: true, label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.issue_date), exportValue: (r) => r.issue_date },
+          { key: "days", sortable: true, label: "Days", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.days.toLocaleString("en-US") },
+          { key: "open_cents", sortable: true, label: "Balance", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.open_cents), exportValue: (r) => r.open_cents / 100 },
           { key: "apply", label: "Apply", render: (r) => (
             <MoneyInput className="w-[120px]" ariaLabel={`Apply to ${r.number ?? r.id}`} valueCents={apply[r.id] ?? null} onChangeCents={(c) => setApply({ ...apply, [r.id]: c ?? 0 })} />) },
-          { key: "new_balance", label: "New balance", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.open_cents - (apply[r.id] ?? 0)) },
+          { key: "new_balance", sortable: true, label: "New balance", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.open_cents - (apply[r.id] ?? 0)) },
         ]}
       />
       <div className="flex flex-wrap items-center justify-end gap-4 text-xs" data-testid="perfume-ar-pay-totals">
@@ -219,12 +219,12 @@ function PaymentsList({ companyId, rows, onDone }: { companyId: string; rows: Sc
       emptyText="No payments recorded for this customer."
       columns={[
         { className: "text-left", key: "number", label: "Payment", render: (r) => <Link className="underline" to={`/accounting/payments/${encodeURIComponent(r.id)}`}>{r.number ?? r.id.slice(0, 8)}</Link>, exportValue: (r) => r.number ?? "" },
-        { key: "date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.date), exportValue: (r) => r.date },
-        { className: "text-left", key: "method", label: "Tender", render: (r) => r.method, exportValue: (r) => r.method },
-        { className: "text-left", key: "reference", label: "Reference", render: (r) => r.reference ?? DASH, exportValue: (r) => r.reference ?? "" },
-        { key: "amount_cents", label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.amount_cents), exportValue: (r) => r.amount_cents / 100 },
-        { key: "applied_cents", label: "Applied", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.applied_cents), exportValue: (r) => r.applied_cents / 100 },
-        { key: "unapplied_cents", label: "Unapplied", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.unapplied_cents), exportValue: (r) => r.unapplied_cents / 100 },
+        { key: "date", sortable: true, label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.date), exportValue: (r) => r.date },
+        { className: "text-left", key: "method", sortable: true, label: "Tender", render: (r) => r.method, exportValue: (r) => r.method },
+        { className: "text-left", key: "reference", sortable: true, label: "Reference", render: (r) => r.reference ?? DASH, exportValue: (r) => r.reference ?? "" },
+        { key: "amount_cents", sortable: true, label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.amount_cents), exportValue: (r) => r.amount_cents / 100 },
+        { key: "applied_cents", sortable: true, label: "Applied", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.applied_cents), exportValue: (r) => r.applied_cents / 100 },
+        { key: "unapplied_cents", sortable: true, label: "Unapplied", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.unapplied_cents), exportValue: (r) => r.unapplied_cents / 100 },
         { className: "text-left", key: "voided_at", label: "Status", render: (r) => (r.voided_at ? `Voided — ${r.void_reason ?? ""}` : voiding === r.id ? (
           <span className="flex items-center gap-1">
             <input className={`${ctl} w-[180px]`} aria-label={tr("perfume.ar.void_reason", "Why the payment is voided")} placeholder="Why (3+ letters)" value={reason} onChange={(e) => setReason(e.target.value)} data-testid={`perfume-ar-void-reason-${r.id}`} />

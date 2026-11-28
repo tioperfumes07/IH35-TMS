@@ -70,7 +70,7 @@ export function PerfumeDupRecommendations({ onDone }: { onDone: () => void }) {
           columns={[
             { className: "text-left", cellClass: "text-left", key: "a", label: "Company A", render: (r) => <Side c={r.a} stays={(keep[r.id] ?? r.keep) === "a"} />, exportValue: (r) => r.a.name },
             { className: "text-left", cellClass: "text-left", key: "b", label: "Company B", render: (r) => <Side c={r.b} stays={(keep[r.id] ?? r.keep) === "b"} />, exportValue: (r) => r.b.name },
-            { className: "text-left", cellClass: "text-left", key: "reasons", label: "Why", render: (r) => r.reasons.map((x) => REASON[x] ?? x).join(" · "), exportValue: (r) => r.reasons.join(", ") },
+            { className: "text-left", cellClass: "text-left", key: "reasons", sortable: true, label: "Why", render: (r) => r.reasons.map((x) => REASON[x] ?? x).join(" · "), exportValue: (r) => r.reasons.join(", ") },
             { key: "score", label: "Match", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => `${Math.round(r.score * 100)}%`, exportValue: (r) => r.score },
             { key: "keep", label: "Stays", render: (r) => (
               <select className="h-8 rounded-sm border border-[#C6D1DC] px-1 text-xs" aria-label={`Company that stays for ${r.a.name}`} value={keep[r.id] ?? r.keep} onChange={(e) => setKeep({ ...keep, [r.id]: e.target.value as "a" | "b" })}>

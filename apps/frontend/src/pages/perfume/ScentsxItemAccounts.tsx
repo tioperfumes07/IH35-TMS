@@ -5,6 +5,7 @@
  * The stock-move poster (reused) does the posting; this screen only says which account. Moving an inventory account is refused while
  * covered stock is on hand (the server says so).
  */
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -19,7 +20,7 @@ import {
 import { tr } from "./perfumeI18n";
 
 const sel = "h-[30px] rounded-sm border border-[#C6D1DC] bg-white px-2 text-xs";
-const label = (a: ScentsxAccount) => `${a.account_number ?? ""} ${a.account_name}`.trim();
+const label = (a: ScentsxAccount) => formatAccountDisplayLabel(a);
 const day = (iso: string | null) => (iso ? new Date(iso).toLocaleString("en-US", { timeZone: "America/Chicago" }) : "—");
 
 function useAccountChoices() {
@@ -68,7 +69,7 @@ export function ScentsxItemAccountsBlock() {
         emptyText="No item categories yet — add them on Catalogs or from the item creator."
         columns={[
           { className: "text-left", key: "value", label: "Item category", render: (r) => <span className="font-semibold">{r.value}</span> },
-          { key: "items", label: "Items", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.items.toLocaleString("en-US") },
+          { key: "items", sortable: true, label: "Items", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.items.toLocaleString("en-US") },
           { className: "text-left", key: "inv", label: "Inventory account", exportValue: (r) => r.map?.inventory_account ?? "default",
             render: (r) => <AccountPick value={edit[r.value]?.inv ?? r.map?.inventory_account_id ?? ""} options={choices.inventory} placeholder="Default inventory" testId={`scentsx-itemacct-inv-${r.value}`}
               onChange={(v) => setEdit({ ...edit, [r.value]: { inv: v, cogs: edit[r.value]?.cogs ?? r.map?.cogs_account_id ?? "" } })} /> },
@@ -80,12 +81,12 @@ export function ScentsxItemAccountsBlock() {
       <ParityTable<ScentsxItemAccountMap["history"][number]> selectable cardTitle title={tr("scentsx.itemacct.history", "Item account changes")} rows={d?.history ?? []} rowKey={(h) => h.id}
         storageKey="scentsx-item-accounts-history-v1" exportFilename="ScentsX item account changes" exportExcel emptyText="No changes yet."
         columns={[
-          { key: "created_at", label: "Set on", cellClass: "text-right tabular-nums", render: (h) => day(h.created_at) },
+          { key: "created_at", sortable: true, label: "Set on", cellClass: "text-right tabular-nums", render: (h) => day(h.created_at) },
           { className: "text-left", key: "what", label: "For", render: (h) => (h.scope === "category" ? `Category: ${h.category}` : `Item: ${h.item}`) },
-          { className: "text-left", key: "inventory_account", label: "Inventory", render: (h) => h.inventory_account ?? "default" },
-          { className: "text-left", key: "cogs_account", label: "COGS", render: (h) => h.cogs_account ?? "default" },
-          { className: "text-left", key: "created_by", label: "By", render: (h) => h.created_by ?? "—" },
-          { key: "archived_at", label: "Replaced on", cellClass: "text-right tabular-nums", render: (h) => (h.archived_at ? day(h.archived_at) : "current") },
+          { className: "text-left", key: "inventory_account", sortable: true, label: "Inventory", render: (h) => h.inventory_account ?? "default" },
+          { className: "text-left", key: "cogs_account", sortable: true, label: "COGS", render: (h) => h.cogs_account ?? "default" },
+          { className: "text-left", key: "created_by", sortable: true, label: "By", render: (h) => h.created_by ?? "—" },
+          { key: "archived_at", sortable: true, label: "Replaced on", cellClass: "text-right tabular-nums", render: (h) => (h.archived_at ? day(h.archived_at) : "current") },
         ]} />
     </section>
   );

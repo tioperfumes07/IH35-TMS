@@ -268,11 +268,11 @@ function QuoteEditor({ id, onClose, onChanged, onOpen }: { id: string; onClose: 
           exportExcel
         emptyText="No lines yet — add an item above."
         columns={[
-          { key: "line_no", label: "#", cellClass: "tabular-nums", render: (l) => l.line_no },
+          { key: "line_no", sortable: true, label: "#", cellClass: "tabular-nums", render: (l) => l.line_no },
           { key: "description", label: "Item", render: (l) => <>{l.description}{l.upc ? <span className="ml-1 text-[#64748B]">{l.upc}</span> : null}</>, exportValue: (l) => `${l.description}${l.upc ? ` ${l.upc}` : ""}` },
           { key: "qty", label: "Qty", render: (l) => <LineCell l={l} field="qty" onSaved={() => void refresh()} />, exportValue: (l) => l.qty },
           { key: "unit_price_cents", label: "Unit price", render: (l) => <LineCell l={l} field="unit_price_cents" onSaved={() => void refresh()} />, exportValue: (l) => l.unit_price_cents / 100 },
-          { key: "total", label: "Total", cellClass: "text-right tabular-nums", render: (l) => money(l.qty * l.unit_price_cents, q.currency), exportValue: (l) => (l.qty * l.unit_price_cents) / 100 },
+          { key: "total", sortable: true, label: "Total", cellClass: "text-right tabular-nums", render: (l) => money(l.qty * l.unit_price_cents, q.currency), exportValue: (l) => (l.qty * l.unit_price_cents) / 100 },
           { key: "cost_cents", label: "Best cost when added", cellClass: "text-right tabular-nums", render: (l) => (l.cost_cents == null ? DASH : `${money(l.cost_cents)}${l.cost_vendor ? ` · ${l.cost_vendor}` : ""}`) },
           { key: "margin", label: "Margin", cellClass: "text-right tabular-nums", render: (l) => (l.cost_cents != null && l.unit_price_cents > 0 ? `${(((l.unit_price_cents - l.cost_cents) / l.unit_price_cents) * 100).toFixed(1)}%` : DASH) },
           { key: "off", label: "", render: (l) => (
@@ -301,10 +301,10 @@ function QuoteEditor({ id, onClose, onChanged, onOpen }: { id: string; onClose: 
           exportExcel
         emptyText="No history yet."
         columns={[
-          { key: "created_at", label: "When", render: (e) => new Date(e.created_at).toLocaleString("en-US") },
-          { key: "kind", label: "What", render: (e) => EVENT_TEXT[e.kind] ?? e.kind, exportValue: (e) => EVENT_TEXT[e.kind] ?? e.kind },
-          { key: "detail", label: "Detail", render: (e) => eventText(e) || DASH, exportValue: (e) => eventText(e) },
-          { key: "by_email", label: "By", render: (e) => e.by_email ?? DASH },
+          { key: "created_at", sortable: true, label: "When", render: (e) => new Date(e.created_at).toLocaleString("en-US") },
+          { key: "kind", sortable: true, label: "What", render: (e) => EVENT_TEXT[e.kind] ?? e.kind, exportValue: (e) => EVENT_TEXT[e.kind] ?? e.kind },
+          { key: "detail", sortable: true, label: "Detail", render: (e) => eventText(e) || DASH, exportValue: (e) => eventText(e) },
+          { key: "by_email", sortable: true, label: "By", render: (e) => e.by_email ?? DASH },
         ]}
       />
     </section>

@@ -177,21 +177,21 @@ function FamilyProfile({ id }: { id: string }) {
         exportFilename={`TIO family ${f.name}`} exportExcel emptyText="No items yet — open an item and pick this family, or use the bulk bar on Item file."
         columns={[
           { className: "text-left", key: "display_name", label: "Item", render: (r) => <DocLink tab="items" id={r.id}>{r.display_name}</DocLink>, exportValue: (r) => r.display_name },
-          { className: "text-left", key: "tio_code", label: "TIO code", render: (r) => r.tio_code ?? DASH, exportValue: (r) => r.tio_code ?? "" },
-          { key: "size_ml", label: "Size ml", kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.size_ml == null ? DASH : String(r.size_ml)), exportValue: (r) => r.size_ml ?? "" },
-          { className: "text-left", key: "conc", label: "EDT / EDP / Parfum", render: (r) => r.conc || DASH, exportValue: (r) => r.conc ?? "" },
-          { className: "text-left", key: "product_type", label: "Product type", render: (r) => r.product_type ?? DASH, exportValue: (r) => r.product_type ?? "" },
-          { className: "text-left", key: "upcs", label: "UPCs", render: (r) => (r.upcs.length ? r.upcs.join(", ") : DASH), exportValue: (r) => r.upcs.join(", ") },
-          { key: "on_hand", label: "On hand", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.on_hand.toLocaleString("en-US") },
-          { key: "avg_cost_cents", label: "Avg cost", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.avg_cost_cents), exportValue: (r) => (r.avg_cost_cents == null ? "" : Number(r.avg_cost_cents) / 100) },
+          { className: "text-left", key: "tio_code", sortable: true, label: "TIO code", render: (r) => r.tio_code ?? DASH, exportValue: (r) => r.tio_code ?? "" },
+          { key: "size_ml", sortable: true, label: "Size ml", kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.size_ml == null ? DASH : String(r.size_ml)), exportValue: (r) => r.size_ml ?? "" },
+          { className: "text-left", key: "conc", sortable: true, label: "EDT / EDP / Parfum", render: (r) => r.conc || DASH, exportValue: (r) => r.conc ?? "" },
+          { className: "text-left", key: "product_type", sortable: true, label: "Product type", render: (r) => r.product_type ?? DASH, exportValue: (r) => r.product_type ?? "" },
+          { className: "text-left", key: "upcs", sortable: true, label: "UPCs", render: (r) => (r.upcs.length ? r.upcs.join(", ") : DASH), exportValue: (r) => r.upcs.join(", ") },
+          { key: "on_hand", sortable: true, label: "On hand", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.on_hand.toLocaleString("en-US") },
+          { key: "avg_cost_cents", sortable: true, label: "Avg cost", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.avg_cost_cents), exportValue: (r) => (r.avg_cost_cents == null ? "" : Number(r.avg_cost_cents) / 100) },
         ]} />
       <ParityTable<PerfumeFamilyProfile["events"][number]> selectable cardTitle title={tr("perfume.fam.history", "History")} rows={p.data.events} rowKey={(e) => e.id} storageKey="perfume-family-history-v1"
         exportFilename={`TIO family ${f.name} history`} exportExcel emptyText="No history."
         columns={[
           { key: "created_at", label: "When", cellClass: "text-right tabular-nums", render: (e) => new Date(e.created_at).toLocaleString("en-US", { timeZone: "America/Chicago" }) },
-          { className: "text-left", key: "kind", label: "What", render: (e) => e.kind.replace("_", " ") },
-          { className: "text-left", key: "detail", label: "Detail", render: (e) => (e.detail.item ? String(e.detail.item) : JSON.stringify(e.detail)), exportValue: (e) => JSON.stringify(e.detail) },
-          { className: "text-left", key: "by_email", label: "By", render: (e) => e.by_email ?? DASH },
+          { className: "text-left", key: "kind", sortable: true, label: "What", render: (e) => e.kind.replace("_", " ") },
+          { className: "text-left", key: "detail", sortable: true, label: "Detail", render: (e) => (e.detail.item ? String(e.detail.item) : JSON.stringify(e.detail)), exportValue: (e) => JSON.stringify(e.detail) },
+          { className: "text-left", key: "by_email", sortable: true, label: "By", render: (e) => e.by_email ?? DASH },
         ]} />
     </section>
   );
@@ -256,13 +256,13 @@ export function ItemSitesBlock({ itemId }: { itemId: string }) {
     <ParityTable<PerfumeItemSite> selectable cardTitle title={tr("perfume.sites.title", "Sites — on hand, bin, min / max and usual reorder quantity")} rows={sites.data ?? []} rowKey={(s) => s.location_code}
       loading={sites.isLoading} storageKey="perfume-item-sites-v1" exportFilename="TIO item sites" exportExcel emptyText="No own sites on the desk."
       columns={[
-        { className: "text-left", key: "location_name", label: "Site", render: (s) => s.location_name },
-        { key: "on_hand", label: "On hand", kind: "number", cellClass: "text-right tabular-nums", render: (s) => s.on_hand.toLocaleString("en-US") },
-        { key: "avg_cost_cents", label: "Avg cost", kind: "number", cellClass: "text-right tabular-nums", render: (s) => money(s.avg_cost_cents), exportValue: (s) => (s.avg_cost_cents == null ? "" : Number(s.avg_cost_cents) / 100) },
-        { className: "text-left", key: "bin", label: "Bin", render: (s) => cell(s, "bin", s.bin ?? "", "w-[90px]"), exportValue: (s) => s.bin ?? "" },
-        { key: "min_qty", label: "Min", kind: "number", render: (s) => cell(s, "min", s.min_qty == null ? "" : String(s.min_qty), "w-[70px]"), exportValue: (s) => s.min_qty ?? "" },
-        { key: "max_qty", label: "Max", kind: "number", render: (s) => cell(s, "max", s.max_qty == null ? "" : String(s.max_qty), "w-[70px]"), exportValue: (s) => s.max_qty ?? "" },
-        { key: "reorder_qty", label: "Reorder qty", kind: "number", render: (s) => cell(s, "reorder", s.reorder_qty == null ? "" : String(s.reorder_qty), "w-[80px]"), exportValue: (s) => s.reorder_qty ?? "" },
+        { className: "text-left", key: "location_name", sortable: true, label: "Site", render: (s) => s.location_name },
+        { key: "on_hand", sortable: true, label: "On hand", kind: "number", cellClass: "text-right tabular-nums", render: (s) => s.on_hand.toLocaleString("en-US") },
+        { key: "avg_cost_cents", sortable: true, label: "Avg cost", kind: "number", cellClass: "text-right tabular-nums", render: (s) => money(s.avg_cost_cents), exportValue: (s) => (s.avg_cost_cents == null ? "" : Number(s.avg_cost_cents) / 100) },
+        { className: "text-left", key: "bin", sortable: true, label: "Bin", render: (s) => cell(s, "bin", s.bin ?? "", "w-[90px]"), exportValue: (s) => s.bin ?? "" },
+        { key: "min_qty", sortable: true, label: "Min", kind: "number", render: (s) => cell(s, "min", s.min_qty == null ? "" : String(s.min_qty), "w-[70px]"), exportValue: (s) => s.min_qty ?? "" },
+        { key: "max_qty", sortable: true, label: "Max", kind: "number", render: (s) => cell(s, "max", s.max_qty == null ? "" : String(s.max_qty), "w-[70px]"), exportValue: (s) => s.max_qty ?? "" },
+        { key: "reorder_qty", sortable: true, label: "Reorder qty", kind: "number", render: (s) => cell(s, "reorder", s.reorder_qty == null ? "" : String(s.reorder_qty), "w-[80px]"), exportValue: (s) => s.reorder_qty ?? "" },
         { key: "save", label: "", render: (s) => (edit[s.location_code] ? <Button type="button" className="h-[28px] px-2 text-xs" onClick={() => save(s)}>{tr("perfume.sites.save", "Save")}</Button> : null) },
       ]} />
   );
@@ -323,16 +323,16 @@ export function PerfumeReorderPanel() {
           selectable selectedKeys={picked} onSelectionChange={setPicked} emptyText="Nothing at or below its minimum."
           columns={[
             { className: "text-left", key: "display_name", label: "Item", render: (r) => <DocLink tab="items" id={r.item_id}>{r.display_name}</DocLink>, exportValue: (r) => r.display_name },
-            { className: "text-left", key: "location_name", label: "Site", render: (r) => r.location_name },
-            { className: "text-left", key: "bin", label: "Bin", render: (r) => r.bin ?? DASH, exportValue: (r) => r.bin ?? "" },
-            { key: "on_hand", label: "On hand", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.on_hand.toLocaleString("en-US") },
-            { key: "on_order", label: "On order", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.on_order.toLocaleString("en-US") },
-            { key: "min_qty", label: "Min", kind: "number", cellClass: "text-right tabular-nums", render: (r) => String(r.min_qty) },
-            { key: "max_qty", label: "Max", kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.max_qty == null ? DASH : String(r.max_qty)), exportValue: (r) => r.max_qty ?? "" },
-            { key: "to_buy", label: "To buy", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (r) => r.to_buy.toLocaleString("en-US") },
+            { className: "text-left", key: "location_name", sortable: true, label: "Site", render: (r) => r.location_name },
+            { className: "text-left", key: "bin", sortable: true, label: "Bin", render: (r) => r.bin ?? DASH, exportValue: (r) => r.bin ?? "" },
+            { key: "on_hand", sortable: true, label: "On hand", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.on_hand.toLocaleString("en-US") },
+            { key: "on_order", sortable: true, label: "On order", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.on_order.toLocaleString("en-US") },
+            { key: "min_qty", sortable: true, label: "Min", kind: "number", cellClass: "text-right tabular-nums", render: (r) => String(r.min_qty) },
+            { key: "max_qty", sortable: true, label: "Max", kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.max_qty == null ? DASH : String(r.max_qty)), exportValue: (r) => r.max_qty ?? "" },
+            { key: "to_buy", sortable: true, label: "To buy", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (r) => r.to_buy.toLocaleString("en-US") },
             { className: "text-left", key: "vendor", label: "Cheapest supplier", render: (r) => (r.vendor_id ? <DocLink tab="suppliers" id={r.vendor_id}>{r.vendor ?? ""}</DocLink> : <span className="text-[#B91C1C]">None on the desk</span>), exportValue: (r) => r.vendor ?? "" },
-            { key: "unit_cost_cents", label: "Unit cost", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.unit_cost_cents), exportValue: (r) => (r.unit_cost_cents == null ? "" : r.unit_cost_cents / 100) },
-            { key: "line_cost_cents", label: "Line cost", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.line_cost_cents), exportValue: (r) => (r.line_cost_cents == null ? "" : r.line_cost_cents / 100) },
+            { key: "unit_cost_cents", sortable: true, label: "Unit cost", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.unit_cost_cents), exportValue: (r) => (r.unit_cost_cents == null ? "" : r.unit_cost_cents / 100) },
+            { key: "line_cost_cents", sortable: true, label: "Line cost", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.line_cost_cents), exportValue: (r) => (r.line_cost_cents == null ? "" : r.line_cost_cents / 100) },
           ]} />
       </section>
     </div>

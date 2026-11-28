@@ -55,11 +55,11 @@ export function PerfumeDuplicatesCard({ onDone }: { onDone: () => void }) {
               <button type="button" className="text-left font-semibold text-[#1D4ED8] hover:underline" onClick={() => setView(g)} data-testid={`perfume-dups-view-${g.key}`}>{g.keep.name}</button>),
               exportValue: (g) => g.keep.name },
             { key: "companies", label: "Records", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (g) => String(g.companies) },
-            { className: "text-left", cellClass: "text-left", key: "role", label: "Type", render: (g) => [g.keep, ...g.merge].map((m) => m.role ?? "—").filter((v, i, a) => a.indexOf(v) === i).join(" + "),
+            { className: "text-left", cellClass: "text-left", key: "role", sortable: true, label: "Type", render: (g) => [g.keep, ...g.merge].map((m) => m.role ?? "—").filter((v, i, a) => a.indexOf(v) === i).join(" + "),
               exportValue: (g) => [g.keep, ...g.merge].map((m) => m.role ?? "").join(" ") },
             { className: "text-left", cellClass: "text-left", key: "locations", label: "Becomes its locations", render: (g) => g.merge.map((m) => [m.name !== g.keep.name ? m.name : null, m.city, m.state].filter(Boolean).join(", ") || "—").join(" · "),
               exportValue: (g) => g.merge.map((m) => `${m.name} ${m.city ?? ""}`).join(" | ") },
-            { key: "people", label: "People", kind: "number", cellClass: "text-right tabular-nums", render: (g) => String([g.keep, ...g.merge].reduce((s, m) => s + m.people, 0)) },
+            { key: "people", sortable: true, label: "People", kind: "number", cellClass: "text-right tabular-nums", render: (g) => String([g.keep, ...g.merge].reduce((s, m) => s + m.people, 0)) },
             { key: "created_date", label: "First record", sortable: true, cellClass: "text-right tabular-nums", render: (g) => usDate(g.keep.created_at.slice(0, 10)), exportValue: (g) => g.keep.created_at.slice(0, 10) },
           ]}
         />
@@ -99,11 +99,11 @@ function PerfumeDupGroupModal({ group, onClose, onMerged }: { group: PerfumeDupG
             { key: "merge", label: "Merge", render: (m) => m.id === keep ? "—" : <input type="checkbox" aria-label={`Merge ${m.name}`} checked={!out.has(m.id)}
               onChange={(e) => { const n = new Set(out); if (e.target.checked) n.delete(m.id); else n.add(m.id); setOut(n); }} /> },
             { className: "text-left", cellClass: "text-left font-semibold", key: "name", label: "Name", sortable: true, render: (m) => m.name, exportValue: (m) => m.name },
-            { className: "text-left", cellClass: "text-left", key: "role", label: "Type", render: (m) => m.role ?? "—", exportValue: (m) => m.role ?? "" },
+            { className: "text-left", cellClass: "text-left", key: "role", sortable: true, label: "Type", render: (m) => m.role ?? "—", exportValue: (m) => m.role ?? "" },
             { className: "text-left", cellClass: "text-left", key: "city", label: "City", sortable: true, render: (m) => [m.city, m.state].filter(Boolean).join(", ") || "—", exportValue: (m) => `${m.city ?? ""} ${m.state ?? ""}` },
-            { key: "people", label: "People", kind: "number", cellClass: "text-right tabular-nums", render: (m) => String(m.people) },
-            { key: "docs", label: "Documents", kind: "number", cellClass: "text-right tabular-nums", render: (m) => String(m.docs) },
-            { key: "sx", label: "ScentsX", render: (m) => [m.sx_link ? "linked" : null, m.account ? "account" : null].filter(Boolean).join(" · ") || "—" },
+            { key: "people", sortable: true, label: "People", kind: "number", cellClass: "text-right tabular-nums", render: (m) => String(m.people) },
+            { key: "docs", sortable: true, label: "Documents", kind: "number", cellClass: "text-right tabular-nums", render: (m) => String(m.docs) },
+            { key: "sx", sortable: true, label: "ScentsX", render: (m) => [m.sx_link ? "linked" : null, m.account ? "account" : null].filter(Boolean).join(" · ") || "—" },
             { key: "created_date", label: "Created", sortable: true, cellClass: "text-right tabular-nums", render: (m) => usDate(m.created_at.slice(0, 10)), exportValue: (m) => m.created_at.slice(0, 10) },
           ]}
         />
@@ -126,10 +126,10 @@ export function PerfumeCompanyLocations({ rows }: { rows: Array<{ id: string; na
       cardTitle title={`${tr("perfume.locs.title", "Locations")} (${rows.length})`} rows={rows} rowKey={(r) => r.id} storageKey="perfume-company-locations-v1" exportFilename="TIO company locations" exportExcel emptyText="No other locations."
       columns={[
         { className: "text-left", cellClass: "text-left", key: "city", label: "City", sortable: true, render: (r) => [r.city, r.state].filter(Boolean).join(", ") || "—", exportValue: (r) => `${r.city ?? ""} ${r.state ?? ""}` },
-        { className: "text-left", cellClass: "text-left", key: "address", label: "Address", render: (r) => r.address ?? "—", exportValue: (r) => r.address ?? "" },
-        { className: "text-left", cellClass: "text-left", key: "phone", label: "Phone", render: (r) => r.phone ?? "—", exportValue: (r) => r.phone ?? "" },
-        { className: "text-left", cellClass: "text-left", key: "name", label: "Name on that record", render: (r) => r.name, exportValue: (r) => r.name },
-        { key: "merged_at", label: "Merged", cellClass: "text-right tabular-nums", render: (r) => (r.merged_at ? usDate(r.merged_at.slice(0, 10)) : "—"), exportValue: (r) => r.merged_at ?? "" },
+        { className: "text-left", cellClass: "text-left", key: "address", sortable: true, label: "Address", render: (r) => r.address ?? "—", exportValue: (r) => r.address ?? "" },
+        { className: "text-left", cellClass: "text-left", key: "phone", sortable: true, label: "Phone", render: (r) => r.phone ?? "—", exportValue: (r) => r.phone ?? "" },
+        { className: "text-left", cellClass: "text-left", key: "name", sortable: true, label: "Name on that record", render: (r) => r.name, exportValue: (r) => r.name },
+        { key: "merged_at", sortable: true, label: "Merged", cellClass: "text-right tabular-nums", render: (r) => (r.merged_at ? usDate(r.merged_at.slice(0, 10)) : "—"), exportValue: (r) => r.merged_at ?? "" },
       ]}
     />
   );

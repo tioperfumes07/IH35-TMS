@@ -27,10 +27,10 @@ const mount = () => render(<MemoryRouter><QueryClientProvider client={new QueryC
 describe("ScentsX financial statements", () => {
   it("P&L from the report engine scoped to ScentsX; a line opens its register; Balance Sheet says balanced", async () => {
     mount();
-    expect(await screen.findByText("4000 · Sales of Goods - Wholesale")).toBeTruthy();
+    expect(await screen.findByText("Sales of Goods - Wholesale")).toBeTruthy();
     expect(paths.some((p) => p.startsWith("/api/v1/accounting/profit-loss") && p.includes("operating_company_id=sx1"))).toBe(true);
     expect(screen.getAllByText("$600.00").length).toBeGreaterThan(0); // gross profit / net income
-    fireEvent.click(screen.getByText("4000 · Sales of Goods - Wholesale"));
+    fireEvent.click(screen.getByText("Sales of Goods - Wholesale"));
     expect(await screen.findByText("Invoice INV-1")).toBeTruthy();
     fireEvent.click(screen.getByTestId("scentsx-st-bs"));
     await waitFor(() => expect(screen.getByTestId("scentsx-st-check").textContent).toMatch(/Balanced: assets = liabilities \+ equity/));

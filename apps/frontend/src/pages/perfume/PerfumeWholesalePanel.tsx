@@ -78,7 +78,7 @@ export function PerfumeWholesalePanel() {
             { className: "text-left", key: "product_type", label: "Type", sortable: true, render: (r) => r.product_type ?? DASH, exportValue: (r) => r.product_type ?? "" },
             { className: "text-left", key: "conc", label: "EDT / EDP / Parfum", sortable: true, render: (r) => r.conc || DASH, exportValue: (r) => r.conc ?? "" },
             { className: "text-left", key: "gender", label: "Gender", sortable: true, render: (r) => GENDER[r.gender ?? ""] ?? DASH, exportValue: (r) => GENDER[r.gender ?? ""] ?? "" },
-            { className: "text-left", key: "upc", label: "UPC", render: (r) => r.upc ?? DASH, exportValue: (r) => r.upc ?? "" },
+            { className: "text-left", key: "upc", sortable: true, label: "UPC", render: (r) => r.upc ?? DASH, exportValue: (r) => r.upc ?? "" },
             { key: "case_pack", label: "Case pack", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.case_pack == null ? DASH : String(r.case_pack)), exportValue: (r) => r.case_pack ?? "" },
             { key: "min_order_qty", label: "Min order", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.min_order_qty == null ? DASH : String(r.min_order_qty)), exportValue: (r) => r.min_order_qty ?? "" },
             { key: "available", label: "Available", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => r.available.toLocaleString("en-US") },
@@ -90,8 +90,8 @@ export function PerfumeWholesalePanel() {
               exportValue: (r) => (r.price_from === "tester" ? `Tester ${tester}% of ${r.regular_name ?? ""}` : r.price_from ?? "") },
             { className: "text-left", key: "breaks", label: "Quantity breaks", render: (r) => (r.breaks.length ? r.breaks.map((b) => `${b.min_qty}+ ${money(b.price_cents)}`).join(" · ") : DASH), exportValue: (r) => r.breaks.map((b) => `${b.min_qty}+ ${(b.price_cents / 100).toFixed(2)}`).join(" · ") },
             { key: "price_set_on", label: "Price date", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.price_set_on ? usDate(r.price_set_on) : r.price_from === "tester" ? "Tester rule" : "By rule"), exportValue: (r) => r.price_set_on ?? "" },
-            { className: "text-left", key: "origin_country", label: "Origin", render: (r) => r.origin_country ?? DASH, exportValue: (r) => r.origin_country ?? "" },
-            { className: "text-left", key: "hs_code", label: "HS code", render: (r) => r.hs_code ?? DASH, exportValue: (r) => r.hs_code ?? "" },
+            { className: "text-left", key: "origin_country", sortable: true, label: "Origin", render: (r) => r.origin_country ?? DASH, exportValue: (r) => r.origin_country ?? "" },
+            { className: "text-left", key: "hs_code", sortable: true, label: "HS code", render: (r) => r.hs_code ?? DASH, exportValue: (r) => r.hs_code ?? "" },
           ]} />
       </section>
     </div>

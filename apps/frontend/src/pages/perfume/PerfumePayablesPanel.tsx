@@ -7,6 +7,7 @@
  * /api/v1/accounting/vendors/:id/statement. Nothing here computes money of its own beyond adding up the books' open balances.
  * One payment pays one bill: the bill engine keeps one check number per bank account per payment.
  */
+import { accountIdByNumber } from "../../lib/show-account-numbers";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -99,14 +100,14 @@ function VendorAccount({ vendorId, asOf, onChanged }: { vendorId: string; asOf: 
         emptyText="Nothing owed to this vendor."
         columns={[
           { className: "text-left", key: "display_id", label: "Bill", render: (r) => <Link className="underline" to={`/accounting/bills/${encodeURIComponent(r.id)}`}>{r.display_id ?? r.id.slice(0, 8)}</Link>, exportValue: (r) => r.display_id ?? "" },
-          { className: "text-left", key: "bill_number", label: "Vendor invoice", render: (r) => r.bill_number ?? DASH, exportValue: (r) => r.bill_number ?? "" },
+          { className: "text-left", key: "bill_number", sortable: true, label: "Vendor invoice", render: (r) => r.bill_number ?? DASH, exportValue: (r) => r.bill_number ?? "" },
           { className: "text-left", key: "po_number", label: "PO", render: (r) => (r.purchase_order_id ? <DocLink tab="purchases" id={r.purchase_order_id}>{r.po_number ?? "PO"}</DocLink> : DASH), exportValue: (r) => r.po_number ?? "" },
-          { key: "bill_date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.bill_date), exportValue: (r) => r.bill_date },
-          { key: "due_date", label: "Due", cellClass: "text-right tabular-nums", render: (r) => usDate(r.due_date), exportValue: (r) => r.due_date },
+          { key: "bill_date", sortable: true, label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.bill_date), exportValue: (r) => r.bill_date },
+          { key: "due_date", sortable: true, label: "Due", cellClass: "text-right tabular-nums", render: (r) => usDate(r.due_date), exportValue: (r) => r.due_date },
           { key: "past_due", label: "Days past due", kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.past_due > 0 ? <span className="text-[#B91C1C]">{r.past_due}</span> : DASH) },
-          { key: "amount_cents", label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.amount_cents), exportValue: (r) => r.amount_cents / 100 },
-          { key: "settled_cents", label: "Paid", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.settled_cents), exportValue: (r) => r.settled_cents / 100 },
-          { key: "open_cents", label: "Balance", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (r) => money(r.open_cents), exportValue: (r) => r.open_cents / 100 },
+          { key: "amount_cents", sortable: true, label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.amount_cents), exportValue: (r) => r.amount_cents / 100 },
+          { key: "settled_cents", sortable: true, label: "Paid", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.settled_cents), exportValue: (r) => r.settled_cents / 100 },
+          { key: "open_cents", sortable: true, label: "Balance", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (r) => money(r.open_cents), exportValue: (r) => r.open_cents / 100 },
           { key: "pay", label: "", render: (r) => <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={() => setPaying(r.id)} data-testid={`perfume-ap-pay-${r.id}`}>{tr("perfume.ap.pay", "Pay")}</Button> },
         ]}
       />
@@ -116,24 +117,24 @@ function VendorAccount({ vendorId, asOf, onChanged }: { vendorId: string; asOf: 
         cardTitle title={tr("perfume.ap.payments", "Payments")} rows={a.payments} rowKey={(r) => r.id} storageKey="perfume-ap-payments-v1" exportFilename={`TIO vendor payments ${a.vendor.name}`} exportExcel
         emptyText="No payments to this vendor."
         columns={[
-          { key: "date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.date), exportValue: (r) => r.date },
+          { key: "date", sortable: true, label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.date), exportValue: (r) => r.date },
           { className: "text-left", key: "bill", label: "Bill", render: (r) => <Link className="underline" to={`/accounting/bills/${encodeURIComponent(r.bill_id)}`}>{r.bill ?? r.bill_id.slice(0, 8)}</Link>, exportValue: (r) => r.bill ?? "" },
-          { className: "text-left", key: "method", label: "Method", render: (r) => r.method, exportValue: (r) => r.method },
-          { className: "text-left", key: "check_number", label: "Check / ref.", render: (r) => r.check_number ?? r.reference_number ?? DASH, exportValue: (r) => r.check_number ?? r.reference_number ?? "" },
-          { className: "text-left", key: "paid_from", label: "Paid from", render: (r) => r.paid_from ?? DASH, exportValue: (r) => r.paid_from ?? "" },
-          { key: "amount_cents", label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.amount_cents), exportValue: (r) => r.amount_cents / 100 },
-          { className: "text-left", key: "voided", label: "Status", render: (r) => (r.voided ? "Voided" : "Paid"), exportValue: (r) => (r.voided ? "Voided" : "Paid") },
+          { className: "text-left", key: "method", sortable: true, label: "Method", render: (r) => r.method, exportValue: (r) => r.method },
+          { className: "text-left", key: "check_number", sortable: true, label: "Check / ref.", render: (r) => r.check_number ?? r.reference_number ?? DASH, exportValue: (r) => r.check_number ?? r.reference_number ?? "" },
+          { className: "text-left", key: "paid_from", sortable: true, label: "Paid from", render: (r) => r.paid_from ?? DASH, exportValue: (r) => r.paid_from ?? "" },
+          { key: "amount_cents", sortable: true, label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.amount_cents), exportValue: (r) => r.amount_cents / 100 },
+          { className: "text-left", key: "voided", sortable: true, label: "Status", render: (r) => (r.voided ? "Voided" : "Paid"), exportValue: (r) => (r.voided ? "Voided" : "Paid") },
         ]}
       />
       <ParityTable<ScentsxApBill> selectable
         cardTitle title={tr("perfume.ap.bills", "Every bill")} rows={a.bills} rowKey={(r) => r.id} storageKey="perfume-ap-bills-v1" exportFilename={`TIO bills ${a.vendor.name}`} exportExcel emptyText="No bills."
         columns={[
           { className: "text-left", key: "display_id", label: "Bill", render: (r) => <Link className="underline" to={`/accounting/bills/${encodeURIComponent(r.id)}`}>{r.display_id ?? r.id.slice(0, 8)}</Link>, exportValue: (r) => r.display_id ?? "" },
-          { className: "text-left", key: "bill_number", label: "Vendor invoice", render: (r) => r.bill_number ?? DASH, exportValue: (r) => r.bill_number ?? "" },
+          { className: "text-left", key: "bill_number", sortable: true, label: "Vendor invoice", render: (r) => r.bill_number ?? DASH, exportValue: (r) => r.bill_number ?? "" },
           { className: "text-left", key: "po_number", label: "PO", render: (r) => (r.purchase_order_id ? <DocLink tab="purchases" id={r.purchase_order_id}>{r.po_number ?? "PO"}</DocLink> : DASH), exportValue: (r) => r.po_number ?? "" },
-          { key: "bill_date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.bill_date), exportValue: (r) => r.bill_date },
-          { key: "amount_cents", label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.amount_cents), exportValue: (r) => r.amount_cents / 100 },
-          { className: "text-left", key: "status", label: "Status", render: (r) => (r.voided ? "Voided" : r.status), exportValue: (r) => (r.voided ? "Voided" : r.status) },
+          { key: "bill_date", sortable: true, label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.bill_date), exportValue: (r) => r.bill_date },
+          { key: "amount_cents", sortable: true, label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.amount_cents), exportValue: (r) => r.amount_cents / 100 },
+          { className: "text-left", key: "status", sortable: true, label: "Status", render: (r) => (r.voided ? "Voided" : r.status), exportValue: (r) => (r.voided ? "Voided" : r.status) },
         ]}
       />
       <VendorStatement companyId={a.operating_company_id} vendorId={a.vendor.id} />
@@ -146,7 +147,7 @@ function PayBill({ bill, companyId, banks, onClose, onDone }: { bill: ScentsxApO
   const { pushToast } = useToast();
   const [amount, setAmount] = useState<number | null>(bill.open_cents);
   const [method, setMethod] = useState<BillPaymentMethod>("check");
-  const [bank, setBank] = useState<string>(banks.find((b) => b.account_number === "1000")?.id ?? banks[0]?.id ?? "");
+  const [bank, setBank] = useState<string>(accountIdByNumber(banks, "1000") || banks[0]?.id || "");
   const [date, setDate] = useState(todayCT());
   const [checkNo, setCheckNo] = useState("");
   const [ref, setRef] = useState("");
@@ -225,11 +226,11 @@ function VendorStatement({ companyId, vendorId }: { companyId: string; vendorId:
         <ParityTable<StmtRow> selectable
           rows={rows} rowKey={(r) => r.key} loading={q.isLoading} storageKey="perfume-ap-statement-v1" exportFilename={`TIO vendor statement ${from} to ${to}`} exportExcel emptyText="No statement."
           columns={[
-            { key: "date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.date), exportValue: (r) => r.date },
-            { className: "text-left", key: "reference", label: "Reference", render: (r) => r.reference || DASH, exportValue: (r) => r.reference },
+            { key: "date", sortable: true, label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.date), exportValue: (r) => r.date },
+            { className: "text-left", key: "reference", sortable: true, label: "Reference", render: (r) => r.reference || DASH, exportValue: (r) => r.reference },
             { className: "text-left", key: "description", label: "Description", render: (r) => <span className={r.bold ? "font-semibold" : ""}>{r.description}</span>, exportValue: (r) => r.description },
-            { key: "debit_cents", label: "Payment / credit", kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.debit_cents ? money(r.debit_cents) : DASH), exportValue: (r) => r.debit_cents / 100 },
-            { key: "credit_cents", label: "Bill", kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.credit_cents ? money(r.credit_cents) : DASH), exportValue: (r) => r.credit_cents / 100 },
+            { key: "debit_cents", sortable: true, label: "Payment / credit", kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.debit_cents ? money(r.debit_cents) : DASH), exportValue: (r) => r.debit_cents / 100 },
+            { key: "credit_cents", sortable: true, label: "Bill", kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.credit_cents ? money(r.credit_cents) : DASH), exportValue: (r) => r.credit_cents / 100 },
             { key: "balance_cents", label: "Balance", kind: "number", cellClass: "text-right tabular-nums", render: (r) => <span className={r.bold ? "font-semibold" : ""}>{money(r.balance_cents)}</span>, exportValue: (r) => r.balance_cents / 100 },
           ]}
         />

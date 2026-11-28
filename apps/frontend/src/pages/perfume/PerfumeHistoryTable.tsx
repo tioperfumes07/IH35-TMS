@@ -39,7 +39,7 @@ export function PerfumeHistoryTable({ events, loading, storageKey, title, export
         { key: "by_name", label: "Who", sortable: true, render: (e) => e.by_name ?? DASH },
         { key: "action", label: "What", sortable: true, render: (e) => ACTION_TEXT[e.action] ?? e.action },
         { key: "entity", label: "On", sortable: true, render: (e) => e.entity.replace(/_/g, " ") },
-        { key: "detail", label: "Detail", render: (e) => eventDetail(e) },
+        { key: "detail", sortable: true, label: "Detail", render: (e) => eventDetail(e) },
       ]}
     />
   );

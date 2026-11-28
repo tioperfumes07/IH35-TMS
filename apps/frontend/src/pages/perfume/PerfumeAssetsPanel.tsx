@@ -64,11 +64,11 @@ export function PerfumeAssetsPanel() {
             { className: "text-left", cellClass: "text-left font-semibold", key: "name", label: "Asset", sortable: true, render: (a) => a.name, exportValue: (a) => a.name },
             { className: "text-left", cellClass: "text-left", key: "class_name", label: "Class", sortable: true, render: (a) => a.class_name ?? DASH, exportValue: (a) => a.class_name ?? "" },
             { key: "in_service_date", label: "In service", sortable: true, cellClass: "text-right tabular-nums", render: (a) => usDate(a.in_service_date), exportValue: (a) => a.in_service_date },
-            { key: "useful_life_months", label: "Life (months)", kind: "number", cellClass: "text-right tabular-nums", render: (a) => String(a.useful_life_months) },
+            { key: "useful_life_months", sortable: true, label: "Life (months)", kind: "number", cellClass: "text-right tabular-nums", render: (a) => String(a.useful_life_months) },
             { key: "purchase_price_cents", label: "Cost", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (a) => formatUsdCents(a.purchase_price_cents), exportValue: (a) => a.purchase_price_cents / 100 },
-            { key: "depreciation_to_date_cents", label: "Depreciation to date", kind: "number", cellClass: "text-right tabular-nums", render: (a) => formatUsdCents(a.depreciation_to_date_cents), exportValue: (a) => a.depreciation_to_date_cents / 100 },
-            { key: "net_book_value_cents", label: "Book value", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (a) => formatUsdCents(a.net_book_value_cents), exportValue: (a) => a.net_book_value_cents / 100 },
-            { className: "text-left", cellClass: "text-left", key: "status", label: "Status", render: (a) => a.status.replace(/_/g, " "), exportValue: (a) => a.status },
+            { key: "depreciation_to_date_cents", sortable: true, label: "Depreciation to date", kind: "number", cellClass: "text-right tabular-nums", render: (a) => formatUsdCents(a.depreciation_to_date_cents), exportValue: (a) => a.depreciation_to_date_cents / 100 },
+            { key: "net_book_value_cents", sortable: true, label: "Book value", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (a) => formatUsdCents(a.net_book_value_cents), exportValue: (a) => a.net_book_value_cents / 100 },
+            { className: "text-left", cellClass: "text-left", key: "status", sortable: true, label: "Status", render: (a) => a.status.replace(/_/g, " "), exportValue: (a) => a.status },
             { key: "post", label: "", render: (a) => (a.status === "active" ? <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" disabled={busy === a.id} onClick={() => void post(a)} data-testid={`scentsx-fa-post-${a.id}`}>{tr("scentsx.fa.post", "Post depreciation")}</Button> : DASH) },
           ]}
         />

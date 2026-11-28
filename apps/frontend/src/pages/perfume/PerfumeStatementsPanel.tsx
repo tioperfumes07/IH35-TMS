@@ -5,6 +5,7 @@
  * operating company — the same numbers the books' own pages show, nothing computed here. Every account line opens its register
  * (posted lines, each from its document); PDF and Excel from the engine's own exports. A/R and A/P aging live on Receivables and Payables.
  */
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -48,7 +49,7 @@ export function PerfumeStatementsPanel() {
 
   const lines: Line[] = [];
   const add = (section: string, ls: Array<{ account_id?: string | null; account_code?: string | null; account_number?: string | null; account_name?: string | null; label?: string; account_type: string; amount: number }>) =>
-    ls.forEach((l, i) => lines.push({ key: `${section}-${l.account_id ?? i}`, account_id: l.account_id ?? null, account: [l.account_code ?? l.account_number, l.account_name ?? l.label].filter(Boolean).join(" · "), type: l.account_type, amount: l.amount, section }));
+    ls.forEach((l, i) => lines.push({ key: `${section}-${l.account_id ?? i}`, account_id: l.account_id ?? null, account: formatAccountDisplayLabel({ account_number: l.account_code ?? l.account_number, account_name: l.account_name ?? l.label }), type: l.account_type, amount: l.amount, section }));
   const kpis: Array<[string, number]> = [];
   if (report === "pl" && pl.data) {
     add("Income", pl.data.revenue.lines); add("Cost of goods sold", pl.data.cogs.lines); add("Expenses", pl.data.operating_expenses.lines);
@@ -59,7 +60,7 @@ export function PerfumeStatementsPanel() {
     kpis.push(["Assets", bs.data.assets.total], ["Liabilities", bs.data.liabilities.total], ["Equity", bs.data.equity.total], ["Current-year earnings", bs.data.equity.current_year_earnings], ["Liabilities + equity", bs.data.total_liabilities_and_equity]);
   }
   if (report === "tb" && tb.data) {
-    tb.data.rows.forEach((r) => lines.push({ key: r.account_id, account_id: r.account_id, account: `${r.account_code} · ${r.account_name}`, type: r.account_type, amount: r.net_balance, section: `Dr ${money(r.total_debits)} / Cr ${money(r.total_credits)}` }));
+    tb.data.rows.forEach((r) => lines.push({ key: r.account_id, account_id: r.account_id, account: formatAccountDisplayLabel({ account_number: r.account_code, account_name: r.account_name }), type: r.account_type, amount: r.net_balance, section: `Dr ${money(r.total_debits)} / Cr ${money(r.total_credits)}` }));
     kpis.push(["Total debits", tb.data.summary.grand_total_debits], ["Total credits", tb.data.summary.grand_total_credits]);
   }
   if (report === "cf" && cf.data) {
@@ -129,10 +130,10 @@ function Register({ id, label, onClose }: { id: string; label: string; onClose: 
         rows={r.data?.lines ?? []} rowKey={(l) => String((l as unknown as { id?: string }).id ?? `${l.entry_date}-${l.memo}-${l.amount_cents}`)} loading={r.isLoading} storageKey="scentsx-st-register-v1" exportFilename={`ScentsX register ${label}`} exportExcel emptyText="No posted lines."
         columns={[
           { key: "entry_date", label: "Date", sortable: true, cellClass: "text-right tabular-nums", render: (l) => usDate(String(l.entry_date).slice(0, 10)), exportValue: (l) => String(l.entry_date) },
-          { className: "text-left", cellClass: "text-left", key: "memo", label: "Memo", render: (l) => l.memo ?? DASH, exportValue: (l) => l.memo ?? "" },
-          { className: "text-left", cellClass: "text-left", key: "source_transaction_type", label: "From", render: (l) => (l.source_transaction_type ?? "journal entry").replace(/_/g, " "), exportValue: (l) => l.source_transaction_type ?? "" },
-          { key: "debit", label: "Debit", kind: "number", cellClass: "text-right tabular-nums", render: (l) => (l.debit_or_credit === "debit" ? money(Number(l.amount_cents)) : ""), exportValue: (l) => (l.debit_or_credit === "debit" ? Number(l.amount_cents) / 100 : "") },
-          { key: "credit", label: "Credit", kind: "number", cellClass: "text-right tabular-nums", render: (l) => (l.debit_or_credit === "credit" ? money(Number(l.amount_cents)) : ""), exportValue: (l) => (l.debit_or_credit === "credit" ? Number(l.amount_cents) / 100 : "") },
+          { className: "text-left", cellClass: "text-left", key: "memo", sortable: true, label: "Memo", render: (l) => l.memo ?? DASH, exportValue: (l) => l.memo ?? "" },
+          { className: "text-left", cellClass: "text-left", key: "source_transaction_type", sortable: true, label: "From", render: (l) => (l.source_transaction_type ?? "journal entry").replace(/_/g, " "), exportValue: (l) => l.source_transaction_type ?? "" },
+          { key: "debit", sortable: true, label: "Debit", kind: "number", cellClass: "text-right tabular-nums", render: (l) => (l.debit_or_credit === "debit" ? money(Number(l.amount_cents)) : ""), exportValue: (l) => (l.debit_or_credit === "debit" ? Number(l.amount_cents) / 100 : "") },
+          { key: "credit", sortable: true, label: "Credit", kind: "number", cellClass: "text-right tabular-nums", render: (l) => (l.debit_or_credit === "credit" ? money(Number(l.amount_cents)) : ""), exportValue: (l) => (l.debit_or_credit === "credit" ? Number(l.amount_cents) / 100 : "") },
         ]}
       />
     </section>

@@ -50,7 +50,7 @@ export function PerfumeNameFormatCard({ onDone }: { onDone: () => void }) {
             { className: "text-left", cellClass: "text-left", key: "from", label: "Now", sortable: true, render: (f) => f.from, exportValue: (f) => f.from },
             { className: "text-left", cellClass: "text-left font-semibold", key: "to", label: "Will read", sortable: true, render: (f) => f.to, exportValue: (f) => f.to },
             { key: "added_date", label: "Added", sortable: true, cellClass: "text-right tabular-nums", render: (f) => (f.added_on ? usDate(f.added_on) : "—"), exportValue: (f) => f.added_on ?? "" },
-            { className: "text-left", cellClass: "text-left", key: "role", label: "Type", render: (f) => f.role ?? "—", exportValue: (f) => f.role ?? "" },
+            { className: "text-left", cellClass: "text-left", key: "role", sortable: true, label: "Type", render: (f) => f.role ?? "—", exportValue: (f) => f.role ?? "" },
           ]}
         />
       )) : null}

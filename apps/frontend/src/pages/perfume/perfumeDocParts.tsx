@@ -77,10 +77,10 @@ export function HistoryTable({ events, storageKey, exportFilename }: { events: P
       exportExcel
       emptyText="No history yet."
       columns={[
-        { key: "created_at", label: "When", render: (e) => new Date(e.created_at).toLocaleString("en-US") },
-        { key: "kind", label: "What", render: (e) => EVENT_TEXT[e.kind] ?? e.kind, exportValue: (e) => EVENT_TEXT[e.kind] ?? e.kind },
-        { key: "detail", label: "Detail", render: (e) => eventText(e) || DASH, exportValue: (e) => eventText(e) },
-        { key: "by_email", label: "By", render: (e) => e.by_email ?? DASH },
+        { key: "created_at", sortable: true, label: "When", render: (e) => new Date(e.created_at).toLocaleString("en-US") },
+        { key: "kind", sortable: true, label: "What", render: (e) => EVENT_TEXT[e.kind] ?? e.kind, exportValue: (e) => EVENT_TEXT[e.kind] ?? e.kind },
+        { key: "detail", sortable: true, label: "Detail", render: (e) => eventText(e) || DASH, exportValue: (e) => eventText(e) },
+        { key: "by_email", sortable: true, label: "By", render: (e) => e.by_email ?? DASH },
       ]}
     />
   );

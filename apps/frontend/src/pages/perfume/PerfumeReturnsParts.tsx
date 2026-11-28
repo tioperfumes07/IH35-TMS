@@ -69,18 +69,18 @@ export function ReturnForm({ invoiceId, onDone, onClose }: { invoiceId: string; 
       <ParityTable<Row> selectable
         rows={d.lines} rowKey={(l) => l.so_line_id} storageKey="perfume-return-lines-v1" emptyText="No sales-order lines on this invoice."
         columns={[
-          { key: "line_no", label: "#", kind: "number", cellClass: "text-right tabular-nums", render: (l) => String(l.line_no) },
-          { className: "text-left", key: "description", label: "Item", render: (l) => l.description, exportValue: (l) => l.description },
-          { key: "unit_price_cents", label: "Unit price", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money(l.unit_price_cents) },
-          { key: "billed", label: "Billed", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.billed.toLocaleString("en-US") },
-          { key: "returned", label: "Returned before", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.returned.toLocaleString("en-US") },
+          { key: "line_no", sortable: true, label: "#", kind: "number", cellClass: "text-right tabular-nums", render: (l) => String(l.line_no) },
+          { className: "text-left", key: "description", sortable: true, label: "Item", render: (l) => l.description, exportValue: (l) => l.description },
+          { key: "unit_price_cents", sortable: true, label: "Unit price", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money(l.unit_price_cents) },
+          { key: "billed", sortable: true, label: "Billed", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.billed.toLocaleString("en-US") },
+          { key: "returned", sortable: true, label: "Returned before", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.returned.toLocaleString("en-US") },
           { key: "qty", label: "Qty return", render: (l) => (
             <input type="number" min={0} max={l.can_return} className={`${ctl} w-[80px] text-right`} aria-label={`Return quantity line ${l.line_no}`} value={qty[l.so_line_id] ?? ""}
               disabled={l.can_return <= 0} onChange={(e) => setQty({ ...qty, [l.so_line_id]: e.target.value === "" ? 0 : Math.max(0, Math.floor(Number(e.target.value))) })} data-testid={`perfume-return-qty-${l.line_no}`} />) },
           { key: "restock", label: "Back to stock", render: (l) => (
             <input type="checkbox" aria-label={`Back to stock line ${l.line_no}`} disabled={!l.item_id} checked={l.item_id ? (restock[l.so_line_id] ?? true) : false}
               onChange={(e) => setRestock({ ...restock, [l.so_line_id]: e.target.checked })} data-testid={`perfume-return-restock-${l.line_no}`} />) },
-          { key: "total", label: "Return total", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money((qty[l.so_line_id] ?? 0) * l.unit_price_cents) },
+          { key: "total", sortable: true, label: "Return total", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money((qty[l.so_line_id] ?? 0) * l.unit_price_cents) },
         ]}
       />
       <div className="flex flex-wrap items-center justify-end gap-4 text-xs">
@@ -106,12 +106,12 @@ export function ReturnsList() {
         { key: "return_date", label: "Date", sortable: true, cellClass: "text-right tabular-nums", render: (r) => usDate(r.return_date), exportValue: (r) => r.return_date },
         { className: "text-left", key: "invoice_no", label: "Invoice", render: (r) => <Link className="underline" to={`/accounting/invoices/${encodeURIComponent(r.invoice_id)}`}>{r.invoice_no ?? r.invoice_id.slice(0, 8)}</Link>, exportValue: (r) => r.invoice_no ?? "" },
         { className: "text-left", key: "customer", label: "Customer", sortable: true, render: (r) => r.customer ?? DASH, exportValue: (r) => r.customer ?? "" },
-        { className: "text-left", key: "reason", label: "Reason", render: (r) => reasonText(r.reason), exportValue: (r) => reasonText(r.reason) },
-        { key: "units", label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.units.toLocaleString("en-US") },
-        { key: "restocked", label: "Back to stock", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.restocked.toLocaleString("en-US") },
-        { key: "merchandise_cents", label: "Merchandise", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.merchandise_cents), exportValue: (r) => r.merchandise_cents / 100 },
-        { key: "tax_cents", label: "Tax", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.tax_cents), exportValue: (r) => r.tax_cents / 100 },
-        { key: "credit", label: "Credit", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (r) => money(r.merchandise_cents + r.tax_cents), exportValue: (r) => (r.merchandise_cents + r.tax_cents) / 100 },
+        { className: "text-left", key: "reason", sortable: true, label: "Reason", render: (r) => reasonText(r.reason), exportValue: (r) => reasonText(r.reason) },
+        { key: "units", sortable: true, label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.units.toLocaleString("en-US") },
+        { key: "restocked", sortable: true, label: "Back to stock", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.restocked.toLocaleString("en-US") },
+        { key: "merchandise_cents", sortable: true, label: "Merchandise", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.merchandise_cents), exportValue: (r) => r.merchandise_cents / 100 },
+        { key: "tax_cents", sortable: true, label: "Tax", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.tax_cents), exportValue: (r) => r.tax_cents / 100 },
+        { key: "credit", sortable: true, label: "Credit", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (r) => money(r.merchandise_cents + r.tax_cents), exportValue: (r) => (r.merchandise_cents + r.tax_cents) / 100 },
       ]}
     />
   );
@@ -149,12 +149,12 @@ export function CustomerStatement({ companyId, customerId }: { companyId: string
         <ParityTable<StmtRow> selectable
           rows={rows} rowKey={(r) => r.key} loading={q.isLoading} storageKey="perfume-ar-statement-v1" exportFilename={`TIO statement ${from} to ${to}`} exportExcel emptyText="No statement."
           columns={[
-            { key: "date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.date), exportValue: (r) => r.date },
-            { className: "text-left", key: "reference", label: "Reference", render: (r) => r.reference || DASH, exportValue: (r) => r.reference },
+            { key: "date", sortable: true, label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.date), exportValue: (r) => r.date },
+            { className: "text-left", key: "reference", sortable: true, label: "Reference", render: (r) => r.reference || DASH, exportValue: (r) => r.reference },
             { className: "text-left", key: "description", label: "Description", render: (r) => <span className={r.bold ? "font-semibold" : ""}>{r.description}</span>, exportValue: (r) => r.description },
-            { key: "debit_cents", label: "Charge", kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.debit_cents ? money(r.debit_cents) : DASH), exportValue: (r) => r.debit_cents / 100 },
-            { key: "credit_cents", label: "Payment / credit", kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.credit_cents ? money(r.credit_cents) : DASH), exportValue: (r) => r.credit_cents / 100 },
-            { key: "balance_cents", label: "Balance", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (r) => money(r.balance_cents), exportValue: (r) => r.balance_cents / 100 },
+            { key: "debit_cents", sortable: true, label: "Charge", kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.debit_cents ? money(r.debit_cents) : DASH), exportValue: (r) => r.debit_cents / 100 },
+            { key: "credit_cents", sortable: true, label: "Payment / credit", kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.credit_cents ? money(r.credit_cents) : DASH), exportValue: (r) => r.credit_cents / 100 },
+            { key: "balance_cents", sortable: true, label: "Balance", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (r) => money(r.balance_cents), exportValue: (r) => r.balance_cents / 100 },
           ]}
         />)}
     </div>

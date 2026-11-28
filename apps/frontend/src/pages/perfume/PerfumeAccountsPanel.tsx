@@ -62,8 +62,8 @@ export function PerfumePriceLevelsPanel() {
             { key: "floor_pct", label: "Floor %", render: (l) => <PctCell value={l.floor_pct} label={`${l.name} floor %`} testId={`perfume-level-floor-${l.name}`} onSave={(v) => save(l.id, { floor_pct: v })} />, exportValue: (l) => l.floor_pct ?? "" },
             { key: "tester_pct", label: "Testers % of regular", render: (l) => <PctCell value={l.tester_pct} label={`${l.name} testers %`} testId={`perfume-level-tester-${l.name}`}
               onSave={(v) => { if (v == null || v <= 0 || v > 100) { pushToast(tr("perfume.acct.tester_bad", "Testers % must be above 0 and at most 100"), "error"); return; } save(l.id, { tester_pct: v }); }} />, exportValue: (l) => l.tester_pct },
-            { key: "fixed_prices", label: "Fixed prices", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.fixed_prices.toLocaleString("en-US") },
-            { key: "customers", label: "Customers", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.customers.toLocaleString("en-US") },
+            { key: "fixed_prices", sortable: true, label: "Fixed prices", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.fixed_prices.toLocaleString("en-US") },
+            { key: "customers", sortable: true, label: "Customers", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.customers.toLocaleString("en-US") },
           ]}
         />
       </section>
@@ -104,7 +104,7 @@ function LevelItems({ level, onChanged }: { level: PerfumePriceLevel; onChanged:
         rows={items.data?.items ?? []} rowKey={(r) => `${r.id}-${r.price_cents}`} storageKey="perfume-level-items-v1" exportFilename="TIO level prices" exportExcel emptyText="No fixed prices — the level's % applies."
         columns={[
           { key: "display_name", label: "Item", render: (r) => <DocLink tab="items" id={r.item_id}>{r.display_name}</DocLink>, exportValue: (r) => r.display_name },
-          { key: "min_qty", label: "From qty", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.min_qty.toLocaleString("en-US") },
+          { key: "min_qty", sortable: true, label: "From qty", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.min_qty.toLocaleString("en-US") },
           { key: "price_cents", label: "Price", render: (r) => <NumberCell value={r.price_cents} money label={tr("perfume.acct.price", "Price")} testId={`perfume-level-item-${r.id}`}
             onSave={(n) => setPerfumeLevelItem(level.id, { item_id: r.item_id, min_qty: r.min_qty, price_cents: n }).then(refresh)} />, exportValue: (r) => r.price_cents / 100 },
           { key: "off", label: "", render: (r) => <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={() => void setPerfumeLevelItem(level.id, { item_id: r.item_id, min_qty: r.min_qty, price_cents: null }).then(refresh).catch(err(pushToast))}>{tr("perfume.acct.take_off", "Take off")}</Button> },
@@ -243,8 +243,8 @@ function AccountEditor({ companyId, onChanged, onClose, push }: { companyId: str
       <ParityTable<PerfumeCreditApplication> selectable
         cardTitle title={tr("perfume.acct.applications", "Applications")} rows={applications} rowKey={(x) => `${x.id}-${x.status}`} storageKey="perfume-account-apps-v1" exportFilename="TIO credit applications" exportExcel emptyText="No applications."
         columns={[
-          { key: "created_at", label: "Date", render: (x) => new Date(x.created_at).toLocaleDateString("en-US") },
-          { key: "legal_name", label: "Legal name", render: (x) => x.legal_name },
+          { key: "created_at", sortable: true, label: "Date", render: (x) => new Date(x.created_at).toLocaleDateString("en-US") },
+          { key: "legal_name", sortable: true, label: "Legal name", render: (x) => x.legal_name },
           { key: "requested_limit_cents", label: "Asked", kind: "number", cellClass: "text-right tabular-nums", render: (x) => `${money(x.requested_limit_cents)} · Net ${x.requested_terms_days}`, exportValue: (x) => x.requested_limit_cents / 100 },
           { key: "status", label: "Status", render: (x) => <Badge text={APP_TEXT[x.status]} color={APP_CLASS[x.status]} />, exportValue: (x) => APP_TEXT[x.status] },
           { key: "approved_limit_cents", label: "Approved", kind: "number", cellClass: "text-right tabular-nums", render: (x) => (x.approved_limit_cents == null ? DASH : `${money(x.approved_limit_cents)} · Net ${x.approved_terms_days}`), exportValue: (x) => (x.approved_limit_cents == null ? "" : x.approved_limit_cents / 100) },
