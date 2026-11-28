@@ -68,6 +68,11 @@ export function PerfumeCompanyProfile({ id, onClose, backLabel }: { id: string; 
   const people = (p.data?.people ?? []) as Person[];
   const emails = companyEmails(people);
   const website = s("website");
+  // Imported addresses often carry the whole line ("784 Main St, Johnson City, NY 13790"): show the city line only when it adds something.
+  const addr = s("address");
+  const cityShown = cityLine && !(addr ?? "").toLowerCase().includes((s("city") ?? "\u0000").toLowerCase()) ? cityLine : null;
+  // The main phone: the company's, else its first person's (QuickBooks shows the customer's phone, wherever it was entered).
+  const mainPhone = s("phone") ?? people.find((x) => x.phones.length)?.phones[0] ?? null;
   const tabBtn = (k: Tab, label: string) => (
     <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} data-testid={`perfume-profile-tab-${k}`}
       className={`h-[34px] border-b-2 px-3 text-xs ${tab === k ? "border-[#14314F] font-semibold text-[#14314F]" : "border-transparent text-[#64748B] hover:text-[#14314F]"}`}>{label}</button>
@@ -102,8 +107,8 @@ export function PerfumeCompanyProfile({ id, onClose, backLabel }: { id: string; 
           <KpiCard label="We owe them (A/P)" number={money(center.data?.open_ap_cents)} />
         </div>
         <div className="grid gap-x-6 gap-y-0.5 text-xs text-[#1F2A44] md:grid-cols-3" data-testid="perfume-profile-contactline">
-          <div>{s("address") ?? DASH}{cityLine ? <><br />{cityLine}</> : null}{s("country") ? <><br />{s("country")}</> : null}</div>
-          <div>{s("phone") ? <a className="underline" href={`tel:${s("phone")}`}>{s("phone")}</a> : "No phone"}<br />
+          <div>{addr ?? DASH}{cityShown ? <><br />{cityShown}</> : null}{s("country") ? <><br />{s("country")}</> : null}</div>
+          <div>{mainPhone ? <a className="underline" href={`tel:${mainPhone}`}>{mainPhone}</a> : "No phone"}<br />
             {emails[0] ? <a className="underline" href={`mailto:${emails[0].email}`}>{emails[0].email}</a> : "No email"}</div>
           <div>{website ? <a className="underline" href={website} target="_blank" rel="noreferrer">{website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</a> : "No website"}</div>
         </div>
@@ -127,7 +132,7 @@ export function PerfumeCompanyProfile({ id, onClose, backLabel }: { id: string; 
               {field("Address", s("address"))}
               {field("City · state · zip", cityLine || null)}
               {field("Country", s("country"))}
-              {field("Main phone", s("phone"))}
+              {field("Main phone", mainPhone)}
               {field("Website", website)}
               {field("Customer type", s("customer_type"))}
               {field("Vendor type", s("vendor_type"))}

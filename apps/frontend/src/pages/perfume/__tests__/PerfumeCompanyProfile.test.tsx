@@ -68,4 +68,16 @@ describe("company profile page", () => {
     fireEvent.click(screen.getByTestId("perfume-person-save"));
     await waitFor(() => expect(posts.some(([p, m, b]) => p === "/api/v1/perfume/people/p1" && m === "PATCH" && (b as { title: string }).title === "Owner")).toBe(true));
   });
+
+  it("an address that already holds the city is not repeated; the phone falls back to the first person's", async () => {
+    vi.mocked(clientApi.apiRequest).mockImplementation(async (path: string) => {
+      if (path === "/api/v1/perfume/contacts/c1") return { company: { id: "c1", name: "A & A Beauty Supply", role: "customer", address: "784 Main St, Johnson City, NY 13790", city: "Johnson City", state: "NY", country: "US", phone: null }, people: [{ id: "p1", name: null, email: null, phones: ["(607) 217-0777"], role: "customer", how_started: null, first_contact_on: null, last_email_on: null, email_count: null }], origins: [] };
+      if (path === "/api/v1/perfume/companies/c1/center") return { company: { id: "c1", name: "x" }, notes: null, customer_ids: [], vendor_ids: [], open_ar_cents: 0, open_ap_cents: 0, ar_aging: { current: 0, b1: 0, b2: 0, b3: 0 }, ap_aging: { current: 0, b1: 0, b2: 0, b3: 0 }, quoted_cents: 0, ordered_cents: 0, bought_cents: 0, transactions: [], operating_company_id: "sx" };
+      throw new Error(`not in this test: ${path}`);
+    });
+    mount();
+    await waitFor(() => expect(screen.getByTestId("perfume-profile-contactline").textContent).toContain("(607) 217-0777"));
+    const t = screen.getByTestId("perfume-profile-contactline").textContent ?? "";
+    expect(t.split("Johnson City").length - 1).toBe(1);
+  });
 });
