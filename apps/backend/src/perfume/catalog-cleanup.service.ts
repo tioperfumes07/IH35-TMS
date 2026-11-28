@@ -100,3 +100,27 @@ export async function applyCleanup(c: pg.PoolClient, uid: string, keys: string[]
   }
   return { applied: done.length, moved: done.reduce((s, d) => s + d.moved, 0), rows: done };
 }
+
+export class CatalogMergeError extends Error {
+  constructor(public readonly code: string, message: string) { super(message); }
+}
+
+/**
+ * Owner 2026-11-27 16:57 CT: "WE SHOULD NOT HAVE DUPLICATE ITEMS IN LISTS, IF SO, WE SOULD BE ABLE TO MERGE". One value merges into another
+ * of the SAME list: every contact / item / family carrying it moves (history on each item and family), the merged value is archived
+ * (never deleted) and the catalog history says where it went.
+ */
+export async function mergeCatalogValue(c: pg.PoolClient, uid: string, fromId: string, intoId: string) {
+  if (fromId === intoId) throw new CatalogMergeError("same_value", "Pick a different value to merge into.");
+  const rows = (await c.query<{ id: string; kind: CatalogKind; value: string }>(
+    `SELECT id::text, kind, value FROM perfume.catalog_values WHERE id = ANY($1::uuid[]) AND archived_at IS NULL FOR UPDATE`, [[fromId, intoId]])).rows;
+  const from = rows.find((r) => r.id === fromId), into = rows.find((r) => r.id === intoId);
+  if (!from || !into) throw new CatalogMergeError("not_found", "That value is no longer in the list.");
+  if (from.kind !== into.kind) throw new CatalogMergeError("other_list", "A value merges only into a value of the same list.");
+  if (from.kind === "source_kind") throw new CatalogMergeError("source_kind_fixed", "Lead source kinds come from where a lead was found; archive instead.");
+  const m = await moveCatalogCarriers(c, from.kind, from.value, into.value, uid, "catalog_merge");
+  await c.query(`UPDATE perfume.catalog_values SET archived_at = now(), updated_at = now() WHERE id = $1::uuid`, [fromId]);
+  await logEvent(c, uid, { entity: "catalog_value", entity_id: fromId, action: "merged", detail: { kind: from.kind, from: from.value, to: into.value, into_id: intoId, contacts_moved: m.moved, items_moved: m.itemsMoved } });
+  await logEvent(c, uid, { entity: "catalog_value", entity_id: intoId, action: "merged_in", detail: { kind: from.kind, from: from.value, from_id: fromId, contacts_moved: m.moved, items_moved: m.itemsMoved } });
+  return { moved: m.moved + m.itemsMoved, into: into.value };
+}

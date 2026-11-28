@@ -7,11 +7,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
+import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
-  addPerfumeCatalogValue, archivePerfumeCatalogValue, listPerfumeCatalogs, renamePerfumeCatalogValue,
+  addPerfumeCatalogValue, archivePerfumeCatalogValue, listPerfumeCatalogs, mergePerfumeCatalogValue, renamePerfumeCatalogValue,
   type PerfumeCatalogKind, type PerfumeCatalogs,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
@@ -28,6 +29,15 @@ const NOTES: Partial<Record<PerfumeCatalogKind, string>> = {
   item_category: "Item categories — what the item creator, the item editor and the bulk bar offer. The number is how many items carry it; a rename moves those items.",
 };
 
+/** Owner 2026-11-27 16:54 CT: "you need to have header for each type and not confuse … separate all the types and categories … not mix".
+ *  One section per thing the list describes; each list is its own catalog. */
+const GROUPS: Array<{ key: string; title: string; note: string; kinds: string[] }> = [
+  { key: "contacts", title: "Contacts & leads", note: "Every company and lead: where it came from, its relationship and its business type.", kinds: ["category", "source_kind", "segment"] },
+  { key: "customers", title: "Customers", note: "The kind of customer (on companies with role customer or both).", kinds: ["customer_type"] },
+  { key: "vendors", title: "Vendors", note: "The kind of vendor (on companies with role vendor or both).", kinds: ["vendor_type"] },
+  { key: "items", title: "Items", note: "Product type is the kind only (Regular, Tester, Set, Mini …); the gender is its own list.", kinds: ["product_type", "gender", "item_category", "olfactory_family"] },
+];
+
 export function PerfumeCatalogsPanel() {
   const cats = useQuery({ queryKey: ["perfume", "catalogs"], queryFn: listPerfumeCatalogs });
   const exportAll = () => void downloadXlsx("TIO catalogs.xlsx", ["List", "Value", "Contacts / items using it"],
@@ -40,10 +50,20 @@ export function PerfumeCatalogsPanel() {
       <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={exportAll} disabled={!cats.data} data-testid="perfume-catalogs-export">
         {tr("perfume.cat.export", "Export all lists (Excel)")}</Button>
     </div>
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {(cats.data?.kinds ?? []).map((k) => <CatalogBox key={k.kind} cat={k} onChanged={() => void cats.refetch()} />)}
-      {cats.isLoading ? <div className="text-xs text-gray-500">{tr("perfume.cat.loading", "Loading…")}</div> : null}
-    </div>
+    {cats.isLoading ? <div className="text-xs text-gray-500">{tr("perfume.cat.loading", "Loading…")}</div> : null}
+    {GROUPS.map((g) => {
+      const kinds = (cats.data?.kinds ?? []).filter((k) => g.kinds.includes(k.kind));
+      if (!kinds.length) return null;
+      return (
+        <section key={g.key} className="space-y-2" aria-label={g.title} data-testid={`perfume-catalog-group-${g.key}`}>
+          <div className="text-page-title">{tr(`perfume.cat.group_${g.key}`, g.title)}</div>
+          <div className="text-xs text-[#64748B]">{tr(`perfume.cat.group_${g.key}_note`, g.note)}</div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {kinds.map((k) => <CatalogBox key={k.kind} cat={k} onChanged={() => void cats.refetch()} />)}
+          </div>
+        </section>
+      );
+    })}
     </div>
   );
 }
@@ -53,6 +73,8 @@ function CatalogBox({ cat, onChanged }: { cat: PerfumeCatalogs["kinds"][number];
   const [add, setAdd] = useState("");
   const [edit, setEdit] = useState<{ id: string; value: string } | null>(null);
   const [histOf, setHistOf] = useState<string | null>(null);
+  const [mergeOf, setMergeOf] = useState<{ id: string; value: string; n: number } | null>(null);
+  const [mergeInto, setMergeInto] = useState("");
   const history = useQuery({ queryKey: ["perfume", "catalog", histOf, "history"], queryFn: () => perfumeHistoryOf("catalogs", histOf!), enabled: Boolean(histOf) });
   const run = async (fn: () => Promise<unknown>, ok: string) => {
     try { await fn(); onChanged(); pushToast(ok, "success"); } catch (e) { pushToast(userFacingApiError(e, "Not saved"), "error"); }
@@ -82,6 +104,10 @@ function CatalogBox({ cat, onChanged }: { cat: PerfumeCatalogs["kinds"][number];
                 {cat.kind !== "source_kind" ? (
                   <button type="button" className="text-xs text-[#14314F] underline" onClick={() => setEdit({ id: v.id, value: v.value })}>{tr("perfume.cat.rename", "Rename")}</button>
                 ) : null}
+                {cat.kind !== "source_kind" && cat.values.length > 1 ? (
+                  <button type="button" className="text-xs text-[#14314F] underline" data-testid={`perfume-catalog-merge-${v.id}`}
+                    onClick={() => { setMergeOf({ id: v.id, value: v.value, n: v.contacts }); setMergeInto(""); }}>{tr("perfume.cat.merge", "Merge into…")}</button>
+                ) : null}
                 <button type="button" className="text-xs text-[#64748B] underline" onClick={() => setHistOf(histOf === v.id ? null : v.id)}>{tr("perfume.cat.history", "History")}</button>
                 <button type="button" className="text-xs text-[#64748B] underline" data-testid={`perfume-catalog-archive-${v.id}`}
                   onClick={() => void run(() => archivePerfumeCatalogValue(v.id), `${v.value} archived`)}>{tr("perfume.cat.archive", "Archive")}</button>
@@ -90,6 +116,25 @@ function CatalogBox({ cat, onChanged }: { cat: PerfumeCatalogs["kinds"][number];
           </li>
         ))}
       </ul>
+      {mergeOf ? (
+        <Modal open onClose={() => setMergeOf(null)} title={`${tr("perfume.cat.merge_title", "Merge")} "${mergeOf.value}"`} size="sm" data-testid="perfume-catalog-merge-modal">
+          <div className="space-y-3 text-xs">
+            <p>{`${mergeOf.n.toLocaleString("en-US")} ${cat.used_by === "items" ? "items" : cat.used_by === "families" ? "item families" : "contacts"} ${tr("perfume.cat.merge_help", "move to the value you pick, each with a history row. The merged value is archived, never deleted.")}`}</p>
+            <label className="block">{tr("perfume.cat.merge_into", "Merge into")}
+              <select className={`${ctl} block w-full`} value={mergeInto} onChange={(e) => setMergeInto(e.target.value)} data-testid="perfume-catalog-merge-into">
+                <option value="">{tr("perfume.cat.pick", "Pick a value…")}</option>
+                {cat.values.filter((x) => x.id !== mergeOf.id).map((x) => <option key={x.id} value={x.id}>{`${x.value} (${x.contacts.toLocaleString("en-US")})`}</option>)}
+              </select>
+            </label>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => setMergeOf(null)}>{tr("perfume.cat.cancel", "Cancel")}</Button>
+              <Button type="button" className="h-[34px] px-3 text-xs" disabled={!mergeInto} data-testid="perfume-catalog-merge-confirm"
+                onClick={() => void run(async () => { const r = await mergePerfumeCatalogValue(mergeOf.id, mergeInto); setMergeOf(null); return r; }, `${mergeOf.value} merged`)}>
+                {tr("perfume.cat.merge_confirm", "Confirm — merge")}</Button>
+            </div>
+          </div>
+        </Modal>
+      ) : null}
       {histOf ? <PerfumeHistoryTable events={history.data?.events ?? []} loading={history.isLoading} storageKey="perfume-catalog-history-v1" exportName="TIO catalog value history" /> : null}
       <div className="flex gap-2">
         <input className={`${ctl} min-w-0 flex-1`} placeholder={tr("perfume.cat.add_ph", "Add a value")} value={add} onChange={(e) => setAdd(e.target.value)}

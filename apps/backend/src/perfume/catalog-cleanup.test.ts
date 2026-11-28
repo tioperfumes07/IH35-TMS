@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
-import { applyCleanup, CLEANUP_PLAN, previewCleanup } from "./catalog-cleanup.service.js";
+import { applyCleanup, CLEANUP_PLAN, mergeCatalogValue, previewCleanup } from "./catalog-cleanup.service.js";
 
 describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("catalog cleanup (real Postgres, rolled back)", () => {
   let db: pg.Client;
@@ -42,5 +42,16 @@ describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("catalog cleanup (real Po
     const beer = (await db.query<{ id: string }>(`INSERT INTO perfume.contact_companies (name, source, segment) VALUES ('Zqc Cervezas', 'test', 'cervezas') RETURNING id::text`)).rows[0]!.id;
     expect((await applyCleanup(db as unknown as pg.PoolClient, TEST_OWNER_USER_ID, ["segment:cervezas"])).applied).toBe(1);
     expect((await db.query(`SELECT segment FROM perfume.contact_companies WHERE id = $1::uuid`, [beer])).rows[0].segment).toBe("Beer depot");
+  });
+
+  it("merge one value into another of the same list: carriers move, merged value archived; other list refused", async () => {
+    const add = async (kind: string, value: string) => (await db.query<{ id: string }>(`INSERT INTO perfume.catalog_values (kind, value) VALUES ($1, $2) RETURNING id::text`, [kind, value])).rows[0]!.id;
+    const a = await add("vendor_type", "Zqm Trader Co"), b = await add("vendor_type", "Zqm Traders"), other = await add("customer_type", "Zqm Other");
+    const co = (await db.query<{ id: string }>(`INSERT INTO perfume.contact_companies (name, source, role, vendor_type) VALUES ('Zqm Vendor', 'test', 'vendor', 'Zqm Trader Co') RETURNING id::text`)).rows[0]!.id;
+    await expect(mergeCatalogValue(db as unknown as pg.PoolClient, TEST_OWNER_USER_ID, a, other)).rejects.toThrow(/same list/);
+    const r = await mergeCatalogValue(db as unknown as pg.PoolClient, TEST_OWNER_USER_ID, a, b);
+    expect(r).toEqual({ moved: 1, into: "Zqm Traders" });
+    expect((await db.query(`SELECT vendor_type FROM perfume.contact_companies WHERE id = $1::uuid`, [co])).rows[0].vendor_type).toBe("Zqm Traders");
+    expect((await db.query(`SELECT archived_at IS NOT NULL AS gone FROM perfume.catalog_values WHERE id = $1::uuid`, [a])).rows[0].gone).toBe(true);
   });
 });

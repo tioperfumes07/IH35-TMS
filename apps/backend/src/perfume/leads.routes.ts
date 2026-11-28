@@ -8,7 +8,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "./desk.routes.js";
 import { contactQueryFrom, listSchema } from "./contacts.routes.js";
-import { applyCleanup, applyCleanupSchema, previewCleanup } from "./catalog-cleanup.service.js";
+import { applyCleanup, applyCleanupSchema, CatalogMergeError, mergeCatalogValue, previewCleanup } from "./catalog-cleanup.service.js";
 import {
   addCatalogValue, applySchema, archiveCatalogValue, catalogValueSchema, discardUpload, exportWorkbook, getUpload, healStaleApplies,
   LeadsError, listCatalogs, listUploads, renameCatalogValue, saveUpload, startApply, uploadSchema,
@@ -58,6 +58,14 @@ export async function registerPerfumeLeadsRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const b = applyCleanupSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "validation_error" });
     return withCurrentUser(uid, (c) => applyCleanup(c, uid, b.data.keys));
+  });
+  // Owner 16:57 CT: merge a duplicate value into another of the same list (carriers move with history; the merged value is archived).
+  app.post("/api/v1/perfume/catalogs/:id/merge", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idParam.safeParse(req.params); const b = z.object({ into_id: z.string().uuid() }).safeParse(req.body ?? {});
+    if (!id.success || !b.success) return reply.code(400).send({ error: "validation_error" });
+    try { return await withCurrentUser(uid, (c) => mergeCatalogValue(c, uid, id.data.id, b.data.into_id)); }
+    catch (e) { if (e instanceof CatalogMergeError) return reply.code(e.code === "not_found" ? 404 : 400).send({ error: e.code, message: e.message }); throw e; }
   });
   app.post("/api/v1/perfume/catalogs/:id/archive", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
