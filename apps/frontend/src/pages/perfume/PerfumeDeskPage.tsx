@@ -3,6 +3,7 @@
  * selector's "Other businesses → TIO Perfumes" or /perfume). Isolated: reads/writes perfume.* only.
  */
 import { useEffect, useMemo, useState } from "react";
+import { ConfirmPricesButton } from "./PerfumeConfirmPrices";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
@@ -886,6 +887,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
         columns={columns}
         rows={query.data?.rows ?? []}
         rowKey={(r) => String(r.id)}
+        batchActions={(sel) => <ConfirmPricesButton itemIds={sel.map((r) => String(r.id))} targetPct={target ?? null} earnPct={earn ?? null} />}
         loading={query.isLoading}
         wrapHeaders
         storageKey={`perfume-desk-${matchDesk ? "match-" : ""}${view}${mine ? "-mine" : ""}${view === "analysis" ? (hideEmpty ? "-h" : "-a") : ""}-v8`}

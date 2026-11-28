@@ -257,6 +257,10 @@ export const confirmPerfumeRow = (rowId: string, target: { item_id: string } | {
 export type PerfumeMyPriceField = "offer" | "last_cost" | "avg_cost";
 export const setPerfumeMyPrice = (body: { item_id?: string | null; line_id?: string | null; field: PerfumeMyPriceField; cents: number | null }) =>
   apiRequest<{ ok: true; updated: number }>(`/api/v1/perfume/mine/price`, { method: "PUT", body });
+/** L.30 item 11: the ticked items' "My price @ my margin" written into my current offer list (one transaction). */
+export type PerfumeConfirmPricesResult = { ok: true; updated: number; unchanged: number; not_on_my_list: string[]; no_price: string[]; changes: Array<{ item_id: string; from: number | null; to: number }> };
+export const confirmPerfumePrices = (body: { item_ids: string[]; target_pct?: number | null; earn_pct?: number | null }) =>
+  apiRequest<PerfumeConfirmPricesResult>(`/api/v1/perfume/mine/confirm-prices`, { method: "POST", body });
 /** Match my list ↔ competitor: my offer items with no competitor line linked, and the lines each most likely is. */
 export type PerfumeLineCandidate = { row_id: string; vendor: string; description: string; price_cents: number; score: number; why: string; linked_to: string | null };
 /** gender: the line being linked is Men (M) or Women (W) — the other gender's bottles are never returned. */

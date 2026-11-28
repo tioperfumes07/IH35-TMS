@@ -1619,6 +1619,31 @@ export async function setMyPrice(c: PoolClient, uid: string, b: { item_id?: stri
 }
 export class MyPriceError extends Error {}
 
+/**
+ * L.30 item 11 (owner 2026-11-27 15:42 CT "Later: confirm new prices into lists"): the ticked items' calculated price
+ * ("My price @ my margin", already rounded up to the next $0.25) becomes my list price on my current offer list — the
+ * same write as typing it in the box (setMyPrice keeps from/to/at/by in price_edits). One transaction: all or nothing.
+ * An item not on my list or without a calculated price is reported, never guessed.
+ */
+export async function confirmPricesIntoList(c: PoolClient, uid: string, b: { item_ids: string[]; target_pct?: number | null; earn_pct?: number | null }):
+  Promise<{ updated: number; unchanged: number; not_on_my_list: string[]; no_price: string[]; changes: Array<{ item_id: string; from: number | null; to: number }> }> {
+  const g = await buildGrid(c, { targetPct: b.target_pct ?? null, earnPct: b.earn_pct ?? null });
+  const byId = new Map(g.rows.map((r) => [String(r.id), r]));
+  const out = { updated: 0, unchanged: 0, not_on_my_list: [] as string[], no_price: [] as string[], changes: [] as Array<{ item_id: string; from: number | null; to: number }> };
+  for (const id of [...new Set(b.item_ids)]) {
+    const row = byId.get(id);
+    const to = row?.target_price_margin as number | null | undefined;
+    if (to == null) { out.no_price.push(id); continue; }
+    const from = (row?.my_offer_price as number | null | undefined) ?? null;
+    if (from == null) { out.not_on_my_list.push(id); continue; }
+    if (from === to) { out.unchanged++; continue; }
+    await setMyPrice(c, uid, { item_id: id, field: "offer", cents: to });
+    out.updated++;
+    out.changes.push({ item_id: id, from, to });
+  }
+  return out;
+}
+
 export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null; earnPct?: number | null } = {}): Promise<GridPayload> {
   // No fingerprint read → a key no earlier build carries (a remembered grid is never trusted without one).
   const sig = (await perfumeDataSig(c)) ?? "nosig";
