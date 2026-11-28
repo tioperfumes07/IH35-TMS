@@ -41,4 +41,19 @@ describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("duplicate detector (real
     expect((await db.query(`SELECT merged_into_id::text FROM perfume.contact_companies WHERE id = $1`, [a])).rows[0]!.merged_into_id).toBe(b);
     expect((await db.query(`SELECT status FROM perfume.duplicate_candidates WHERE id = $1`, [ab.id])).rows[0]!.status).toBe("merged");
   });
+
+  it("owner 18:21 CT: B&S Group / B&S Global / B&S Brand Distribution BV (B&S Group); same person on a typo domain", async () => {
+    const mk = async (name: string, role: string | null) => (await db.query<{ id: string }>(
+      `INSERT INTO perfume.contact_companies (name, source, role) VALUES ($1, 'test', $2) RETURNING id::text`, [name, role])).rows[0]!.id;
+    const grp = await mk("Q&Z Group (distributor)", "vendor"), glb = await mk("Q&Z Global (distributor)", "vendor");
+    const bv = await mk("Q&Z Brand Distribution BV (Q&Z Group)", "vendor");
+    const t1 = await mk("Zqk Fragances Mayra", null), t2 = await mk("Zqkfragrances", "vendor");
+    await db.query(`INSERT INTO perfume.contact_people (company_id, name, email) VALUES ($1::uuid, 'Mayra', 'mayra@zqkfragances.com'), ($2::uuid, 'Mayra', 'mayra@zqkfragrances.com')`, [t1, t2]);
+    await scanDuplicates(db);
+    const all = (await listRecommendations(db, { limit: 5000 })).rows;
+    const pair = (x: string, y: string) => all.find((r) => (r.a.id === x && r.b.id === y) || (r.a.id === y && r.b.id === x));
+    expect(pair(grp, bv)?.reasons).toEqual(expect.arrayContaining(["same_core_name"]));
+    expect(pair(grp, glb)?.reasons).toEqual(expect.arrayContaining(["same_brand_initials"]));
+    expect(pair(t1, t2)?.reasons).toEqual(expect.arrayContaining(["same_contact_similar_domain"]));
+  });
 });

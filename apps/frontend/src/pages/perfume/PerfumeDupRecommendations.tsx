@@ -15,7 +15,8 @@ import { confirmPerfumeDuplicates, dismissPerfumeDuplicates, getPerfumeDupRecomm
 import { tr } from "./perfumeI18n";
 import { DocLink, usDate } from "./perfumeDocParts";
 
-const REASON: Record<string, string> = { same_name: "Same name", similar_name: "Similar name", same_phone: "Same phone", same_domain: "Same website / e-mail domain", same_address: "Same address" };
+const REASON: Record<string, string> = { same_name: "Same name", similar_name: "Similar name", same_phone: "Same phone", same_domain: "Same website / e-mail domain", same_address: "Same address",
+  same_contact_email: "Same contact e-mail", same_contact_similar_domain: "Same contact, near-same domain", same_core_name: "Same name without notes / alias", same_brand_initials: "Same brand initials (vendors)" };
 const where = (c: PerfumeDupCard) => [c.city, c.state].filter(Boolean).join(", ");
 const Side = ({ c, stays }: { c: PerfumeDupCard; stays: boolean }) => (
   <div className={stays ? "font-semibold" : ""}>
@@ -45,20 +46,15 @@ export function PerfumeDupRecommendations({ onDone }: { onDone: () => void }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-card-title">{`${tr("perfume.duprec.title", "Duplicate recommendations")}${q.data ? ` · ${q.data.open.toLocaleString("en-US")} ${tr("perfume.duprec.open", "to review")}` : ""}`}</div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!rows.length} onClick={() => setPicked(picked.size === rows.length ? new Set() : new Set(rows.map((r) => r.id)))}>
-            {picked.size === rows.length && rows.length ? tr("perfume.duprec.none", "Unpick all") : tr("perfume.duprec.all", "Pick all")}
-          </Button>
           <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy || !ids.length} onClick={() => void act("confirm")} data-testid="perfume-duprec-confirm">{`${tr("perfume.duprec.confirm", "Confirm — merge")} (${ids.length})`}</Button>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={busy || !ids.length} onClick={() => void act("dismiss")} data-testid="perfume-duprec-dismiss">{`${tr("perfume.duprec.dismiss", "Not a duplicate")} (${ids.length})`}</Button>
         </div>
       </div>
       {q.isError ? <ListErrorState title={tr("perfume.duprec.error", "Couldn't load the recommendations")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} /> : (
         <ParityTable<PerfumeDupRec>
-          rows={rows} rowKey={(r) => `${r.id}-${keep[r.id] ?? r.keep}`} loading={q.isLoading} storageKey="perfume-dup-recs-v1" exportFilename="TIO duplicate recommendations" exportExcel
+          rows={rows} rowKey={(r) => r.id} selectable selectedKeys={[...picked]} onSelectionChange={(k) => setPicked(new Set(k))} loading={q.isLoading} storageKey="perfume-dup-recs-v1" exportFilename="TIO duplicate recommendations" exportExcel
           emptyText="No duplicates found — every company is one record."
           columns={[
-            { key: "pick", label: "Pick", render: (r) => <input type="checkbox" aria-label={`Pick ${r.a.name} and ${r.b.name}`} checked={picked.has(r.id)}
-              onChange={(e) => { const n = new Set(picked); if (e.target.checked) n.add(r.id); else n.delete(r.id); setPicked(n); }} data-testid={`perfume-duprec-pick-${r.id}`} /> },
             { className: "text-left", cellClass: "text-left", key: "a", label: "Company A", render: (r) => <Side c={r.a} stays={(keep[r.id] ?? r.keep) === "a"} />, exportValue: (r) => r.a.name },
             { className: "text-left", cellClass: "text-left", key: "b", label: "Company B", render: (r) => <Side c={r.b} stays={(keep[r.id] ?? r.keep) === "b"} />, exportValue: (r) => r.b.name },
             { className: "text-left", cellClass: "text-left", key: "reasons", label: "Why", render: (r) => r.reasons.map((x) => REASON[x] ?? x).join(" · "), exportValue: (r) => r.reasons.join(", ") },
