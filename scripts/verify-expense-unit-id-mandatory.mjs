@@ -54,6 +54,14 @@ export function collectFailures(src = loadSource()) {
     failures.push("G3: fixed_cost_cannot_carry_load_id error response missing");
   }
 
+  // G4 (owner ruling 2026-11-27 22:40 CT "Exempt ScentsX") — the ONLY exemption from G1 is ScentsX LLC (no trucks), resolved by
+  // scentsx.company_id(); any other exemption (a flag, a role, a second company, a name match) is a regression of GO-19-1b.
+  const exemptions = src.match(/noFleetCompany\s*=\s*[^;]*;/g) ?? [];
+  if (exemptions.length > 1) failures.push("G4: more than one unit-rule exemption — only ScentsX (no trucks) is exempt");
+  if (exemptions.length === 1 && !/isNoFleetScentsxCompany\(/.test(exemptions[0])) failures.push("G4: the unit-rule exemption must be isNoFleetScentsxCompany only");
+  if (/isNoFleetScentsxCompany/.test(src) && !/SELECT \(scentsx\.company_id\(\) = \$1::uuid\) AS is_scentsx/.test(src)) {
+    failures.push("G4: the exemption must resolve ScentsX by scentsx.company_id(), never a flag or a name");
+  }
   return failures;
 }
 
