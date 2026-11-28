@@ -36,6 +36,13 @@ export const CLEANUP_PLAN: CleanupRow[] = [
   ...P("customer_type", "Wholesale", "Same kind of customer", "Formal wholesale", "Perfume wholesale"),
   ...P("customer_type", "Liquor store", "Same kind of customer", "Wine & liquor"),
   ...P("customer_type", "Perfume retail", "Same kind of customer (a shop that sells perfume)", "Perfume / fragrance retail", "Perfume shop", "Perfume seller", "Perfume retailer/maker", "Retailer"),
+  // Business types (segment): the Sección Amarilla import wrote Spanish web slugs beside the English names (measured 2026-11-27:
+  // depositos-de-cerveza 265, perfumerias 69, vinos-y-licores 66, cosmeticos 65, cervezas 35, perfumes 20, puros-y-tabacos 12).
+  ...P("segment", "Beer depot", "Spanish web slug of the same business type", "depositos-de-cerveza", "cervezas"),
+  ...P("segment", "Beauty supply / cosmetics", "Spanish web slug of the same business type", "cosmeticos"),
+  ...P("segment", "Perfume (retail/brand)", "Spanish web slug of the same business type", "perfumerias", "perfumes"),
+  ...P("segment", "Liquor store", "Spanish web slug of the same business type", "vinos-y-licores"),
+  ...P("segment", "Tobacco / smoke shop", "Spanish web slug of the same business type", "puros-y-tabacos"),
   // Vendor types.
   ...P("vendor_type", "Brand direct", "Same thing, other spelling", "Brand-direct", "Manufacturer / brand"),
 ];
@@ -43,7 +50,7 @@ export const CLEANUP_PLAN: CleanupRow[] = [
 /** Values the owner named that the catalogs must carry (added once, never duplicated). */
 export const CLEANUP_ADD: Array<{ kind: CatalogKind; value: string }> = [
   { kind: "product_type", value: "Regular" }, { kind: "product_type", value: "Kids" }, { kind: "product_type", value: "Dupe" },
-  { kind: "product_type", value: "Sample" }, { kind: "product_type", value: "Vial" }, { kind: "customer_type", value: "Perfume retail" },
+  { kind: "product_type", value: "Sample" }, { kind: "product_type", value: "Vial" }, { kind: "customer_type", value: "Perfume retail" }, { kind: "segment", value: "Beer depot" },
 ];
 
 type Q = Pick<pg.PoolClient, "query">;
@@ -51,6 +58,7 @@ type Q = Pick<pg.PoolClient, "query">;
 async function usage(c: Q, kind: CatalogKind, value: string): Promise<number> {
   const sql = kind === "product_type" ? `SELECT count(*)::int n FROM perfume.items WHERE product_type = $1 AND merged_into_id IS NULL`
     : kind === "customer_type" ? `SELECT count(*)::int n FROM perfume.contact_companies WHERE customer_type = $1 AND archived_at IS NULL`
+    : kind === "segment" ? `SELECT count(*)::int n FROM perfume.contact_companies WHERE segment = $1 AND archived_at IS NULL`
     : `SELECT count(*)::int n FROM perfume.contact_companies WHERE vendor_type = $1 AND archived_at IS NULL`;
   return (await c.query<{ n: number }>(sql, [value])).rows[0]!.n;
 }
