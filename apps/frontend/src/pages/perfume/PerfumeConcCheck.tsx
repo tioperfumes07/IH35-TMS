@@ -99,16 +99,17 @@ export function PerfumeConcCheck() {
         ) : null}
       </div>
       {busy ? <div className="text-xs font-semibold text-[#1F2A44]" data-testid="perfume-conc-busy">{busy}</div> : null}
+      {/* TABLE_DATE_OMIT: a concentration check — each row is an item and what the vendor lists say about it, not a dated event. */}
       <ParityTable<PerfumeConcRow> selectable
         rows={d?.rows ?? []} rowKey={(r) => r.id} loading={q.isLoading} storageKey="perfume-conc-check-v1" exportFilename="TIO concentration check" exportExcel
         hidePager page={1} pageSize={PAGE} emptyText="Nothing to check."
         batchActions={(sel) => <button type="button" className={btn} disabled={!!busy || !sel.some((r) => r.proposed)} onClick={() => void apply(sel)} data-testid="perfume-conc-apply">{`Set the lists' concentration (${sel.filter((r) => r.proposed).length})`}</button>}
         columns={[
-          { className: "text-left", key: "display_name", label: "Item", render: (r) => r.display_name, exportValue: (r) => r.display_name },
-          { className: "text-left", key: "product_type", label: "Type", render: (r) => r.product_type || DASH, exportValue: (r) => r.product_type },
-          { className: "text-left", key: "proposed", label: "Lists say", render: (r) => r.proposed ?? (r.concs ? `Disagree: ${r.concs}` : "Nothing"), exportValue: (r) => r.proposed ?? r.concs ?? "" },
-          { key: "agree_n", label: "Agreeing", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.agree_n.toLocaleString("en-US"), exportValue: (r) => r.agree_n },
-          { className: "text-left", key: "evidence", label: "Seen as", render: (r) => r.evidence.join(" · ") || DASH, exportValue: (r) => r.evidence.join(" | ") },
+          { className: "text-left", key: "display_name", sortable: true, label: "Item", render: (r) => r.display_name, exportValue: (r) => r.display_name },
+          { className: "text-left", key: "product_type", sortable: true, label: "Type", render: (r) => r.product_type || DASH, exportValue: (r) => r.product_type },
+          { className: "text-left", key: "proposed", sortable: true, label: "Lists say", render: (r) => r.proposed ?? (r.concs ? `Disagree: ${r.concs}` : "Nothing"), exportValue: (r) => r.proposed ?? r.concs ?? "" },
+          { key: "agree_n", sortable: true, label: "Agreeing", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.agree_n.toLocaleString("en-US"), exportValue: (r) => r.agree_n },
+          { className: "text-left", key: "evidence", sortable: true, label: "Seen as", render: (r) => r.evidence.join(" · ") || DASH, exportValue: (r) => r.evidence.join(" | ") },
         ]}
       />
     </div>
