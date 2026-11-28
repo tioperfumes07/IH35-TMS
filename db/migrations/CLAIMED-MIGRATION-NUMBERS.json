@@ -1438,5 +1438,5 @@
   "202617190100": {"claimed_at": "2026-11-27", "claimed_by": "p1-11-02", "purpose": "SCENTSX one vendor many price lists: drop uq_scentsx_vendor_links_vendor; a ScentsX vendor links to several perfume lists of the SAME company only (owner 2026-11-27 18:38 CT)"},
   "202617200100": {"claimed_at": "2026-11-28", "claimed_by": "lead", "purpose": "PERFUME contact category split: contact_companies.review_tags + catalog kinds industry / review_tag / origin_country (owner 2026-11-27 16:54 / 17:35 CT)"},
   "202617210100": {"claimed_at": "2026-11-28", "claimed_by": "lead", "purpose": "PERFUME country-of-origin catalog values as the items' 2-letter codes (FR, US, AE …) — fixes 202617200100 seeding names"},
-  "202617220100": {"claimed_at": "2026-11-28", "claimed_by": "p1-11-02", "purpose": "PERFUME M20 catalogs on documents: payment terms / shipping method / sales-tax code on quotes, sales orders, purchase orders (catalogs.payment_terms, catalogs.tax_codes, catalog kind shipping_method)"}
+  "202617220100": {"claimed_at": "2026-11-28", "claimed_by": "claude (p1-11-02)", "purpose": "PERFUME M20 catalogs on documents: payment terms / shipping method / sales-tax code on quotes, sales orders, purchase orders (catalogs.payment_terms, catalogs.tax_codes, catalog kind shipping_method)"}
 }
