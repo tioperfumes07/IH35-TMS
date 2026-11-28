@@ -1,5 +1,5 @@
 /**
- * PERFUME vendor ranking — ROUND L.31 M27 (owner 2026-11-27 19:38 CT "VENDORS … ALL FULLY COMPLETELY DONE"). The vendor side of the
+ * SCENTSX vendor ranking (lives in scentsx/: it reads ScentsX's books — perfume/ reads perfume.* only, verify-perfume-desk-isolation) — ROUND L.31 M27 (owner 2026-11-27 19:38 CT "VENDORS … ALL FULLY COMPLETELY DONE"). The vendor side of the
  * customer ranking: every buying vendor (perfume.vendors kind 'buy') ranked by what TIO actually bought from it — ScentsX LLC's own
  * bills from the vendor (the books, through scentsx.vendor_links; same on-books rule as the A/P aging: drafts, voids, revoked and
  * sample bills excluded), then the purchase orders placed (non-cancelled lines, qty × unit cost) and received (qty received × cost).
@@ -7,9 +7,9 @@
  * vendor's latest price lists are. READ ONLY — no money is written here.
  */
 import type pg from "pg";
-import { abcTiers, type Tier } from "./customer-ranking.service.js";
-import { ON_BOOKS, VENDOR_OF } from "../scentsx/payables.service.js";
-import { scopeToScentsx } from "../scentsx/links.service.js";
+import { abcTiers, type Tier } from "../perfume/customer-ranking.service.js";
+import { ON_BOOKS, VENDOR_OF } from "./payables.service.js";
+import { scopeToScentsx } from "./links.service.js";
 
 type Q = Pick<pg.PoolClient, "query">;
 

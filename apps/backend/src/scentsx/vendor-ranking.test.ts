@@ -8,7 +8,7 @@ import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
 import { createBillInClientTx } from "../accounting/bills.service.js";
-import { createLink } from "../scentsx/links.service.js";
+import { createLink } from "./links.service.js";
 import { vendorRanking } from "./vendor-ranking.service.js";
 
 describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("vendor ranking (real Postgres, rolled back)", () => {

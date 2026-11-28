@@ -112,7 +112,7 @@ function JournalModal({ companyId, accounts, template, onClose, onSaved }: { com
   };
   const setRow = (i: number, p: Partial<Row>) => setRows(rows.map((r, k) => (k === i ? { ...r, ...p } : r)));
   return (
-    <Modal open onClose={onClose} title={template?.label ?? tr("scentsx.je.new_title", "New journal entry")} size="lg" data-testid="scentsx-je-modal">
+    <Modal open onClose={onClose} title={template?.label ?? tr("scentsx.je.new_title", "New journal entry")} size="lg" variant="drawer" data-testid="scentsx-je-modal">
       <div className="space-y-3 text-xs">
         <div className="flex flex-wrap items-end gap-2">
           <label>{tr("scentsx.je.date", "Date")} <DatePicker aria-label="Entry date" value={date} onChange={(v) => setDate(v || todayCT())} /></label>

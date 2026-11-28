@@ -5,6 +5,7 @@
  * postDepreciation, POST /api/v1/accounting/amortization-posting/depreciation/post). Never guesses a price; salvage ≤ cost.
  */
 import { z } from "zod";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 
 type Db = { query: <T = Record<string, unknown>>(sql: string, args?: unknown[]) => Promise<{ rows: T[]; rowCount: number | null }> };
 
@@ -47,5 +48,9 @@ export async function registerFixedAsset(c: Db, uid: string, x: z.infer<typeof r
      RETURNING id::text`,
     [x.operating_company_id, x.asset_number ?? null, x.name, cls.id, x.serial ?? null, x.purchase_price_cents, x.salvage_value_cents,
       x.purchase_date, x.in_service_date, cls.default_method, x.useful_life_months ?? cls.default_useful_life_months, cls.a, cls.ad, cls.de, uid]);
-  return { id: r.rows[0]!.id };
+  const id = r.rows[0]!.id;
+  // Every register is audited on the spine (who, which company, class, cost) — the asset row itself is the record.
+  await appendCrudAudit(c, uid, "accounting.fixed_asset_registered",
+    { id, operating_company_id: x.operating_company_id, class_id: cls.id, asset_number: x.asset_number ?? null, purchase_price_cents: x.purchase_price_cents }, "info", "L31-M14");
+  return { id };
 }

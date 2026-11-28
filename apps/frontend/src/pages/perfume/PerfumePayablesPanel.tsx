@@ -104,7 +104,7 @@ function VendorAccount({ vendorId, asOf, onChanged }: { vendorId: string; asOf: 
           { className: "text-left", key: "po_number", label: "PO", render: (r) => (r.purchase_order_id ? <DocLink tab="purchases" id={r.purchase_order_id}>{r.po_number ?? "PO"}</DocLink> : DASH), exportValue: (r) => r.po_number ?? "" },
           { key: "bill_date", sortable: true, label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.bill_date), exportValue: (r) => r.bill_date },
           { key: "due_date", sortable: true, label: "Due", cellClass: "text-right tabular-nums", render: (r) => usDate(r.due_date), exportValue: (r) => r.due_date },
-          { key: "past_due", label: "Days past due", kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.past_due > 0 ? <span className="text-[#B91C1C]">{r.past_due}</span> : DASH) },
+          { key: "past_due", label: "Days past due", kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.past_due > 0 ? <span className="text-[#B91C1C]">{r.past_due.toLocaleString("en-US")}</span> : DASH) },
           { key: "amount_cents", sortable: true, label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.amount_cents), exportValue: (r) => r.amount_cents / 100 },
           { key: "settled_cents", sortable: true, label: "Paid", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.settled_cents), exportValue: (r) => r.settled_cents / 100 },
           { key: "open_cents", sortable: true, label: "Balance", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (r) => money(r.open_cents), exportValue: (r) => r.open_cents / 100 },

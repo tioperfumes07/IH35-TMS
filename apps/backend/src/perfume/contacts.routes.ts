@@ -19,7 +19,7 @@ import {
 import { applyNameFixes, applyNameFixesSchema, previewNameFixes } from "./company-names.service.js";
 import { companyLocations, duplicateGroups, mergeCompanies, mergeDuplicateGroups, mergeOneSchema, mergeSchema } from "./company-merge.service.js";
 import { confirmDuplicates, decideSchema, dismissDuplicates, listRecommendations, scanDuplicates } from "./duplicate-detector.service.js";
-import { vendorRanking } from "./vendor-ranking.service.js";
+import { vendorRanking } from "../scentsx/vendor-ranking.service.js";
 import { companyTier, customerRanking, historyImportSchema, importPurchaseHistory, rankingQuery, relinkPurchaseHistory } from "./customer-ranking.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {

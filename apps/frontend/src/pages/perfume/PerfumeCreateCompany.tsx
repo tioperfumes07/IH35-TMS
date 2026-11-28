@@ -55,7 +55,7 @@ function CreateModal({ role, onClose, onCreated, onOpen }: { role: "vendor" | "c
   };
   const field = (label: string, el: React.ReactNode) => <label className="block text-xs">{label}<div className="mt-0.5">{el}</div></label>;
   return (
-    <Modal open onClose={onClose} title={role === "vendor" ? tr("perfume.create.vendor_title", "New vendor") : tr("perfume.create.customer_title", "New customer")} size="lg" data-testid="perfume-create-modal">
+    <Modal open onClose={onClose} title={role === "vendor" ? tr("perfume.create.vendor_title", "New vendor") : tr("perfume.create.customer_title", "New customer")} size="lg" variant="drawer" data-testid="perfume-create-modal">
       <div className="space-y-3 text-xs">
         <div className="text-card-title">{tr("perfume.create.company", "Company")}</div>
         <div className="grid gap-2 md:grid-cols-3">
