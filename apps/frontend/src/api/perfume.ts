@@ -1069,3 +1069,6 @@ export type PerfumeItemFacet = { value: string; count: number; label?: string };
 export type PerfumeItemFacets = Record<"brand" | "product_type" | "gender" | "category" | "conc" | "origin" | "scent" | "family", PerfumeItemFacet[]>
   & { stock: { in_stock: number; out_of_stock: number; never_purchased: number; below_min: number } };
 export const getPerfumeItemFacets = () => apiRequest<PerfumeItemFacets>("/api/v1/perfume/item-file/facets");
+/** Owner 16:57 CT: merge a duplicate catalog value into another of the same list. */
+export const mergePerfumeCatalogValue = (id: string, intoId: string) =>
+  apiRequest<{ moved: number; into: string }>(`/api/v1/perfume/catalogs/${encodeURIComponent(id)}/merge`, { method: "POST", body: { into_id: intoId } });
