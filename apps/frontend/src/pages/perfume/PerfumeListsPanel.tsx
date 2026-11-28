@@ -41,7 +41,7 @@ export function PerfumeListsPanel() {
       <LocationsCard />
       <section className="space-y-1" aria-label={tr("perfume.lists.1", "Price lists on file")}>
         <div className="text-card-title">{tr("perfume.lists.2", "Price lists on file")}</div>
-        <ParityTable<PerfumeList>
+        <ParityTable<PerfumeList> selectable
           rows={lists.data?.lists ?? []}
           rowKey={(l) => l.id}
           loading={lists.isLoading}
@@ -75,7 +75,7 @@ export function VoidedListsCard() {
   return (
     <section className="space-y-1" aria-label={tr("perfume.lists.voided", "Voided lists")}>
       <div className="text-card-title">{tr("perfume.lists.voided", "Voided lists")}</div>
-      <ParityTable<PerfumeVoidedList>
+      <ParityTable<PerfumeVoidedList> selectable
         rows={q.data?.lists ?? []}
         rowKey={(l) => l.id}
         loading={q.isLoading}
@@ -244,7 +244,7 @@ function VendorsCard({ vendors }: { vendors: PerfumeVendor[] }) {
           {edit.id ? <ScentsxVendorLink vendorId={edit.id} name={edit.name ?? ""} /> : null}
         </div>
       ) : null}
-      <ParityTable<PerfumeVendor>
+      <ParityTable<PerfumeVendor> selectable
         rows={vendors}
         rowKey={(v) => v.id}
         storageKey="perfume-desk-vendors-v1"
@@ -331,7 +331,7 @@ function LocationsCard() {
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => setEdit(null)}>{tr("perfume.lists.19", "Close")}</Button>
         </div>
       ) : null}
-      <ParityTable<PerfumeLocation>
+      <ParityTable<PerfumeLocation> selectable
         rows={locs.data?.locations ?? []}
         rowKey={(l) => l.code}
         storageKey="perfume-desk-locations-v1"
@@ -530,7 +530,7 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
                 {lines.length.toLocaleString()} {tr("perfume.lists.pic5", "lines read")} · {lines.filter((l) => l.include).length.toLocaleString()} {tr("perfume.lists.pic6", "approved")}
                 {needPrice ? <b className="text-red-700"> · {needPrice} {tr("perfume.lists.pic7", "approved line(s) have no price — type it or untick the line")}</b> : null}
               </div>
-              <ParityTable<PictureLine>
+              <ParityTable<PictureLine> selectable
                 rows={lines}
                 rowKey={(l) => l.key}
                 storageKey="perfume-desk-picture-lines-v1"
@@ -571,7 +571,7 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
             {extracted.sections ? ` · ${extracted.sections} section headers (WOMEN / MEN / SETS …) carried to the lines under them` : ""}
             {locCols.size ? <span data-testid="perfume-import-locations"> · {tr("perfume.loc.7", "stock by location read from")} <b>{locCols.size}</b> {tr("perfume.loc.8", "location columns")} ({[...locCols.values()].join(", ")})</span> : null}
           </div>
-          {isPictures ? null : <ParityTable
+          {isPictures ? null : <ParityTable selectable
             rows={extracted.rows.slice(0, 8)}
             rowKey={(r) => String(r.row_no)}
             storageKey="perfume-desk-import-preview-v1"

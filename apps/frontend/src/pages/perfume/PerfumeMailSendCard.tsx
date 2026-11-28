@@ -136,7 +136,7 @@ export function PerfumeMailSendCard({ send, account, configured, onChanged }: {
         )}
       </div>
 
-      <ParityTable<PerfumeMailSendBatch>
+      <ParityTable<PerfumeMailSendBatch> selectable
         rows={send?.batches ?? []}
         rowKey={(b) => b.id}
         storageKey="perfume-desk-mail-sends-v1"

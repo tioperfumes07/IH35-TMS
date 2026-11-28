@@ -143,7 +143,7 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
           <input type="search" aria-label={tr("perfume.contacts.search_contacts", "Search contacts")} placeholder={`Search all ${n(c?.companies)} — company, person, email, phone, city`}
             className={`${ctl} min-w-[240px] flex-1`} value={q} onChange={(e) => setQ(e.target.value)} data-testid="perfume-contacts-search" />
         </div>
-        <ParityTable<PerfumeContactRow>
+        <ParityTable<PerfumeContactRow> selectable
           rows={list.data?.rows ?? []}
           rowKey={(r) => r.id}
           loading={list.isLoading}
@@ -192,7 +192,7 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
       </div>
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-3">
-          <ParityTable<PerfumeContactProfile["origins"][number]>
+          <ParityTable<PerfumeContactProfile["origins"][number]> selectable
             cardTitle title={tr("perfume.contacts.how_and_when_this_relationship_started", "How and when this relationship started")}
             rows={p.data?.origins ?? []}
             rowKey={(o) => o.id}
@@ -212,7 +212,7 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
               { key: "detail", label: "Detail", sortable: true, render: (o) => o.detail ?? DASH },
             ]}
           />
-          <ParityTable<PerfumeContactProfile["people"][number]>
+          <ParityTable<PerfumeContactProfile["people"][number]> selectable
             cardTitle title={tr("perfume.contacts.people", "People")}
             rows={p.data?.people ?? []}
             rowKey={(x) => x.id}
@@ -237,7 +237,7 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
           />
           {/* ROUND P1.12 A — the P1 seat's activity block: quotes, sales orders, linked vendors and the POs to it, each opening its document. */}
           <PerfumeCompanyActivity companyId={id} />
-          <ParityTable<PerfumeContactTrade>
+          <ParityTable<PerfumeContactTrade> selectable
             cardTitle title={tr("perfume.contacts.trades", "Trades")}
             rows={trades.data?.trades ?? []}
             rowKey={(x) => x.id}
@@ -386,7 +386,7 @@ function GoogleCard({ onChanged }: { onChanged: () => void }) {
 
       {results ? (
         <div className="space-y-1" data-testid="perfume-google-results">
-          <ParityTable<PerfumeGoogleResult>
+          <ParityTable<PerfumeGoogleResult> selectable
             cardTitle title={`“${results.text}” · ${results.rows.length} results · ${results.requests} Google requests`}
             rows={results.rows}
             rowKey={(r) => r.place_id}
@@ -419,7 +419,7 @@ function RunsTable({ runs }: { runs: PerfumeGoogleRun[] }) {
   const shown = runs.find((r) => r.id === open) ?? null;
   return (
     <div className="space-y-1" data-testid="perfume-google-runs">
-      <ParityTable<PerfumeGoogleRun>
+      <ParityTable<PerfumeGoogleRun> selectable
         cardTitle title={tr("perfume.contacts.google_searches_run", "Google searches run")}
         rows={runs}
         rowKey={(r) => r.id}

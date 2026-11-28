@@ -129,7 +129,7 @@ export function PerfumeSendListPanel() {
             {tr("perfume.send.attach", "Attach the Excel")}
           </Button>
         </div>
-        <ParityTable<PerfumeSendRow>
+        <ParityTable<PerfumeSendRow> selectable
           cardTitle title={tr("perfume.send.preview", "Preview (first 300 lines)")} rows={p?.rows ?? []} rowKey={(r) => r.item_id} loading={preview.isLoading} storageKey="perfume-sendlist-v1"
           exportFilename={title || "TIO price list"} exportExcel emptyText="Nothing on the list with these choices."
           columns={[

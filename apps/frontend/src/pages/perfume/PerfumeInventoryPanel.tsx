@@ -65,7 +65,7 @@ export function PerfumeStockPanel() {
             {tr("perfume.inv.export", "Export (Excel)")}
           </Button>
         </div>
-        <ParityTable<PerfumeStockRow>
+        <ParityTable<PerfumeStockRow> selectable
           rows={rows} rowKey={(r) => `${r.item_id}-${r.location_code}`} loading={stock.isLoading} storageKey="perfume-stock-v1" exportFilename="TIO stock on hand" exportExcel
           emptyText={site || q || low ? "Nothing matches these filters." : "No stock yet — receive a purchase order, or bring in opening stock on the Sites tab."}
           columns={[
@@ -107,7 +107,7 @@ export function PerfumeMovesPanel() {
         </select>
         <span className="text-xs text-[#64748B]">{tr("perfume.inv.moves_note", "Written once, never changed. A mistake is undone by a new move.")}</span>
       </div>
-      <ParityTable<PerfumeMove>
+      <ParityTable<PerfumeMove> selectable
         rows={moves.data?.moves ?? []} rowKey={(m) => m.id} loading={moves.isLoading} storageKey="perfume-moves-v1" exportFilename="TIO stock moves" exportExcel emptyText="No stock has moved yet."
         columns={[
           { key: "moved_at", label: "When", sortable: true, render: (m) => new Date(m.moved_at).toLocaleString("en-US") },
@@ -153,7 +153,7 @@ export function PerfumeTransfersPanel() {
           <label>{tr("perfume.inv.to", "To")} <SitePicker value={to} onChange={setTo} label={tr("perfume.inv.to", "To")} testId="perfume-transfer-to" /></label>
           <Button type="button" className="h-[34px] px-3 text-xs" onClick={create} data-testid="perfume-transfer-new">{tr("perfume.inv.new_transfer", "New transfer")}</Button>
         </div>
-        <ParityTable<PerfumeTransferRow>
+        <ParityTable<PerfumeTransferRow> selectable
           rows={list.data?.transfers ?? []} rowKey={(t) => t.id} loading={list.isLoading} storageKey="perfume-transfers-v1" exportFilename="TIO transfers" exportExcel
           emptyText="No transfers yet." onRowClick={(t) => setSelected(t.id)}
           columns={[
@@ -190,7 +190,7 @@ function TransferEditor({ id, onChanged, onClose }: { id: string; onChanged: () 
         </div>
       </div>
       {x.status === "draft" ? <ItemFinder testId="perfume-transfer-find" onPick={(itemId, qty) => run(() => addPerfumeTransferLine(id, { item_id: itemId, qty }))} /> : null}
-      <ParityTable<typeof x.lines[number]>
+      <ParityTable<typeof x.lines[number]> selectable
         cardTitle title={tr("perfume.inv.lines", "Lines")} rows={x.lines} rowKey={(l) => l.id} storageKey="perfume-transfer-lines-v1" exportFilename="TIO transfer lines" exportExcel emptyText="No lines yet — add an item above."
         columns={[
           { key: "display_name", label: "Item", render: (l) => l.display_name },
@@ -256,7 +256,7 @@ export function PerfumeCountsPanel() {
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => start("spot")} data-testid="perfume-count-spot">{tr("perfume.inv.spot_count", "Count or adjust a few items")}</Button>
         </div>
         <div className="text-xs text-[#64748B]">{tr("perfume.inv.count_rule2", "The sheet is blind (no expected quantity). Each line keeps the on-hand at the moment it is counted, so sales during the count are never counted twice. Lines left blank move nothing. A difference worth more than $500 is posted by a second person.")}</div>
-        <ParityTable<PerfumeCountRow>
+        <ParityTable<PerfumeCountRow> selectable
           rows={list.data?.counts ?? []} rowKey={(k) => k.id} loading={list.isLoading} storageKey="perfume-counts-v1" exportFilename="TIO counts" exportExcel emptyText="No counts yet." onRowClick={(k) => setSelected(k.id)}
           columns={[
             { key: "number", label: "Count", sortable: true, render: (k) => <span className="font-semibold">{k.number}</span> },
@@ -321,7 +321,7 @@ function CountEditor({ id, onChanged, onClose }: { id: string; onChanged: () => 
         <KpiCard label={tr("perfume.inv.k_net", "Net variance")} number={money(t.net_cents)} disabled />
       </div>
       {x.status === "draft" ? <ItemFinder testId="perfume-count-find" onPick={(itemId, qty) => run(() => setPerfumeCountLine(id, { item_id: itemId, counted_qty: qty }))} /> : null}
-      <ParityTable<PerfumeCountLine>
+      <ParityTable<PerfumeCountLine> selectable
         cardTitle title={tr("perfume.inv.variance", "Count entry and variance report")} rows={x.lines} rowKey={(l) => `${l.id}-${l.counted_qty ?? "x"}`} storageKey="perfume-count-lines-v2"
         exportFilename={`TIO ${x.number} variance`} exportExcel emptyText="No lines yet — add an item above."
         columns={[
@@ -377,7 +377,7 @@ export function PerfumeWriteoffsPanel() {
           <Button type="button" className="h-[34px] px-3 text-xs" onClick={start} data-testid="perfume-wo-start">{tr("perfume.inv.wo_start", "Start a write-off")}</Button>
           <span className="text-[#64748B]">{tr("perfume.inv.wo_rule", "Pieces leave at their lot cost (oldest first). Worth more than $500: a second person posts it.")}</span>
         </div>
-        <ParityTable<PerfumeWriteoffRow>
+        <ParityTable<PerfumeWriteoffRow> selectable
           rows={list.data?.writeoffs ?? []} rowKey={(w) => `${w.id}-${w.status}`} loading={list.isLoading} storageKey="perfume-writeoffs-v1" exportFilename="TIO write-offs" exportExcel emptyText="No write-offs." onRowClick={(w) => setSelected(w.id)}
           columns={[
             { key: "number", label: "Write-off", sortable: true, render: (w) => <span className="font-semibold">{w.number}</span> },
@@ -418,7 +418,7 @@ function WriteoffEditor({ id, onChanged, onClose }: { id: string; onChanged: () 
       </div>
       {x.notes ? <div className="text-xs text-[#64748B]">{x.notes}</div> : null}
       {x.status === "draft" ? <ItemFinder testId="perfume-wo-find" onPick={(itemId, qty) => run(() => addPerfumeWriteoffLine(id, { item_id: itemId, qty }))} /> : null}
-      <ParityTable<typeof x.lines[number]>
+      <ParityTable<typeof x.lines[number]> selectable
         cardTitle title={tr("perfume.inv.lines", "Lines")} rows={x.lines} rowKey={(l) => l.id} storageKey="perfume-wo-lines-v1" exportFilename="TIO write-off lines" exportExcel emptyText="No pieces yet — add an item above."
         columns={[
           { key: "display_name", label: "Item", render: (l) => <DocLink tab="items" id={l.item_id}>{l.display_name}</DocLink>, exportValue: (l) => l.display_name },
@@ -459,7 +459,7 @@ export function PerfumeValuationPanel() {
             onClick={() => void downloadPerfumeFile(perfumeValuationExportPath(asOf, site ?? undefined), `Stock valuation ${asOf}.xlsx`).catch(fail(pushToast))}>{tr("perfume.inv.val_xlsx", "Excel")}</Button>
           <span className="text-[#64748B]">{tr("perfume.inv.val_help", "From the stock ledger alone: FIFO = what the lots still hold at their cost; average = on hand × the moving average.")}</span>
         </div>
-        <ParityTable<PerfumeValuationRow>
+        <ParityTable<PerfumeValuationRow> selectable
           rows={d?.rows ?? []} rowKey={(r) => `${r.location_code}-${r.item_id}`} loading={v.isLoading} storageKey="perfume-valuation-v1" exportFilename={`TIO valuation ${asOf}`} exportExcel emptyText="No stock on hand at that date."
           columns={[
             { key: "location_code", label: "Site", sortable: true, render: (r) => r.location_code },
@@ -491,7 +491,7 @@ export function PerfumeSitesPanel() {
   return (
     <div className="space-y-3" data-testid="perfume-sites-panel">
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.inv.sites", "Sites")}>
-        <ParityTable<PerfumeSite>
+        <ParityTable<PerfumeSite> selectable
           cardTitle title={tr("perfume.inv.sites_title", "My sites — warehouses and stores from my inventory file")}
           rows={sites.data?.sites ?? []} rowKey={(s) => `${s.code}-${s.kind}-${s.own}-${s.active}`} loading={sites.isLoading} storageKey="perfume-sites-v1" exportFilename="TIO sites" exportExcel emptyText="No sites."
           columns={[
@@ -519,7 +519,7 @@ export function PerfumeSitesPanel() {
         {!o ? null : o.already_applied ? <div className="text-xs">{tr("perfume.inv.opening_done", "Opening stock is already in the ledger. Corrections go through a count.")}</div> : (
           <>
             <div className="text-xs">{`${o.lists.join(", ") || tr("perfume.inv.no_file", "No current inventory file")} — ${o.lines.toLocaleString("en-US")} lines, ${o.units.toLocaleString("en-US")} units, ${money(o.value_cents)} at the file's cost. Skipped: ${o.skipped_no_cost.toLocaleString("en-US")} with no cost, ${o.skipped_unknown_site.toLocaleString("en-US")} at a site that does not hold stock.`}</div>
-            <ParityTable<PerfumeOpeningSite> rows={o.by_site} rowKey={(r) => r.code} storageKey="perfume-opening-v1" exportFilename="TIO opening stock" exportExcel emptyText="Nothing to bring in."
+            <ParityTable<PerfumeOpeningSite> selectable rows={o.by_site} rowKey={(r) => r.code} storageKey="perfume-opening-v1" exportFilename="TIO opening stock" exportExcel emptyText="Nothing to bring in."
               columns={[
                 { key: "code", label: "Site", render: (r) => r.code },
                 { key: "lines", label: "Lines", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.lines.toLocaleString("en-US") },

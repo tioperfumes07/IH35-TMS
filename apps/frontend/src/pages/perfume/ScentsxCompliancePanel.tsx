@@ -99,7 +99,7 @@ export function ScentsxCompliancePanel() {
       <ReceiptForm payers={d?.payers ?? []} companyId={co.data?.company.id ?? null} unlogged={unlogged} onDone={() => void desk.refetch()} />
 
       <div id="scentsx-8300-cases">
-        <ParityTable<Scentsx8300Case>
+        <ParityTable<Scentsx8300Case> selectable
           cardTitle title={tr("scentsx.cash.cases", "Form 8300 cases")}
           rows={d?.cases ?? []}
           rowKey={(c) => c.id}
@@ -133,7 +133,7 @@ export function ScentsxCompliancePanel() {
         onClose={() => setCmirVoid(null)} onSubmit={async (why) => { if (!cmirVoid?.cmir_declaration_id) return; await voidScentsxCmirDeclaration(cmirVoid.cmir_declaration_id, why); setCmirVoid(null); void desk.refetch(); }} />
 
       <div id="scentsx-structuring">
-        <ParityTable<ScentsxStructuringAlert>
+        <ParityTable<ScentsxStructuringAlert> selectable
           cardTitle title={tr("scentsx.cash.alerts", "Structuring alerts")}
           rows={d?.alerts ?? []}
           rowKey={(a) => a.id}
@@ -153,7 +153,7 @@ export function ScentsxCompliancePanel() {
       </div>
 
       <div id="scentsx-unlogged">
-        <ParityTable<ScentsxUnloggedCash>
+        <ParityTable<ScentsxUnloggedCash> selectable
           cardTitle title={tr("scentsx.cash.unlogged", "ScentsX cash payments not in the cash log")}
           rows={unlogged}
           rowKey={(p) => p.id}
@@ -168,7 +168,7 @@ export function ScentsxCompliancePanel() {
         />
       </div>
 
-      <ParityTable<ScentsxCashReceipt>
+      <ParityTable<ScentsxCashReceipt> selectable
         cardTitle title={tr("scentsx.cash.receipts", "Cash log")}
         rows={d?.receipts ?? []}
         rowKey={(r) => r.id}
@@ -353,7 +353,7 @@ function SanctionsBlock() {
         </div>
         <Button type="button" className="h-[30px] px-3 text-xs" disabled={busy} onClick={() => void load()} data-testid="scentsx-ofac-load">{tr("scentsx.ofac.load", "Load the newest list")}</Button>
       </div>
-      <ParityTable<ScentsxScreening>
+      <ParityTable<ScentsxScreening> selectable
         cardTitle title={tr("scentsx.ofac.open", "Possible matches waiting for you")}
         rows={q.data?.open_matches ?? []}
         rowKey={(s) => s.id}
@@ -403,7 +403,7 @@ function KycDeskBlock({ companyId }: { companyId: string | null }) {
         <KpiCard label={tr("scentsx.kyc.none", "No KYC yet")} number={String(d?.counts.none ?? "—")} onClick={() => setOnly(only === "none" ? "all" : "none")} />
         <KpiCard label={tr("scentsx.kyc.expiring", "Documents expiring ≤ 60 days")} number={String(d?.counts.expiring ?? "—")} onClick={() => setOnly(only === "expiring" ? "all" : "expiring")} />
       </div>
-      <ParityTable<Row>
+      <ParityTable<Row> selectable
         cardTitle title={tr("scentsx.kyc.title", "Customers & vendors — KYC and tax forms")}
         rows={(d?.parties ?? []).filter((r) => only === "all" || (only === "expiring" ? r.warnings.length > 0 : r.status === only))}
         rowKey={(r) => `${r.kind}:${r.party_id}`}

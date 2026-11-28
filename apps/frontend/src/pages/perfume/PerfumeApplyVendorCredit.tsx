@@ -20,7 +20,7 @@ export function PerfumeVendorCredits({ credits, openBills, companyId, onDone }: 
   const [applying, setApplying] = useState<ScentsxApCredit | null>(null);
   return (
     <>
-      <ParityTable<ScentsxApCredit>
+      <ParityTable<ScentsxApCredit> selectable
         cardTitle title={tr("perfume.ap.credits", "Vendor credits")} rows={credits} rowKey={(r) => `${r.id}-${r.unapplied_cents}`} storageKey="perfume-ap-credits-v1" exportFilename="TIO vendor credits" exportExcel
         emptyText="No vendor credits."
         columns={[

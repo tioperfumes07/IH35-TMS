@@ -64,7 +64,7 @@ export function ScentsxItemAccountsBlock() {
       <div className="text-xs text-[#64748B]">
         {tr("scentsx.itemacct.defaults", "Blank uses the defaults")}: {d?.defaults.inventory_asset ?? "—"} · {d?.defaults.cogs_goods ?? "—"}. {tr("scentsx.itemacct.rule", "An inventory account cannot be moved while that category has stock on hand — reclass the value first. Sales income follows the channel (wholesale / retail / export).")}
       </div>
-      <ParityTable<Row> rows={rows} rowKey={(r) => r.value} loading={q.isLoading} storageKey="scentsx-item-accounts-v1" exportFilename="ScentsX item accounts" exportExcel
+      <ParityTable<Row> selectable rows={rows} rowKey={(r) => r.value} loading={q.isLoading} storageKey="scentsx-item-accounts-v1" exportFilename="ScentsX item accounts" exportExcel
         emptyText="No item categories yet — add them on Catalogs or from the item creator."
         columns={[
           { className: "text-left", key: "value", label: "Item category", render: (r) => <span className="font-semibold">{r.value}</span> },
@@ -77,7 +77,7 @@ export function ScentsxItemAccountsBlock() {
               onChange={(v) => setEdit({ ...edit, [r.value]: { inv: edit[r.value]?.inv ?? r.map?.inventory_account_id ?? "", cogs: v } })} /> },
           { key: "save", label: "", render: (r) => (edit[r.value] ? <Button type="button" className="h-[28px] px-2 text-xs" onClick={() => save(r.value)}>{tr("scentsx.itemacct.save", "Save")}</Button> : null) },
         ]} />
-      <ParityTable<ScentsxItemAccountMap["history"][number]> cardTitle title={tr("scentsx.itemacct.history", "Item account changes")} rows={d?.history ?? []} rowKey={(h) => h.id}
+      <ParityTable<ScentsxItemAccountMap["history"][number]> selectable cardTitle title={tr("scentsx.itemacct.history", "Item account changes")} rows={d?.history ?? []} rowKey={(h) => h.id}
         storageKey="scentsx-item-accounts-history-v1" exportFilename="ScentsX item account changes" exportExcel emptyText="No changes yet."
         columns={[
           { key: "created_at", label: "Set on", cellClass: "text-right tabular-nums", render: (h) => day(h.created_at) },

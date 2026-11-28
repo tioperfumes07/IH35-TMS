@@ -42,7 +42,7 @@ const ORDER_TEXT: Record<string, string> = { open: "Open", shipped: "Shipped", c
 
 export function QuotesTable({ rows, storageKey }: { rows: PerfumeQuoteRow[]; storageKey: string }) {
   return (
-    <ParityTable<PerfumeQuoteRow> cardTitle title={tr("perfume.profiles.quotes", "Quotes")} rows={rows} rowKey={(r) => r.id} storageKey={storageKey} exportFilename="TIO quotes" exportExcel emptyText="No quotes."
+    <ParityTable<PerfumeQuoteRow> selectable cardTitle title={tr("perfume.profiles.quotes", "Quotes")} rows={rows} rowKey={(r) => r.id} storageKey={storageKey} exportFilename="TIO quotes" exportExcel emptyText="No quotes."
       columns={[
         { key: "number", label: "Quote", render: (r) => <DocLink tab="quotes" id={r.id}>{r.number}</DocLink>, exportValue: (r) => r.number },
         { key: "quote_date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.quote_date) },
@@ -54,7 +54,7 @@ export function QuotesTable({ rows, storageKey }: { rows: PerfumeQuoteRow[]; sto
 }
 export function OrdersTable({ rows, storageKey }: { rows: PerfumeOrderRow[]; storageKey: string }) {
   return (
-    <ParityTable<PerfumeOrderRow> cardTitle title={tr("perfume.profiles.orders", "Sales orders")} rows={rows} rowKey={(r) => r.id} storageKey={storageKey} exportFilename="TIO sales orders" exportExcel emptyText="No sales orders."
+    <ParityTable<PerfumeOrderRow> selectable cardTitle title={tr("perfume.profiles.orders", "Sales orders")} rows={rows} rowKey={(r) => r.id} storageKey={storageKey} exportFilename="TIO sales orders" exportExcel emptyText="No sales orders."
       columns={[
         { key: "number", label: "Order", render: (r) => <DocLink tab="orders" id={r.id}>{r.number}</DocLink>, exportValue: (r) => r.number },
         { key: "order_date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.order_date) },
@@ -67,7 +67,7 @@ export function OrdersTable({ rows, storageKey }: { rows: PerfumeOrderRow[]; sto
 }
 export function PosTable({ rows, storageKey }: { rows: PerfumePoRow[]; storageKey: string }) {
   return (
-    <ParityTable<PerfumePoRow> cardTitle title={tr("perfume.profiles.pos", "Purchase orders")} rows={rows} rowKey={(r) => r.id} storageKey={storageKey} exportFilename="TIO purchase orders" exportExcel emptyText="No purchase orders."
+    <ParityTable<PerfumePoRow> selectable cardTitle title={tr("perfume.profiles.pos", "Purchase orders")} rows={rows} rowKey={(r) => r.id} storageKey={storageKey} exportFilename="TIO purchase orders" exportExcel emptyText="No purchase orders."
       columns={[
         { key: "number", label: "PO", render: (r) => <DocLink tab="purchases" id={r.id}>{r.number}</DocLink>, exportValue: (r) => r.number },
         { key: "order_date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.order_date) },
@@ -108,7 +108,7 @@ export function PerfumeSupplierProfilesPanel() {
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.profiles.suppliers", "Supplier profiles")}>
         <input type="search" className={`${ctl} w-full max-w-[420px]`} aria-label={tr("perfume.profiles.find_vendor", "Find a vendor")} placeholder={tr("perfume.profiles.find_vendor_ph", "Find a vendor")}
           value={q} onChange={(e) => setQ(e.target.value)} data-testid="perfume-suppliers-search" />
-        <ParityTable<PerfumeVendor> rows={rows} rowKey={(v) => v.id} loading={vendors.isLoading} storageKey="perfume-suppliers-v1" exportFilename="TIO vendors" exportExcel
+        <ParityTable<PerfumeVendor> selectable rows={rows} rowKey={(v) => v.id} loading={vendors.isLoading} storageKey="perfume-suppliers-v1" exportFilename="TIO vendors" exportExcel
           emptyText="No vendor matches." onRowClick={(v) => { setSelected(v.id); open("suppliers", v.id); window.scrollTo({ top: 0 }); }}
           columns={[
             { key: "name", label: "Vendor", sortable: true, render: (v) => <span className="font-semibold">{v.name}</span> },
@@ -188,7 +188,7 @@ function VendorProfile({ id, onClose }: { id: string; onClose: () => void }) {
         <KpiCard label={tr("perfume.profiles.kpi_pos", "Open purchase orders")} number={p.po_open.toLocaleString("en-US")} to="/perfume?tab=purchases" />
         <KpiCard label={tr("perfume.profiles.kpi_spend", "Bought (POs not cancelled)")} number={money(p.po_total_cents)} to="/perfume?tab=purchases" />
       </div>
-      <ParityTable<PerfumeVendorProfile["lists"][number]> cardTitle title={tr("perfume.profiles.lists", "Price lists")} rows={p.lists} rowKey={(l) => l.id} storageKey="perfume-vendor-lists-v1"
+      <ParityTable<PerfumeVendorProfile["lists"][number]> selectable cardTitle title={tr("perfume.profiles.lists", "Price lists")} rows={p.lists} rowKey={(l) => l.id} storageKey="perfume-vendor-lists-v1"
         exportFilename="TIO vendor lists" exportExcel emptyText="No lists from this vendor."
         columns={[
           { key: "list_date", label: "List date", cellClass: "text-right tabular-nums", render: (l) => usDate(l.list_date) },
@@ -265,7 +265,7 @@ function ItemProfile({ id }: { id: string }) {
       <ScentsxItemAccountLine itemId={id} />
       <ItemSitesBlock itemId={id} />
       <div className="text-xs" data-testid="perfume-item-upcs"><span className="text-[#64748B]">{tr("perfume.profiles.upcs", "Barcodes:")}</span> {p.upcs.length ? p.upcs.join(" · ") : DASH}</div>
-      <ParityTable<PerfumeItemVendorLine> cardTitle title={tr("perfume.profiles.vendor_lines", "Every vendor's line for it (their code, their words, their price)")} rows={p.vendor_lines} rowKey={(l) => l.id}
+      <ParityTable<PerfumeItemVendorLine> selectable cardTitle title={tr("perfume.profiles.vendor_lines", "Every vendor's line for it (their code, their words, their price)")} rows={p.vendor_lines} rowKey={(l) => l.id}
         storageKey="perfume-item-vendor-lines-v1" exportFilename="TIO item vendor lines" exportExcel emptyText="No current list carries it."
         columns={[
           { key: "vendor", label: "Vendor", render: (l) => <DocLink tab="suppliers" id={l.vendor_id}>{l.vendor}</DocLink>, exportValue: (l) => l.vendor },
@@ -277,7 +277,7 @@ function ItemProfile({ id }: { id: string }) {
           { key: "match_method", label: "Linked by", render: (l) => METHOD_TEXT[l.match_method ?? ""] ?? DASH, exportValue: (l) => METHOD_TEXT[l.match_method ?? ""] ?? "" },
           { key: "list_date", label: "List date", cellClass: "text-right tabular-nums", render: (l) => usDate(l.list_date) },
         ]} />
-      <ParityTable<PerfumeItemProfile["remembered"][number]> cardTitle title={tr("perfume.profiles.remembered", "Remembered — any of these links to this item by itself")} rows={p.remembered} rowKey={(a) => a.id}
+      <ParityTable<PerfumeItemProfile["remembered"][number]> selectable cardTitle title={tr("perfume.profiles.remembered", "Remembered — any of these links to this item by itself")} rows={p.remembered} rowKey={(a) => a.id}
         storageKey="perfume-item-remembered-v1" exportFilename="TIO item remembered names" exportExcel emptyText="Nothing remembered yet."
         columns={[
           { key: "vendor", label: "Vendor", render: (a) => a.vendor },
@@ -285,7 +285,7 @@ function ItemProfile({ id }: { id: string }) {
           { key: "value", label: "Code / words", render: (a) => a.sku ?? a.text_key ?? DASH, exportValue: (a) => a.sku ?? a.text_key ?? "" },
           { key: "method", label: "From", render: (a) => (a.method === "confirmed" ? "Confirmed by me" : "Linked by the desk"), exportValue: (a) => (a.method === "confirmed" ? "Confirmed by me" : "Linked by the desk") },
         ]} />
-      <ParityTable<PerfumeLot> cardTitle title={tr("perfume.profiles.lots", "Stock and lots (FIFO — each lot keeps its vendor and PO)")} rows={lots.data?.lots ?? []} rowKey={(l) => l.id}
+      <ParityTable<PerfumeLot> selectable cardTitle title={tr("perfume.profiles.lots", "Stock and lots (FIFO — each lot keeps its vendor and PO)")} rows={lots.data?.lots ?? []} rowKey={(l) => l.id}
         storageKey="perfume-item-lots-v1" exportFilename="TIO item lots" exportExcel emptyText="No stock of this item yet."
         columns={[
           { key: "location_code", label: "Site", render: (l) => l.location_code },

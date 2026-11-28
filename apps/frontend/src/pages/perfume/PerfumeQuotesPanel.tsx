@@ -87,7 +87,7 @@ export function PerfumeQuotesPanel() {
           <Button type="button" className="h-[34px] px-3 text-xs" onClick={() => setAdding((v) => !v)} data-testid="perfume-quotes-new">{tr("perfume.quotes.new", "New quote")}</Button>
         </div>
         {adding ? <NewQuoteForm onClose={() => setAdding(false)} onCreated={(id) => { setAdding(false); setSelected(id); void quotes.refetch(); }} /> : null}
-        <ParityTable<PerfumeQuoteRow>
+        <ParityTable<PerfumeQuoteRow> selectable
           rows={shown}
           rowKey={(r) => r.id}
           loading={quotes.isLoading}
@@ -258,7 +258,7 @@ function QuoteEditor({ id, onClose, onChanged, onOpen }: { id: string; onClose: 
           </div>
         ) : null}
       </div>
-      <ParityTable<PerfumeQuoteLine>
+      <ParityTable<PerfumeQuoteLine> selectable
         cardTitle title={tr("perfume.quotes.lines", "Lines")}
         rows={q.lines}
         rowKey={(l) => `${l.id}-${l.qty}-${l.unit_price_cents}`}
@@ -293,7 +293,7 @@ function QuoteEditor({ id, onClose, onChanged, onOpen }: { id: string; onClose: 
           <textarea className="block min-h-[56px] w-full rounded-sm border border-[#C6D1DC] p-2 text-xs" defaultValue={q.notes ?? ""} onBlur={(e) => { if (e.target.value !== (q.notes ?? "")) void patch({ notes: e.target.value || null }); }} />
         </label>
       </div>
-      <ParityTable<PerfumeQuoteEvent>
+      <ParityTable<PerfumeQuoteEvent> selectable
         cardTitle title={tr("perfume.quotes.history", "History")}
         rows={q.events}
         rowKey={(e) => e.id}

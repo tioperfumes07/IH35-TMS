@@ -118,7 +118,7 @@ export function PerfumeBooksPanel() {
         {accts.isError ? (
           <ListErrorState title={tr("scentsx.books.chart_error", "Couldn't load the chart of accounts")} status={0} message={(accts.error as Error)?.message} onRetry={() => void accts.refetch()} />
         ) : (
-          <ParityTable<ScentsxAccount>
+          <ParityTable<ScentsxAccount> selectable
             cardTitle title={tr("scentsx.books.chart", "Chart of accounts")}
             rows={accts.data?.accounts ?? []}
             rowKey={(a) => a.id}
@@ -150,7 +150,7 @@ function AccountRegister({ account, label }: { account: ScentsxAccount; label: s
   const reg = useQuery({ queryKey: ["scentsx", "register", account.id], queryFn: () => getScentsxAccountRegister(account.id) });
   if (reg.isError) return <ListErrorState title={tr("scentsx.books.reg_error", "Couldn't load the register")} status={0} message={(reg.error as Error)?.message} onRetry={() => void reg.refetch()} />;
   return (
-    <ParityTable<ScentsxRegisterLine>
+    <ParityTable<ScentsxRegisterLine> selectable
       cardTitle title={`${tr("scentsx.books.register", "Register")} · ${label}`}
       rows={reg.data?.lines ?? []}
       rowKey={(l) => l.posting_id}

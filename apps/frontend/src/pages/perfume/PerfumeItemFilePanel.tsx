@@ -310,7 +310,7 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
             <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!upc.trim()} data-testid="perfume-itemfile-upc-add"
               onClick={() => run(() => addPerfumeItemUpc(id, upc).then((r) => { setUpc(""); if (r.moved_from) pushToast("UPC moved from another item — its file says so", "success"); }), "UPC on the item")}>{tr("perfume.itemfile.add", "Add")}</Button>
           </div>
-          <ParityTable<{ upc: string }> cardTitle title={tr("perfume.itemfile.upcs", "UPCs")} rows={x.upcs.map((u) => ({ upc: u }))} rowKey={(r) => r.upc} storageKey="perfume-itemfile-upcs-v1"
+          <ParityTable<{ upc: string }> selectable cardTitle title={tr("perfume.itemfile.upcs", "UPCs")} rows={x.upcs.map((u) => ({ upc: u }))} rowKey={(r) => r.upc} storageKey="perfume-itemfile-upcs-v1"
             exportFilename="TIO item UPCs" exportExcel emptyText="No UPC — add one above."
             columns={[{ className: "text-left", key: "upc", label: "UPC", render: (r) => <button type="button" className="underline" onClick={() => open("linkage", r.upc)}>{r.upc}</button>, exportValue: (r) => r.upc }]} />
         </div>
@@ -320,7 +320,7 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
             <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!hk.trim()} data-testid="perfume-itemfile-hk-add"
               onClick={() => run(() => addPerfumeItemHkCode(id, hk).then((r) => { setHk(""); if (r.moved_from) pushToast("HK code moved from another item — its file says so", "success"); }), "HK code on the item")}>{tr("perfume.itemfile.add", "Add")}</Button>
           </div>
-          <ParityTable<PerfumeItemFile["hk_codes"][number]> cardTitle title={tr("perfume.itemfile.hk_codes", "HK codes")} rows={x.hk_codes} rowKey={(r) => r.id} storageKey="perfume-itemfile-hk-v1"
+          <ParityTable<PerfumeItemFile["hk_codes"][number]> selectable cardTitle title={tr("perfume.itemfile.hk_codes", "HK codes")} rows={x.hk_codes} rowKey={(r) => r.id} storageKey="perfume-itemfile-hk-v1"
             exportFilename="TIO item HK codes" exportExcel emptyText="No HK code — add one above."
             columns={[
               { className: "text-left", key: "sku", label: "HK code", render: (r) => <button type="button" className="underline" onClick={() => open("linkage", r.sku)}>{r.sku}</button>, exportValue: (r) => r.sku },
@@ -329,7 +329,7 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
             ]} />
         </div>
       </div>
-      <ParityTable<PerfumeItemFile["vendor_lines"][number]>
+      <ParityTable<PerfumeItemFile["vendor_lines"][number]> selectable
         cardTitle title={tr("perfume.itemfile.linked", "Every line linked to this item (current lists)")} rows={x.vendor_lines} rowKey={(l) => l.id} storageKey="perfume-itemfile-lines-v1"
         exportFilename="TIO item linked lines" exportExcel emptyText="No list carries this item."
         columns={[
@@ -342,7 +342,7 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
           { key: "list_date", label: "List date", cellClass: "text-right tabular-nums", render: (l) => usDate(l.list_date) },
         ]}
       />
-      <ParityTable<PerfumeItemFile["events"][number]>
+      <ParityTable<PerfumeItemFile["events"][number]> selectable
         cardTitle title={tr("perfume.itemfile.history", "History")} rows={x.events} rowKey={(e) => e.id} storageKey="perfume-itemfile-history-v1" exportFilename="TIO item history" exportExcel emptyText="No changes yet."
         columns={[
           { key: "created_at", label: "When", cellClass: "text-right tabular-nums", render: (e) => new Date(e.created_at).toLocaleString("en-US", { timeZone: "America/Chicago" }) },
@@ -386,7 +386,7 @@ export function PerfumeLinkagePanel() {
               ? d.items.map((i) => <div key={i.id}>{tr("perfume.linkage.points_to", "Points to")} <DocLink tab="itemfile" id={i.id}>{i.display_name}</DocLink>{` · TIO ${i.tio_code ?? DASH} · UPC ${codes(i.upcs)}`}</div>)
               : tr("perfume.linkage.no_item", "No item carries this UPC / code — the lines below match it on the lists.")}
           </div>) : null}
-        <ParityTable<PerfumeLinkageLine>
+        <ParityTable<PerfumeLinkageLine> selectable
           rows={d?.lines ?? []} rowKey={(l) => `${l.line_id}-${l.item_id}`} loading={lk.isLoading && q.length > 0} storageKey="perfume-linkage-v1" exportFilename={`TIO linkage ${q}`} exportExcel
           emptyText={q ? "No line on a current list carries it." : "Type a UPC, a code or words above."}
           columns={[
@@ -459,7 +459,7 @@ export function PerfumeStockLinkagePanel() {
         {showStrict ? (
           <div className="space-y-2 border-t border-[#D8E0E8] pt-2" data-testid="perfume-stock-link-strict-list">
             <div className="text-xs">{tr("perfume.stock_link.strict_rule", "Same words (EDP / EDT / for him / pour homme ignored), same brand, same size, same kind, and one-to-one — nothing else fits either side.")}</div>
-            <ParityTable<{ mine_id: string; mine: string; vend_id: string; vend: string }>
+            <ParityTable<{ mine_id: string; mine: string; vend_id: string; vend: string }> selectable
               rows={strict.data?.pairs ?? []} rowKey={(p) => p.mine_id} loading={strict.isLoading} storageKey="perfume-stock-strict-v1" exportFilename="TIO sure matches" exportExcel
               emptyText="No sure match left."
               columns={[
@@ -472,7 +472,7 @@ export function PerfumeStockLinkagePanel() {
               <Button type="button" className="h-[32px] px-3 text-xs" disabled={busy} onClick={applyStrict} data-testid="perfume-stock-link-strict-apply">
                 {`Link these ${strict.data.pairs.length}`}</Button>) : null}
           </div>) : null}
-        <ParityTable<PerfumeStockLinkRow>
+        <ParityTable<PerfumeStockLinkRow> selectable
           rows={d?.rows ?? []} rowKey={(r) => r.id} loading={sq.isLoading} storageKey="perfume-stock-linkage-v1" exportFilename="TIO stock linkage" exportExcel
           emptyText="Every one of our items here is linked to a vendor."
           columns={[

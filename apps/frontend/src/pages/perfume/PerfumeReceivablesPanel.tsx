@@ -59,7 +59,7 @@ export function PerfumeReceivablesPanel() {
           <span className="text-[#64748B]">{tr("perfume.ar.basis", "Days counted from the invoice date. Balances are the books' own open amounts (A/R control account).")}</span>
         </div>
         {d ? <BucketStrip b={d.totals} d={d.days} testId="perfume-ar-totals" /> : null}
-        <ParityTable<ScentsxAgingRow>
+        <ParityTable<ScentsxAgingRow> selectable
           rows={d?.customers ?? []} rowKey={(r) => r.customer_id} loading={aging.isLoading} storageKey="perfume-ar-aging-v1" exportFilename={`TIO aging ${asOf}`} exportExcel
           emptyText="No open invoices — nothing owed on ScentsX's books." onRowClick={(r) => open("receivables", r.customer_id)}
           columns={[
@@ -103,7 +103,7 @@ function CustomerAccount({ customerId, asOf, days, onChanged }: { customerId: st
       </div>
       <BucketStrip b={a.buckets} d={a.days} testId="perfume-ar-customer-buckets" />
       <PaymentEntry acctId={a.operating_company_id} customerId={a.customer.id} open={a.open_invoices} onDone={refresh} />
-      <ParityTable<ScentsxArInvoice>
+      <ParityTable<ScentsxArInvoice> selectable
         cardTitle title={tr("perfume.ar.history", "Invoice history — click an invoice for its payments")} rows={a.invoices} rowKey={(r) => r.id} storageKey="perfume-ar-invoices-v1"
         exportFilename={`TIO invoices ${a.customer.name}`} exportExcel emptyText="No invoices on ScentsX's books for this customer." onRowClick={(r) => setOpenInv(r.id === openInv ? null : r.id)}
         columns={[
@@ -121,7 +121,7 @@ function CustomerAccount({ customerId, asOf, days, onChanged }: { customerId: st
       />
       {returnInv ? <ReturnForm key={returnInv} invoiceId={returnInv} onClose={() => setReturnInv(null)} onDone={() => void refresh()} /> : null}
       {shown ? (
-        <ParityTable<ScentsxArInvoice["payments"][number]>
+        <ParityTable<ScentsxArInvoice["payments"][number]> selectable
           cardTitle title={`${tr("perfume.ar.payments_on", "Payments on invoice")} ${shown.number ?? ""} · ${tr("perfume.ar.amount", "amount")} ${money(shown.total_cents)} · ${tr("perfume.ar.paid", "paid")} ${money(shown.paid_cents)} · ${tr("perfume.ar.balance", "A/R balance")} ${money(shown.open_cents)}`}
           rows={shown.payments} rowKey={(p) => `${p.payment_id}-${p.amount_cents}`} storageKey="perfume-ar-inv-payments-v1" exportFilename="TIO invoice payments" exportExcel emptyText="No payment applied to this invoice."
           columns={[
@@ -181,7 +181,7 @@ function PaymentEntry({ acctId, customerId, open, onDone }: { acctId: string; cu
         <label>{tr("perfume.ar.reference", "Reference")} <input className={`${ctl} block w-[180px]`} aria-label={tr("perfume.ar.reference", "Reference")} placeholder="Check no. / wire ref." value={ref} onChange={(e) => setRef(e.target.value)} data-testid="perfume-ar-pay-ref" /></label>
         <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!amount} onClick={() => oldestFirst(amount)} data-testid="perfume-ar-pay-oldest">{tr("perfume.ar.oldest", "Apply oldest first")}</Button>
       </div>
-      <ParityTable<ScentsxArInvoice>
+      <ParityTable<ScentsxArInvoice> selectable
         rows={open} rowKey={(r) => r.id} storageKey="perfume-ar-apply-v1" emptyText="No open invoice — a payment would sit as the customer's credit."
         columns={[
           { className: "text-left", key: "number", label: "Invoice", render: (r) => r.number ?? r.id.slice(0, 8), exportValue: (r) => r.number ?? "" },
@@ -214,7 +214,7 @@ function PaymentsList({ companyId, rows, onDone }: { companyId: string; rows: Sc
     catch (e) { pushToast(userFacingApiError(e, "Payment not voided"), "error"); }
   };
   return (
-    <ParityTable<ScentsxArPayment>
+    <ParityTable<ScentsxArPayment> selectable
       cardTitle title={tr("perfume.ar.payments", "Payments")} rows={rows} rowKey={(r) => `${r.id}-${r.voided_at ?? ""}`} storageKey="perfume-ar-payments-v1" exportFilename="TIO customer payments" exportExcel
       emptyText="No payments recorded for this customer."
       columns={[

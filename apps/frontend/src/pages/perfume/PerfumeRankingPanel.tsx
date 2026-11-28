@@ -105,7 +105,7 @@ export function PerfumeRankingPanel() {
             <KpiCard label={tr("perfume.rank.linked", "Linked to a contact")} number={`${d.linked.toLocaleString("en-US")} / ${d.customers.toLocaleString("en-US")}`} disabled />
           </div>
         ) : null}
-        <ParityTable<PerfumeRankRow>
+        <ParityTable<PerfumeRankRow> selectable
           rows={rows} rowKey={(r) => r.key} loading={q.isLoading} storageKey="perfume-ranking-v1" exportFilename={`TIO customer ranking ${cur}`} exportExcel
           emptyText="No purchases imported yet in this currency."
           columns={[

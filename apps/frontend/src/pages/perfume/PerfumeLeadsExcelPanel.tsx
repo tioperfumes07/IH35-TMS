@@ -91,7 +91,7 @@ export function PerfumeLeadsExcelPanel() {
       {openId ? <UploadReview id={openId} onClose={() => setOpenId(null)} onChanged={() => void uploads.refetch()} /> : null}
 
       <section className="rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.leadsx.history", "Uploads")}>
-        <ParityTable<PerfumeUploadRow>
+        <ParityTable<PerfumeUploadRow> selectable
           cardTitle title={tr("perfume.leadsx.history", "Uploads")}
           rows={uploads.data?.uploads ?? []}
           rowKey={(u) => u.id}
@@ -176,7 +176,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
 
       {s.changes.length ? (
         <div id="perfume-leadsx-changes">
-        <ParityTable
+        <ParityTable selectable
           cardTitle title={`${tr("perfume.leadsx.changes", "Changes")} (${n(s.changes_total)})`}
           rows={s.changes.map((c, i) => ({ ...c, i }))}
           rowKey={(c) => String(c.i)}
@@ -199,7 +199,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
 
       {s.removals.length ? (
         <div id="perfume-leadsx-removals">
-        <ParityTable
+        <ParityTable selectable
           cardTitle title={`${tr("perfume.leadsx.removals", "Marked Remove — archived on Apply")} (${n(ex.remove_companies + ex.remove_people)})`}
           rows={s.removals.map((c, i) => ({ ...c, i }))}
           rowKey={(c) => String(c.i)}
@@ -233,7 +233,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
               );
             })}
           </div>
-          <ParityTable
+          <ParityTable selectable
             cardTitle title={tr("perfume.leadsx.by_category", "By category in the file")}
             rows={cats.map(([k, v]) => ({ k, ...v }))}
             rowKey={(c) => c.k}
@@ -254,7 +254,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
               { key: "new", label: "New", kind: "number", cellClass: "text-right tabular-nums", render: (c) => n(c.records - c.match) },
             ]}
           />
-          <ParityTable<PerfumeUploadSummary["new"]["samples"][number] & { i: number }>
+          <ParityTable<PerfumeUploadSummary["new"]["samples"][number] & { i: number }> selectable
             cardTitle title={`${tr("perfume.leadsx.samples", "First new leads")} (${n(s.new.samples.length)} ${tr("perfume.leadsx.of", "of")} ${n(s.new.records)})`}
             rows={s.new.samples.map((x, i) => ({ ...x, i }))}
             rowKey={(x) => String(x.i)}
@@ -280,7 +280,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
 
       {s.removed_check && (s.removed_check.companies || s.removed_check.people) ? (
         <div className="space-y-2" data-testid="perfume-leadsx-removed-check">
-          <ParityTable
+          <ParityTable selectable
             cardTitle title={`${tr("perfume.leadsx.rc_title", "Contacts on file that the file's Removed-Check list names")} (${n(s.removed_check.companies)} ${tr("perfume.leadsx.rc_co", "companies")} · ${n(s.removed_check.people)} ${tr("perfume.leadsx.rc_pe", "people")})`}
             rows={s.removed_check.list.map((c, i) => ({ ...c, i }))}
             rowKey={(c) => String(c.i)}

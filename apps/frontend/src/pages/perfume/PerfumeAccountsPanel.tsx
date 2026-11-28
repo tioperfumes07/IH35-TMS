@@ -45,7 +45,7 @@ export function PerfumePriceLevelsPanel() {
           <div className="text-xs" data-testid="perfume-level-costs">
             {`${tr("perfume.acct.costs", "Items with a cost")}: ${levels.data.costs.any_cost.toLocaleString("en-US")} — ${tr("perfume.acct.costs_avg", "my avg cost")} ${levels.data.costs.my_avg_cost.toLocaleString("en-US")} · ${tr("perfume.acct.costs_file", "my inventory file (last cost)")} ${levels.data.costs.inventory_file.toLocaleString("en-US")} · ${tr("perfume.acct.costs_vendor", "supplier lists")} ${levels.data.costs.vendor_lists.toLocaleString("en-US")} · ${tr("perfume.acct.costs_stock", "in stock")} ${levels.data.costs.stock.toLocaleString("en-US")}. ${tr("perfume.acct.costs_rule", "My average cost = stock average when in stock, else my avg cost, else my inventory file's last cost, else the best supplier cost.")}`}
           </div>) : null}
-        <ParityTable<PerfumePriceLevel>
+        <ParityTable<PerfumePriceLevel> selectable
           rows={rows} rowKey={(l) => `${l.id}-${l.pct}-${l.method}-${l.cost_basis}-${l.floor_pct}-${l.tester_pct}`} loading={levels.isLoading} storageKey="perfume-levels-v1" exportFilename="TIO price levels" exportExcel
           emptyText="No price levels." onRowClick={(l) => setSelected(l.id)}
           columns={[
@@ -100,7 +100,7 @@ function LevelItems({ level, onChanged }: { level: PerfumePriceLevel; onChanged:
         <span className="text-[#64748B]">{tr("perfume.acct.fixed_help", "then pick the item; Qty = the quantity from which this price applies")}</span>
       </div>
       <ItemFinder testId="perfume-level-find" onPick={add} />
-      <ParityTable<PerfumeLevelItem>
+      <ParityTable<PerfumeLevelItem> selectable
         rows={items.data?.items ?? []} rowKey={(r) => `${r.id}-${r.price_cents}`} storageKey="perfume-level-items-v1" exportFilename="TIO level prices" exportExcel emptyText="No fixed prices — the level's % applies."
         columns={[
           { key: "display_name", label: "Item", render: (r) => <DocLink tab="items" id={r.item_id}>{r.display_name}</DocLink>, exportValue: (r) => r.display_name },
@@ -154,7 +154,7 @@ export function PerfumeAccountsPanel() {
             </div>
           ) : null}
         </label>
-        <ParityTable<PerfumeCustomerAccount>
+        <ParityTable<PerfumeCustomerAccount> selectable
           rows={shown} rowKey={(a) => a.company_id} loading={accounts.isLoading} storageKey="perfume-accounts-v1" exportFilename="TIO customer accounts" exportExcel
           emptyText={filter ? "No account matches." : "No customer accounts yet — open one above."} onRowClick={(a) => setSelected(a.company_id)}
           columns={[
@@ -240,7 +240,7 @@ function AccountEditor({ companyId, onChanged, onClose, push }: { companyId: str
           <Button type="button" className="h-[34px] px-3 text-xs" onClick={apply} data-testid="perfume-account-apply-save">{tr("perfume.acct.apply_save", "Save application")}</Button>
         </div>
       </div>
-      <ParityTable<PerfumeCreditApplication>
+      <ParityTable<PerfumeCreditApplication> selectable
         cardTitle title={tr("perfume.acct.applications", "Applications")} rows={applications} rowKey={(x) => `${x.id}-${x.status}`} storageKey="perfume-account-apps-v1" exportFilename="TIO credit applications" exportExcel emptyText="No applications."
         columns={[
           { key: "created_at", label: "Date", render: (x) => new Date(x.created_at).toLocaleDateString("en-US") },
