@@ -19,6 +19,7 @@ import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { tr } from "./perfumeI18n";
 import { ScentsxDepositsPanel } from "./ScentsxDepositsPanel";
+import { ScentsxDailyReportPanel } from "./ScentsxDailyReportPanel";
 import { ScentsxCompliancePanel } from "./ScentsxCompliancePanel";
 import { ScentsxSalesReport } from "./ScentsxSalesReport";
 import { ScentsxItemAccountsBlock } from "./ScentsxItemAccounts";
@@ -106,6 +107,7 @@ export function PerfumeBooksPanel() {
           {tr("scentsx.books.post_now", "Post now")}</Button>
       </div>
       <InventoryTieOut />
+      <ScentsxDailyReportPanel />
       <ScentsxDepositsPanel />
       <ScentsxItemAccountsBlock />
       <ScentsxItemBooks />

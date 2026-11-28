@@ -9,6 +9,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "../perfume/desk.routes.js";
 import { ScentsxLinkInvalid, ScentsxNotSetUp } from "./links.service.js";
 import { inquiryCustomers, salesInvoices, salesLines, type InquiryFilter } from "./sales-inquiry.service.js";
+import { dailyReport, dailyReportQuery, drawerCount, drawerCountBody } from "./daily-report.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
   if (!requireAuth(req, reply)) return null;
@@ -74,5 +75,17 @@ export async function registerScentsxInquiryRoutes(app: FastifyInstance) {
       r.rows.map((x) => [x.invoice ?? "", x.issue_date, x.customer, x.status, x.lines, x.units, x.sales_cents / 100, x.tax_cents / 100, x.total_cents / 100]),
       [`Total — ${r.total.invoices.toLocaleString("en-US")} invoices`, "", "", "", "", r.total.units, r.total.sales_cents / 100, r.total.tax_cents / 100, r.total.total_cents / 100]);
     return reply.header("Content-Type", XLSX).header("Content-Disposition", `attachment; filename="ScentsX sales inquiry ${r.from} to ${r.to}.xlsx"`).send(buf);
+  });
+
+  // ROUND L.31 M8 — the day's posted transactions (read only) and the end-of-shift drawer count (over / short through the JE writer).
+  app.get("/api/v1/scentsx/daily-report", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const q = dailyReportQuery.safeParse(req.query ?? {}); if (!q.success) return reply.code(400).send({ error: "invalid", issues: q.error.issues });
+    try { return await withCurrentUser(uid, (c) => dailyReport(c, q.data)); } catch (e) { return fail(reply, e); }
+  });
+  app.post("/api/v1/scentsx/drawer-count", RL_FILE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = drawerCountBody.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "invalid", issues: b.error.issues });
+    try { return await withCurrentUser(uid, (c) => drawerCount(c, { userId: uid, role: "Owner" }, b.data)); } catch (e) { return fail(reply, e); }
   });
 }
