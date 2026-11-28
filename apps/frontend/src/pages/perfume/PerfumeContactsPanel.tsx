@@ -17,12 +17,15 @@ import { KpiCard } from "../../components/layout/KpiCard";
 import { useToast } from "../../components/Toast";
 import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { ApiError } from "../../api/client";
+import { listCustomers } from "../../api/catalog-customers";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import {
   deletePerfumeContacts, restorePerfumeContacts, type PerfumeContactDeleteResult,
   getPerfumeContact, getPerfumeGooglePlan, importPerfumeContacts, listPerfumeContacts, perfumeGoogleSearch, startPerfumeGoogleRun, stopPerfumeGoogleRun,
   type PerfumeContactFacet, type PerfumeContactImportTally, type PerfumeContactPicks, type PerfumeContactProfile, type PerfumeContactRole, type PerfumeContactRow, type PerfumeGoogleResult, type PerfumeGoogleRun,
 } from "../../api/perfume";
+import { createScentsxCustomer, getEligibleScentsxCustomers, getScentsxCompany, linkScentsxCustomer, type EligibleScentsxContact } from "../../api/scentsx";
 import { tr } from "./perfumeI18n";
 import { PerfumeHistoryTable } from "./PerfumeHistoryTable";
 import { getPerfumeCompanyLocations, perfumeContactHistory, perfumeContactTrades, type PerfumeContactTrade } from "../../api/perfume";
@@ -144,6 +147,8 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
           <PerfumeCreateCompany role={initialRole === "vendor" ? "vendor" : "customer"} onCreated={(name) => { setQ(name); void list.refetch(); }} onOpen={(id) => setSelected(id)} />
           {/* L.29 E1 (CC3): the customers' purchase-history workbook creates the customer companies — on Customers, not Leads (owner 18:21 CT). */}
           {initialRole === "customer" ? <CustomerSalesImportCard onDone={() => void list.refetch()} /> : null}
+          {/* L.29 E2 (CC3): bulk-link eligible customers to ScentsX (have email, no link yet). */}
+          {initialRole === "customer" ? <BulkMakeScentsxCustomerCard onDone={() => void list.refetch()} /> : null}
         </>
       )}
       <PerfumeDuplicatesCard onDone={() => void list.refetch()} />
@@ -475,6 +480,96 @@ export function CustomerSalesImportCard({ onDone }: { onDone: () => void }) {
           {state.error ? <b className="text-red-700"> — {state.error}</b> : (state.done >= state.total ? " · done" : " · importing…")}
         </span>
       )}
+    </section>
+  );
+}
+
+/**
+ * L.31 M18 E2 — bulk "Make ScentsX customer" (CC3, made safe by LEAD): every live customer company with an email and no ScentsX link
+ * becomes ScentsX LLC's customer through the SAME two canonical calls as the one-at-a-time button — the canonical customer create
+ * (POST /api/v1/mdata/customers for ScentsX's company) and the link (POST /api/v1/scentsx/customer-links). A name already on ScentsX's
+ * customer list (409 mdata_customer_name_conflict) is linked instead of duplicated; a 429 waits and retries; confirm first (pop-up),
+ * one result row per company, nothing silent.
+ */
+type BulkResult = { id: string; name: string; outcome: "created" | "linked_existing" | "failed"; detail: string };
+async function withRetry429<T>(fn: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try { return await fn(); } catch (e) {
+      if (!(e instanceof ApiError) || e.status !== 429 || attempt >= 3) throw e;
+      await new Promise((res) => setTimeout(res, (e.retryAfter ?? 30) * 1000));
+    }
+  }
+}
+export async function makeScentsxCustomers(companyId: string, contacts: EligibleScentsxContact[], onEach: (r: BulkResult) => void) {
+  for (const c of contacts) {
+    let r: BulkResult;
+    try {
+      let customerId: string | null = null;
+      let outcome: BulkResult["outcome"] = "created";
+      try {
+        customerId = (await withRetry429(() => createScentsxCustomer(companyId, { name: c.name, email: c.email, phone: c.phone }))).id ?? null;
+      } catch (e) {
+        const code = e instanceof ApiError ? (e.data as { error?: string } | null)?.error : undefined;
+        if (code !== "mdata_customer_name_conflict") throw e;
+        const found = await listCustomers({ operating_company_id: companyId, search: c.name, limit: 50 });
+        const exact = found.customers.find((x) => (x.name ?? "").trim().toLowerCase() === c.name.trim().toLowerCase());
+        if (!exact) throw e;
+        customerId = String(exact.id);
+        outcome = "linked_existing";
+      }
+      if (!customerId) throw new Error("The customer was created but its id did not come back");
+      const id = customerId;
+      await withRetry429(() => linkScentsxCustomer(c.id, id));
+      r = { id: c.id, name: c.name, outcome, detail: c.email };
+    } catch (e) {
+      r = { id: c.id, name: c.name, outcome: "failed", detail: userFacingApiError(e, "Not created") };
+    }
+    onEach(r);
+  }
+}
+
+export function BulkMakeScentsxCustomerCard({ onDone }: { onDone: () => void }) {
+  const eligible = useQuery({ queryKey: ["scentsx", "eligible-customers"], queryFn: () => getEligibleScentsxCustomers(500), staleTime: 30_000 });
+  const co = useQuery({ queryKey: ["scentsx", "company"], queryFn: getScentsxCompany });
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [results, setResults] = useState<BulkResult[]>([]);
+  const total = eligible.data?.total ?? 0;
+  const contacts = eligible.data?.contacts ?? [];
+  const companyId = co.data?.company.id ?? "";
+  const go = async () => {
+    setBusy(true); setResults([]);
+    try { await makeScentsxCustomers(companyId, contacts, (r) => setResults((x) => [...x, r])); } finally { setBusy(false); void eligible.refetch(); onDone(); }
+  };
+  if (eligible.isError) return <ListErrorState title={tr("perfume.sctx.bulk_error", "Couldn't load the customers to make")} status={0} message={(eligible.error as Error)?.message} onRetry={() => void eligible.refetch()} />;
+  return (
+    <section className="flex flex-wrap items-center gap-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3 text-xs" aria-label={tr("perfume.sctx.bulk_section", "Make ScentsX customers")} data-testid="perfume-bulk-scentsx-card">
+      <span className="text-card-title">{tr("perfume.sctx.bulk_title", "Make ScentsX customers")}</span>
+      <span className="text-[#64748B]">{`${total.toLocaleString("en-US")} ${tr("perfume.sctx.bulk_sub", "customer companies with an email are not ScentsX customers yet")}`}</span>
+      <Button type="button" className="h-[30px] px-3 text-xs" disabled={!companyId || !contacts.length} onClick={() => { setResults([]); setOpen(true); }} data-testid="perfume-bulk-scentsx-open">
+        {`${tr("perfume.sctx.bulk_btn", "Make ScentsX customers")} (${contacts.length})`}</Button>
+      {open ? (
+        <Modal open onClose={() => { if (!busy) setOpen(false); }} title={tr("perfume.sctx.bulk_title", "Make ScentsX customers")} size="md" data-testid="perfume-bulk-scentsx-modal">
+          <div className="space-y-3 text-xs">
+            <p>{`${contacts.length} ${tr("perfume.sctx.bulk_confirm", "customer companies become ScentsX LLC customers (A/R), one by one.")}${total > contacts.length ? ` ${tr("perfume.sctx.bulk_more", "The rest follow on the next run")} (${total - contacts.length}).` : ""}`}</p>
+            {/* TABLE_DATE_OMIT: a run result — one row per company and what happened to it, not a dated event. */}
+            {results.length ? (
+              <ParityTable<BulkResult> selectable rows={results} rowKey={(r) => r.id} storageKey="perfume-bulk-scentsx-v1" exportFilename="ScentsX customers made" exportExcel emptyText="—"
+                columns={[
+                  { className: "text-left", cellClass: "text-left font-semibold", key: "name", sortable: true, label: "Company", render: (r) => r.name, exportValue: (r) => r.name },
+                  { className: "text-left", cellClass: "text-left", key: "outcome", sortable: true, label: "Result", render: (r) => (r.outcome === "created" ? "Created + linked" : r.outcome === "linked_existing" ? "Linked to the existing customer" : "NOT done"), exportValue: (r) => r.outcome },
+                  { className: "text-left", cellClass: "text-left", key: "detail", sortable: true, label: "Detail", render: (r) => r.detail, exportValue: (r) => r.detail },
+                ]} />
+            ) : null}
+            {results.length ? <p data-testid="perfume-bulk-scentsx-summary">{`${results.filter((r) => r.outcome !== "failed").length} ${tr("perfume.sctx.bulk_done", "done")} · ${results.filter((r) => r.outcome === "failed").length} ${tr("perfume.sctx.bulk_failed", "not done")} · ${contacts.length - results.length} ${tr("perfume.sctx.bulk_left", "left")}`}</p> : null}
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={busy} onClick={() => setOpen(false)}>{tr("perfume.sctx.close", "Close")}</Button>
+              <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy || !contacts.length || results.length > 0} onClick={() => void go()} data-testid="perfume-bulk-scentsx-apply">
+                {busy ? tr("perfume.sctx.working", "Working…") : `${tr("perfume.sctx.make", "Make")} ${contacts.length}`}</Button>
+            </div>
+          </div>
+        </Modal>
+      ) : null}
     </section>
   );
 }
