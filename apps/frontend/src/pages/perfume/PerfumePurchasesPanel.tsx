@@ -70,7 +70,7 @@ export function PerfumePurchasesPanel() {
           <Button type="button" className="h-[34px] px-3 text-xs" onClick={() => setAdding((v) => !v)} data-testid="perfume-pos-new">{tr("perfume.pos.new", "New purchase order")}</Button>
         </div>
         {adding ? <NewPoForm onClose={() => setAdding(false)} onCreated={(id) => { setAdding(false); setSelected(id); void pos.refetch(); }} /> : null}
-        <ParityTable<PerfumePoRow>
+        <ParityTable<PerfumePoRow> selectable
           rows={shown}
           rowKey={(r) => r.id}
           loading={pos.isLoading}
@@ -212,7 +212,7 @@ function PoEditor({ id, onClose, onChanged }: { id: string; onClose: () => void;
           </div>
         </>
       )}
-      <ParityTable<PerfumePoLine>
+      <ParityTable<PerfumePoLine> selectable
         cardTitle title={tr("perfume.pos.lines", "Lines")}
         rows={p.lines}
         rowKey={(l) => `${l.id}-${l.qty}-${l.qty_received}-${l.unit_cost_cents}`}

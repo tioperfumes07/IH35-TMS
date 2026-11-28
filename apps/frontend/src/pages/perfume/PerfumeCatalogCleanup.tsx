@@ -47,7 +47,7 @@ function CleanupModal({ onClose, onDone }: { onClose: () => void; onDone: () => 
         <p>{tr("perfume.cleanup.help", "Product types keep only the kind (Regular, Tester, Set, Mini …); the gender stays in the Gender list, already on every item. Overlapping customer and vendor types merge into one. Every item and company moves with a history row; the old value is archived, never deleted.")}</p>
         {adds.length ? <p data-testid="perfume-cleanup-adds">{`${tr("perfume.cleanup.adds", "Also added")}: ${adds.map((a) => `${a.value} (${a.list})`).join(" · ")}`}</p> : null}
         {q.isError ? <ListErrorState title={tr("perfume.cleanup.error", "Couldn't load the cleanup")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} /> : (
-          <ParityTable<PerfumeCleanupRow>
+          <ParityTable<PerfumeCleanupRow> selectable
             rows={q.data?.rows ?? []} rowKey={(r) => r.key} loading={q.isLoading} storageKey="perfume-cleanup-v1" exportFilename="TIO catalog cleanup" exportExcel emptyText="Nothing to clean."
             columns={[
               { key: "pick", label: "Apply", render: (r) => (r.done ? "Done" : <input type="checkbox" aria-label={`Merge ${r.from} into ${r.to}`} checked={!off.has(r.key)}

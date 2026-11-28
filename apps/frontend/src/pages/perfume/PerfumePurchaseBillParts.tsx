@@ -100,7 +100,7 @@ export function PurchaseBillForm({ poId, poNumber, onDone }: { poId: string; poN
             <label>{tr("perfume.pbill.due", "Due date")} <DatePicker aria-label={tr("perfume.pbill.due", "Due date")} value={dueDate} onChange={(v) => setDueDate(v || "")} /></label>
             <span className="text-[#64748B]">{tr("perfume.pbill.due_help", "Blank = from the PO terms (Net 30 …), else due on receipt.")}</span>
           </div>
-          <ParityTable<ScentsxBillablePoLine>
+          <ParityTable<ScentsxBillablePoLine> selectable
             rows={lines} rowKey={(l) => l.po_line_id} storageKey="perfume-po-bill-lines-v1" emptyText="No lines on this PO."
             columns={[
               { key: "line_no", label: "#", kind: "number", cellClass: "text-right tabular-nums", render: (l) => String(l.line_no) },
@@ -150,7 +150,7 @@ export function PurchaseBillForm({ poId, poNumber, onDone }: { poId: string; poN
           </div>
         </div>
       ) : null}
-      <ParityTable<ScentsxPoBill>
+      <ParityTable<ScentsxPoBill> selectable
         rows={q.data.bills} rowKey={(b) => b.id} storageKey="perfume-po-bill-list-v1" exportFilename={`${poNumber} bills`} exportExcel emptyText="No vendor bills on this PO yet."
         columns={[
           { className: "text-left", key: "display_id", label: "Bill", render: (b) => <Link className="underline" to={`/accounting/bills/${encodeURIComponent(b.id)}`}>{b.display_id ?? b.id.slice(0, 8)}</Link>, exportValue: (b) => b.display_id ?? "" },

@@ -42,7 +42,7 @@ export function PerfumeNameFormatCard({ onDone }: { onDone: () => void }) {
         </div>
       </div>
       {open ? (q.isError ? <ListErrorState title={tr("perfume.names.error", "Couldn't load the names")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} /> : (
-        <ParityTable<PerfumeNameFix>
+        <ParityTable<PerfumeNameFix> selectable
           rows={q.data?.fixes ?? []} rowKey={(f) => f.id} loading={q.isLoading} storageKey="perfume-name-format-v1" exportFilename="TIO name format preview" exportExcel
           emptyText="Every company name is already in proper format."
           columns={[

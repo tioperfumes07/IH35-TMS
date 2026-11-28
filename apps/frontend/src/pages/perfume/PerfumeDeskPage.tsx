@@ -881,7 +881,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
           />
         </div>
       ) : (
-      <ParityTable<PerfumeGridRow>
+      <ParityTable<PerfumeGridRow> selectable
         key={`${matchDesk ? "match-" : ""}${view}-${mine ?? "all"}-${view === "analysis" ? (hideEmpty ? "h" : "a") : ""}`}
         columns={columns}
         rows={query.data?.rows ?? []}

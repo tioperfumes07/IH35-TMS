@@ -68,7 +68,7 @@ function eventText(e: PerfumeQuoteEvent): string {
 
 export function HistoryTable({ events, storageKey, exportFilename }: { events: PerfumeQuoteEvent[]; storageKey: string; exportFilename: string }) {
   return (
-    <ParityTable<PerfumeQuoteEvent>
+    <ParityTable<PerfumeQuoteEvent> selectable
       cardTitle title={tr("perfume.docs.history", "History")}
       rows={events}
       rowKey={(e) => e.id}

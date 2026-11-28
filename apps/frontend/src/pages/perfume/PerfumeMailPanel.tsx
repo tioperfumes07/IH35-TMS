@@ -163,7 +163,7 @@ function FilesCard({ files, loading, vendorOptions, onChanged }: { files: Perfum
           </button>
         ))}
       </div>
-      <ParityTable<PerfumeMailFile>
+      <ParityTable<PerfumeMailFile> selectable
         rows={rows}
         rowKey={(f) => f.id}
         loading={loading}
@@ -260,7 +260,7 @@ function RulesCard({ rules, vendors, onChanged }: { rules: PerfumeMailRule[]; ve
           catch (e) { pushToast(userFacingApiError(e, "Sender not saved"), "error"); }
         }}>{tr("perfume.mail.addRule", "Add sender")}</Button>
       </div>
-      <ParityTable<PerfumeMailRule>
+      <ParityTable<PerfumeMailRule> selectable
         rows={rules}
         rowKey={(r) => r.id}
         storageKey="perfume-desk-mail-rules-v1"

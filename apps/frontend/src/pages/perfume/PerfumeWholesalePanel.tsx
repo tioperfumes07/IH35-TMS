@@ -68,7 +68,7 @@ export function PerfumeWholesalePanel() {
           <Button type="button" className="h-[34px] px-3 text-xs" disabled={!rows.length} onClick={download} data-testid="perfume-wl-xlsx">{tr("perfume.wl.xlsx", "Download Excel to send")}</Button>
         </div>
         <div className="text-xs text-[#64748B]">{tr("perfume.wl.how", "Price = this level's fixed price at the item's minimum order (Price levels → fixed prices and quantity breaks), else the level's markup / margin on cost. A tester with no fixed price of its own = the level's testers % (Price levels) of its regular version's price. Set case pack, minimum order, origin and HS code on each item (or with the bulk bar on Item file).")}</div>
-        <ParityTable<PerfumeWholesaleRow> rows={rows} rowKey={(r) => r.item_id} loading={list.isLoading} storageKey="perfume-wholesale-list-v1" exportFilename={`TIO ${list.data?.level.name ?? ""} price list`} exportExcel
+        <ParityTable<PerfumeWholesaleRow> selectable rows={rows} rowKey={(r) => r.item_id} loading={list.isLoading} storageKey="perfume-wholesale-list-v1" exportFilename={`TIO ${list.data?.level.name ?? ""} price list`} exportExcel
           emptyText="No items — our items are the ones in stock or on my inventory / offer list."
           columns={[
             { className: "text-left", key: "tio_code", label: "TIO code", sortable: true, render: (r) => r.tio_code ?? DASH, exportValue: (r) => r.tio_code ?? "" },

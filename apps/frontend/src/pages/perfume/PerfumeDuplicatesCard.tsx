@@ -92,7 +92,7 @@ function PerfumeDupGroupModal({ group, onClose, onMerged }: { group: PerfumeDupG
     <Modal open onClose={onClose} title={`${group.keep.name} — ${all.length} records`} size="lg" data-testid="perfume-dups-modal">
       <div className="space-y-3">
         <p className="text-xs text-[#374151]">{tr("perfume.dups.modal_help", "Pick the record that stays. The others merge into it: their people, documents, accounts and links move to it and they stay as its locations (nothing is deleted).")}</p>
-        <ParityTable<PerfumeDupMember>
+        <ParityTable<PerfumeDupMember> selectable
           rows={all} rowKey={(m) => m.id} storageKey="perfume-dups-modal-v1" exportFilename={`TIO duplicates ${group.keep.name}`} exportExcel emptyText="No records."
           columns={[
             { key: "stays", label: "Stays", render: (m) => <input type="radio" name="perfume-dup-keep" aria-label={`${m.name} stays`} checked={keep === m.id} onChange={() => setKeep(m.id)} /> },
@@ -122,7 +122,7 @@ function PerfumeDupGroupModal({ group, onClose, onMerged }: { group: PerfumeDupG
 export function PerfumeCompanyLocations({ rows }: { rows: Array<{ id: string; name: string; address: string | null; city: string | null; state: string | null; phone: string | null; merged_at: string | null }> }) {
   if (!rows.length) return null;
   return (
-    <ParityTable
+    <ParityTable selectable
       cardTitle title={`${tr("perfume.locs.title", "Locations")} (${rows.length})`} rows={rows} rowKey={(r) => r.id} storageKey="perfume-company-locations-v1" exportFilename="TIO company locations" exportExcel emptyText="No other locations."
       columns={[
         { className: "text-left", cellClass: "text-left", key: "city", label: "City", sortable: true, render: (r) => [r.city, r.state].filter(Boolean).join(", ") || "—", exportValue: (r) => `${r.city ?? ""} ${r.state ?? ""}` },

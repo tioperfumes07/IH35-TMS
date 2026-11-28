@@ -85,7 +85,7 @@ export function PerfumeCampaignPanel() {
           <div className="text-card-title">{tr("perfume.cmp.title", "Mass email campaigns")}{only ? ` · ${STATUS_TEXT[only]}` : ""}</div>
           <Button type="button" className="h-[34px] px-3 text-xs" data-testid="perfume-cmp-new" onClick={() => setOpen("new")}>{tr("perfume.cmp.new", "New campaign")}</Button>
         </div>
-        <ParityTable<PerfumeCampaign>
+        <ParityTable<PerfumeCampaign> selectable
           rows={shown}
           rowKey={(c) => c.id}
           loading={campaigns.isLoading}
@@ -316,7 +316,7 @@ function CampaignEditor({ id, onClose, onChanged }: { id: string | null; onClose
         </div>
         {cmp ? <div className="text-xs text-[#64748B]" data-testid="perfume-cmp-counts">{`${tr("perfume.cmp.c_recipients", "Recipients")} ${cmp.recipients.toLocaleString()} · ${tr("perfume.cmp.c_sent", "sent")} ${cmp.sent.toLocaleString()} · ${tr("perfume.cmp.c_skipped", "skipped")} ${cmp.skipped.toLocaleString()} · ${tr("perfume.cmp.c_failed", "failed")} ${cmp.failed.toLocaleString()}`}{cmp.started_at ? ` · ${tr("perfume.cmp.c_started", "started")} ${when(cmp.started_at)}` : ""}{cmp.finished_at ? ` · ${tr("perfume.cmp.c_finished", "finished")} ${when(cmp.finished_at)}` : ""}</div> : null}
         {(detail.data?.batches ?? []).length ? (
-          <ParityTable
+          <ParityTable selectable
             cardTitle title={tr("perfume.cmp.batches", "Send batches")}
             rows={detail.data!.batches}
             rowKey={(b) => b.id}
