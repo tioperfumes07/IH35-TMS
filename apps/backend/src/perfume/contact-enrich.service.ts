@@ -21,6 +21,8 @@ export const findContactInfoSchema = z.object({
   /** The companies to look up; empty = the next `limit` companies with no email or phone that were not looked up in the last 30 days. */
   ids: z.array(z.string().uuid()).max(50).optional(),
   limit: z.number().int().min(1).max(25).default(10),
+  /** Look up again every company not looked up since this moment (a run passes its own start, so a fixed matcher can re-check). */
+  since: z.string().datetime({ offset: true }).optional(),
 });
 
 export type EnrichOutcome = { id: string; name: string; result: "phone" | "website" | "email" | "nothing" | "no_match" | "error";
@@ -78,6 +80,38 @@ async function readEmail(website: string, fetchImpl: typeof fetch): Promise<stri
   return null;
 }
 
+/** "United States" / "USA" / "US" → US; "México" / "Mexico" / "MX" → MX; anything else as written. */
+export function countryCode(country: string | null): string | null {
+  const x = (country ?? "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (!x) return null;
+  if (["us", "usa", "united states", "united states of america", "estados unidos"].includes(x)) return "US";
+  if (["mx", "mexico"].includes(x)) return "MX";
+  return country;
+}
+
+/**
+ * Is this Google result the same company? The name key must be the same, or one must be the other plus words (perfume.name_key
+ * already drops Inc. / LLC / punctuation). Then the place must agree, because one name can be a different store in another city:
+ *  - our street number + street word is in Google's address, or
+ *  - our city is in Google's address / Google's city is in ours, or
+ *  - (exact name only) the city we have is not a real city — research files wrote "US", "Newark port", "New York (Hauppauge) /
+ *    Newark port" — or there is none, and the country does not disagree.
+ */
+export function sameCompany(co: { name_key: string | null; city: string | null; country: string | null; address?: string | null }, r: ProspectRow, key: string | null): boolean {
+  if (!key || !co.name_key || key.length < 3) return false;
+  const ours = countryCode(co.country), theirs = countryCode(r.country);
+  if (ours && theirs && ours !== theirs) return false;
+  const exact = key === co.name_key;
+  if (!exact && !(key.startsWith(co.name_key + " ") || co.name_key.startsWith(key + " "))) return false;
+  const gAddr = `${r.address ?? ""} ${r.city ?? ""}`.toLowerCase();
+  const street = (co.address ?? "").toLowerCase().match(/^\s*(\d+[a-z]?)\s+([a-z0-9]+)/);
+  if (street && gAddr.includes(street[1]!) && gAddr.includes(street[2]!)) return true;
+  const city = (co.city ?? "").trim().toLowerCase();
+  if (city && r.city && (city.includes(r.city.toLowerCase()) || gAddr.includes(city))) return true;
+  const realCity = city.length >= 3 && !/[/()]|\bport\b|\barea\b|^(us|usa|united states|mx|mexico|méxico)$/.test(city);
+  return exact && !realCity && !street;
+}
+
 type Co = { id: string; name: string; address: string | null; city: string | null; state: string | null; country: string | null; name_key: string | null };
 
 /** Looks up the given companies (or the next batch with no email or phone) and fills what Google and their own website give. */
@@ -94,8 +128,8 @@ export async function findContactInfo(db: Db, uid: string, input: z.infer<typeof
     : `SELECT co.id::text, co.name, co.address, co.city, co.state, co.country, co.name_key FROM perfume.contact_companies co
         WHERE co.archived_at IS NULL AND co.merged_into_id IS NULL AND ${NO_REACH}
           AND NOT EXISTS (SELECT 1 FROM perfume.contact_origins o WHERE o.company_id = co.id AND o.how = 'Contact info lookup'
-                           AND o.created_at > now() - interval '30 days')
-        ORDER BY co.created_at, co.id LIMIT $1`, [input.ids?.length ? input.ids : input.limit])).rows);
+                           AND o.created_at > coalesce($2::timestamptz, now() - interval '30 days'))
+        ORDER BY co.created_at, co.id LIMIT $1`, input.ids?.length ? [input.ids] : [input.limit, input.since ?? null])).rows);
   const out: EnrichOutcome[] = [];
   for (const co of cos) {
     try { out.push(await lookupOne(db, uid, co, search, fetchImpl)); }
@@ -110,17 +144,16 @@ export async function findContactInfo(db: Db, uid: string, input: z.infer<typeof
 }
 
 async function lookupOne(db: Db, uid: string, co: Co, search: typeof searchText, fetchImpl: typeof fetch): Promise<EnrichOutcome> {
-  const where = co.address ?? [co.city, co.state, co.country === "MX" ? "México" : co.country === "US" ? "USA" : co.country].filter(Boolean).join(", ");
+  const cc = countryCode(co.country);
+  const where = co.address ?? [co.city, co.state, cc === "MX" ? "México" : cc === "US" ? "USA" : co.country].filter(Boolean).join(", ");
   const query = where ? `${co.name} ${where}` : co.name;
-  const page = await search(query, { maxResults: 5, regionCode: co.country === "MX" ? "mx" : co.country === "US" ? "us" : undefined });
+  const page = await search(query, { maxResults: 5, regionCode: cc === "MX" ? "mx" : cc === "US" ? "us" : undefined });
   // Only this company: the same name key, and the same city when we have one (Google's first hit for a common name can be another store).
   const keys = page.rows.length
     ? await db(async (c) => (await c.query<{ k: string }>(`SELECT perfume.name_key(x) AS k FROM unnest($1::text[]) WITH ORDINALITY AS t(x, n) ORDER BY n`,
         [page.rows.map((r) => r.name)])).rows.map((r) => r.k))
     : [];
-  const sameCity = (r: ProspectRow) => !co.city || !r.city || r.city.toLowerCase() === co.city.toLowerCase();
-  const hit = page.rows.find((r, i) => r.business_status !== "CLOSED_PERMANENTLY" && keys[i] && co.name_key
-    && (keys[i] === co.name_key || keys[i]!.startsWith(co.name_key + " ") || co.name_key.startsWith(keys[i] + " ")) && sameCity(r));
+  const hit = page.rows.find((r, i) => r.business_status !== "CLOSED_PERMANENTLY" && sameCompany(co, r, keys[i] ?? null));
   const log = (c: Q, detail: string, url: string | null) => c.query(
     `INSERT INTO perfume.contact_origins (company_id, occurred_on, how, source, source_url, detail, created_by)
      VALUES ($1::uuid, (now() AT TIME ZONE 'America/Chicago')::date, 'Contact info lookup', 'Google Places', $2, $3, $4::uuid)`, [co.id, url, detail, uid]);
