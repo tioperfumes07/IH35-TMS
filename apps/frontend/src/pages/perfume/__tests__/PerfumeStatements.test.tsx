@@ -19,6 +19,13 @@ beforeEach(() => {
       cogs: { lines: [{ account_id: "a5000", account_code: "5000", account_name: "Cost of Goods Sold", account_type: "CostOfGoodsSold", amount: 90000 }], total: 90000 }, gross_profit: 60000, operating_expenses: { lines: [], total: 0 }, net_income: 60000, basis: "accrual" };
     if (path.startsWith("/api/v1/accounting/balance-sheet")) return { assets: { lines: [], total: 0 }, liabilities: { lines: [], total: 0 }, equity: { lines: [], total: 0, current_year_earnings: 0 }, total_liabilities_and_equity: 0, balanced: true, basis: "accrual" };
     if (path === "/api/v1/scentsx/accounts/a4000/register") return { lines: [{ entry_date: "2026-11-20", memo: "Invoice INV-1", source_transaction_type: "invoice", debit_or_credit: "credit", amount_cents: "150000" }] };
+    if (path.startsWith("/api/v1/scentsx/general-ledger?")) return { from: "2026-01-01", to: "2026-11-27", capped: false, max_lines: 5000, totals: { debit_cents: 3000, credit_cents: 3000 },
+      accounts: [
+        { account_id: "a1000", account_number: "1000", account_name: "Operating Checking", account_type: "Asset", normal_side: "debit", opening_cents: 10000, debit_cents: 0, credit_cents: 3000, closing_cents: 7000,
+          lines: [{ posting_id: "p1", journal_entry_id: "j1", entry_date: "2026-11-27", memo: "Refund RF-2026-00001", source_transaction_type: "customer_refund", source_transaction_id: "r1", debit_cents: 0, credit_cents: 3000, balance_cents: 7000 }] },
+        { account_id: "a1100", account_number: "1100", account_name: "Accounts Receivable", account_type: "Asset", normal_side: "debit", opening_cents: -5000, debit_cents: 3000, credit_cents: 0, closing_cents: -2000,
+          lines: [{ posting_id: "p2", journal_entry_id: "j1", entry_date: "2026-11-27", memo: "Refund RF-2026-00001 customer credit cleared", source_transaction_type: "customer_refund", source_transaction_id: "r1", debit_cents: 3000, credit_cents: 0, balance_cents: -2000 }] },
+      ] };
     throw new Error(`unexpected ${path}`);
   });
 });
@@ -34,5 +41,18 @@ describe("ScentsX financial statements", () => {
     expect(await screen.findByText("Invoice INV-1")).toBeTruthy();
     fireEvent.click(screen.getByTestId("scentsx-st-bs"));
     await waitFor(() => expect(screen.getByTestId("scentsx-st-check").textContent).toMatch(/Balanced: assets = liabilities \+ equity/));
+  });
+  it("General ledger: opening, each posted line with its document and running balance, closing; says balanced", async () => {
+    mount();
+    fireEvent.click(await screen.findByTestId("scentsx-st-gl"));
+    expect(await screen.findByText("Refund RF-2026-00001")).toBeTruthy();
+    expect(screen.getAllByText("Opening balance").length).toBe(2);
+    expect(screen.getAllByText("Closing balance").length).toBe(2);
+    expect(screen.getAllByText("customer refund").length).toBe(2);
+    expect(screen.getAllByText("$70.00").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("-$20.00").length).toBeGreaterThan(0);
+    expect(screen.getByTestId("scentsx-st-check").textContent).toMatch(/Balanced: debits = credits/);
+    expect(screen.queryByTestId("scentsx-st-basis")).toBeNull();
+    expect(paths.some((p) => /^\/api\/v1\/scentsx\/general-ledger\?from=\d{4}-01-01&to=\d{4}-\d{2}-\d{2}$/.test(p))).toBe(true);
   });
 });
