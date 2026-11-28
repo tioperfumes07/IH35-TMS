@@ -3,7 +3,7 @@
  * documents). Owner 2026-11-26 20:13 / 20:16 CT; design https://claude.ai/artifact/VQ83ogvJyPpVoop1FNKJXC.
  * Same gate as the TIO Perfumes desk: Owner role AND perfume.desk_users. Links are voided, never deleted.
  */
-import { itemBooks, itemBooksQuery, makeItemsSchema, makeScentsxItems } from "./item-links.service.js";
+import { itemBooks, itemBooksQuery, makeItemsSchema, makeScentsxItems, syncScentsxItemAccounts } from "./item-links.service.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -131,6 +131,11 @@ export async function registerScentsxLinkRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const b = makeItemsSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "invalid_body" });
     try { return await withCurrentUser(uid, (c) => makeScentsxItems(c, uid, b.data)); } catch (e) { return fail(reply, e); }
+  });
+  app.post("/api/v1/scentsx/item-books/sync-accounts", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = z.object({ max: z.number().int().min(1).max(500).default(500) }).safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "invalid_body" });
+    try { return await withCurrentUser(uid, (c) => syncScentsxItemAccounts(c, uid, b.data.max)); } catch (e) { return fail(reply, e); }
   });
   app.get("/api/v1/scentsx/item-accounts/item/:id", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

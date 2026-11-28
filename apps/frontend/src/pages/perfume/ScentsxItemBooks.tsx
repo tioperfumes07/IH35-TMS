@@ -10,7 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { getScentsxItemBooks, makeScentsxItems, type ScentsxItemBookRow, type ScentsxItemBooksFilter } from "../../api/scentsx";
+import { getScentsxItemBooks, makeScentsxItems, syncScentsxItemAccounts, type ScentsxItemBookRow, type ScentsxItemBooksFilter } from "../../api/scentsx";
 import { bulkEditPerfumeItems, listPerfumeCatalogs } from "../../api/perfume";
 import { DASH } from "./perfumeDocParts";
 
@@ -48,6 +48,19 @@ export function ScentsxItemBooks() {
       }
       pushToast(`${made.toLocaleString("en-US")} ScentsX items made`, "success");
     } catch (e) { pushToast(userFacingApiError(e, `Stopped after ${made} made`), "error"); }
+    finally { setBusy(null); await refresh(); }
+  };
+  const syncAccounts = async () => {
+    let done = 0;
+    try {
+      for (;;) {
+        const r = await syncScentsxItemAccounts(500);
+        done += r.updated;
+        setBusy(`Updating ScentsX items… ${done.toLocaleString("en-US")} updated, ${r.remaining.toLocaleString("en-US")} left`);
+        if (!r.remaining || r.updated === 0) break;
+      }
+      pushToast(`${done.toLocaleString("en-US")} ScentsX items now post to their category's COGS account`, "success");
+    } catch (e) { pushToast(userFacingApiError(e, `Stopped after ${done} updated`), "error"); }
     finally { setBusy(null); await refresh(); }
   };
   const setCategoryAll = async () => {
@@ -95,6 +108,11 @@ export function ScentsxItemBooks() {
         <button type="button" className={btn} disabled={!!busy || !d?.total || f.linked === "yes"} onClick={() => void makeAll()} data-testid="scentsx-item-books-make-all">
           {`Make ScentsX item — all ${(d ? d.total - d.linked : 0).toLocaleString("en-US")} matching`}
         </button>
+        {d?.account_drift ? (
+          <button type="button" className={btn} disabled={!!busy} onClick={() => void syncAccounts()} data-testid="scentsx-item-books-sync">
+            {`Update COGS account on ${d.account_drift.toLocaleString("en-US")} ScentsX items whose category changed`}
+          </button>
+        ) : null}
         <label>Set category{" "}
           <select className={ctl} value={setCat} onChange={(e) => setSetCat(e.target.value)} data-testid="scentsx-item-books-setcat">
             <option value="">—</option>{categories.map((c) => <option key={c} value={c}>{c}</option>)}
