@@ -249,7 +249,8 @@ export type ScentsxApPayment = { id: string; date: string; method: string; check
   bill_id: string; bill: string | null; paid_from: string | null; voided: boolean };
 export type ScentsxBank = { id: string; name: string; account_type: string; account_number: string | null };
 export type ScentsxVendorAccount = { as_of: string; operating_company_id: string; vendor: { id: string; name: string; perfume_vendor_id: string | null; perfume_vendor: string | null };
-  buckets: ScentsxApBuckets; open_bills: ScentsxApOpenBill[]; bills: ScentsxApBill[]; payments: ScentsxApPayment[]; bank_accounts: ScentsxBank[] };
+  buckets: ScentsxApBuckets; open_bills: ScentsxApOpenBill[]; bills: ScentsxApBill[]; payments: ScentsxApPayment[]; credits: ScentsxApCredit[]; bank_accounts: ScentsxBank[] };
+export type ScentsxApCredit = { id: string; display_id: string; issue_date: string; status: string; notes: string | null; amount_cents: number; applied_cents: number; unapplied_cents: number };
 export const getScentsxPayablesAging = (asOf: string) =>
   apiRequest<{ as_of: string; operating_company_id: string; totals: ScentsxApBuckets; vendors: ScentsxApAgingRow[] }>(`/api/v1/scentsx/payables/aging?as_of=${encodeURIComponent(asOf)}`);
 export const getScentsxVendorAccount = (vendorId: string, asOf: string) =>

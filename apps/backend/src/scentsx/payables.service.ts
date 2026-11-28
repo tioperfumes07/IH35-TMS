@@ -125,9 +125,17 @@ export async function vendorAccount(c: Q, vendorId: string, f: z.infer<typeof pa
        LEFT JOIN banking.bank_accounts ba ON ba.id = bp.from_bank_account_id
       WHERE bp.operating_company_id = $1::uuid AND ${VENDOR_OF("b")} = $2::uuid AND bp.settlement_deduction_noncash IS NOT TRUE
       ORDER BY bp.payment_date DESC, bp.created_at DESC LIMIT 500`, [co, vendorId])).rows;
+  // Vendor credits with something left to apply (returns credited after billing, #29960) — applied to a bill through the one
+  // vendor-credit apply engine (POST /api/v1/accounting/vendor-credits/:id/apply).
+  const credits = (await c.query(
+    `SELECT vc.id::text, vc.display_id, vc.issue_date::text, vc.status, vc.notes,
+            vc.amount_cents::float8 AS amount_cents, vc.amount_applied_cents::float8 AS applied_cents, vc.amount_unapplied_cents::float8 AS unapplied_cents
+       FROM accounting.vendor_credits vc
+      WHERE vc.operating_company_id = $1::uuid AND vc.vendor_id = $2 AND vc.status <> 'voided'
+      ORDER BY vc.issue_date DESC, vc.display_id DESC LIMIT 500`, [co, vendorId])).rows;
   const banks = (await c.query(
     `SELECT b.id::text, b.account_name AS name, b.account_type, a.account_number
        FROM banking.bank_accounts b LEFT JOIN catalogs.accounts a ON a.id = b.ledger_account_id
       WHERE b.operating_company_id = $1::uuid AND b.is_active = true AND b.deactivated_at IS NULL ORDER BY a.account_number NULLS LAST, b.account_name`, [co])).rows;
-  return { as_of: asOf, operating_company_id: co, vendor: v, buckets, open_bills: open, bills, payments, bank_accounts: banks };
+  return { as_of: asOf, operating_company_id: co, vendor: v, buckets, open_bills: open, bills, payments, credits, bank_accounts: banks };
 }
