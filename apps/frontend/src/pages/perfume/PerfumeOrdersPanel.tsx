@@ -73,7 +73,7 @@ export function PerfumeOrdersPanel() {
           <Button type="button" className="h-[34px] px-3 text-xs" onClick={() => setAdding((v) => !v)} data-testid="perfume-orders-new">{tr("perfume.orders.new", "New sales order")}</Button>
         </div>
         {adding ? <NewOrderForm onClose={() => setAdding(false)} onCreated={(id) => { setAdding(false); setSelected(id); void orders.refetch(); }} /> : null}
-        <ParityTable<PerfumeOrderRow>
+        <ParityTable<PerfumeOrderRow> selectable
           rows={shown}
           rowKey={(r) => r.id}
           loading={orders.isLoading}
@@ -196,7 +196,7 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
             placeholder={tr("perfume.orders.override_ph", "Only to sell below an item's minimum price, or off a locked price — goes in the item's history")} />
         </label>
       )}
-      <ParityTable<PerfumeOrderLine>
+      <ParityTable<PerfumeOrderLine> selectable
         cardTitle title={tr("perfume.orders.lines", "Lines")}
         rows={o.lines}
         rowKey={(l) => `${l.id}-${l.qty}-${l.qty_shipped}-${l.unit_price_cents}`}
@@ -230,7 +230,7 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
           {tr("perfume.orders.skipped", "Not bought — pick these by hand on a purchase order:")} {skipped.map((s) => `#${s.line_no} ${s.description} (${s.reason})`).join("; ")}
         </div>
       ) : null}
-      <ParityTable<PerfumePoRow>
+      <ParityTable<PerfumePoRow> selectable
         cardTitle title={tr("perfume.orders.pos", "Purchase orders for this sales order")}
         rows={pos.data?.purchase_orders ?? []}
         rowKey={(p) => p.id}

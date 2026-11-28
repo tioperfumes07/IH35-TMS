@@ -66,7 +66,7 @@ export function ReturnForm({ invoiceId, onDone, onClose }: { invoiceId: string; 
         <label>{tr("perfume.ret.site", "Back to site")} <span className="block"><SitePicker value={site} onChange={setSite} label={tr("perfume.ret.site", "Back to site")} testId="perfume-return-site" /></span></label>
         <label>{tr("perfume.ret.notes", "Notes")} <input className={`${ctl} block w-[260px]`} aria-label={tr("perfume.ret.notes", "Notes")} value={notes} onChange={(e) => setNotes(e.target.value)} data-testid="perfume-return-notes" /></label>
       </div>
-      <ParityTable<Row>
+      <ParityTable<Row> selectable
         rows={d.lines} rowKey={(l) => l.so_line_id} storageKey="perfume-return-lines-v1" emptyText="No sales-order lines on this invoice."
         columns={[
           { key: "line_no", label: "#", kind: "number", cellClass: "text-right tabular-nums", render: (l) => String(l.line_no) },
@@ -98,7 +98,7 @@ export function ReturnsList() {
   const q = useQuery({ queryKey: ["scentsx", "returns"], queryFn: listScentsxReturns });
   if (q.isError) return <ListErrorState title={tr("perfume.ret.list_error", "Couldn't load the returns")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />;
   return (
-    <ParityTable<ScentsxReturnRow>
+    <ParityTable<ScentsxReturnRow> selectable
       cardTitle title={tr("perfume.ret.list", "Returns")} rows={q.data?.returns ?? []} rowKey={(r) => r.id} loading={q.isLoading} storageKey="perfume-returns-v1" exportFilename="TIO returns" exportExcel
       emptyText="No returns yet."
       columns={[
@@ -146,7 +146,7 @@ export function CustomerStatement({ companyId, customerId }: { companyId: string
         {from > to ? <span className="text-[#B91C1C]">{tr("perfume.stmt.order", "From must be on or before To")}</span> : null}
       </div>
       {q.isError ? <ListErrorState title={tr("perfume.stmt.error", "Couldn't load the statement")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} /> : (
-        <ParityTable<StmtRow>
+        <ParityTable<StmtRow> selectable
           rows={rows} rowKey={(r) => r.key} loading={q.isLoading} storageKey="perfume-ar-statement-v1" exportFilename={`TIO statement ${from} to ${to}`} exportExcel emptyText="No statement."
           columns={[
             { key: "date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.date), exportValue: (r) => r.date },

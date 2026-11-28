@@ -109,7 +109,7 @@ export function PerfumeTradeShowsPanel() {
           <Button type="button" className="h-[34px] px-3 text-xs" data-testid="perfume-shows-add" onClick={() => setAdding(true)}>{tr("perfume.shows.add", "Add a show")}</Button>
         </div>
         {adding ? <AddShowForm onClose={() => setAdding(false)} onSaved={() => { setAdding(false); void shows.refetch(); }} /> : null}
-        <ParityTable<PerfumeShow>
+        <ParityTable<PerfumeShow> selectable
           rows={rows}
           rowKey={(s) => s.id}
           loading={shows.isLoading}
@@ -233,7 +233,7 @@ function ShowDetail({ show, onClose, onChanged }: { show: PerfumeShow | null; on
           </div>
         ) : null}
       </div>
-      <ParityTable<PerfumeShowContact>
+      <ParityTable<PerfumeShowContact> selectable
         cardTitle title={tr("perfume.shows.contacts_title", "Contacts at this show")}
         rows={contacts.data?.contacts ?? []}
         rowKey={(x) => x.id}

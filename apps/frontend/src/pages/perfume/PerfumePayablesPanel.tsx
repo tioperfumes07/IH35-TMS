@@ -58,7 +58,7 @@ export function PerfumePayablesPanel() {
           <span className="text-[#64748B]">{tr("perfume.ap.basis", "Days past the bill's due date. Balances are the books' own open amounts (A/P control account).")}</span>
         </div>
         {d ? <ApStrip b={d.totals} testId="perfume-ap-totals" /> : null}
-        <ParityTable<ScentsxApAgingRow>
+        <ParityTable<ScentsxApAgingRow> selectable
           rows={d?.vendors ?? []} rowKey={(r) => r.vendor_id ?? r.vendor} loading={aging.isLoading} storageKey="perfume-ap-aging-v1" exportFilename={`TIO payables ${asOf}`} exportExcel
           emptyText="No open bills — nothing owed to vendors on ScentsX's books." onRowClick={(r) => { if (r.vendor_id) open("payables", r.vendor_id); }}
           columns={[
@@ -94,7 +94,7 @@ function VendorAccount({ vendorId, asOf, onChanged }: { vendorId: string; asOf: 
         {a.vendor.perfume_vendor_id ? <DocLink tab="suppliers" id={a.vendor.perfume_vendor_id}>{tr("perfume.ap.open_vendor", "Supplier profile")}</DocLink> : null}
       </div>
       <ApStrip b={a.buckets} testId="perfume-ap-vendor-buckets" />
-      <ParityTable<ScentsxApOpenBill>
+      <ParityTable<ScentsxApOpenBill> selectable
         cardTitle title={tr("perfume.ap.open_bills", "Open bills")} rows={a.open_bills} rowKey={(r) => `${r.id}-${r.open_cents}`} storageKey="perfume-ap-open-v1" exportFilename={`TIO open bills ${a.vendor.name}`} exportExcel
         emptyText="Nothing owed to this vendor."
         columns={[
@@ -112,7 +112,7 @@ function VendorAccount({ vendorId, asOf, onChanged }: { vendorId: string; asOf: 
       />
       {bill ? <PayBill key={bill.id} bill={bill} companyId={a.operating_company_id} banks={a.bank_accounts} onClose={() => setPaying(null)} onDone={async () => { setPaying(null); await refresh(); }} /> : null}
       <PerfumeVendorCredits credits={a.credits ?? []} openBills={a.open_bills} companyId={a.operating_company_id} onDone={refresh} />
-      <ParityTable<ScentsxApPayment>
+      <ParityTable<ScentsxApPayment> selectable
         cardTitle title={tr("perfume.ap.payments", "Payments")} rows={a.payments} rowKey={(r) => r.id} storageKey="perfume-ap-payments-v1" exportFilename={`TIO vendor payments ${a.vendor.name}`} exportExcel
         emptyText="No payments to this vendor."
         columns={[
@@ -125,7 +125,7 @@ function VendorAccount({ vendorId, asOf, onChanged }: { vendorId: string; asOf: 
           { className: "text-left", key: "voided", label: "Status", render: (r) => (r.voided ? "Voided" : "Paid"), exportValue: (r) => (r.voided ? "Voided" : "Paid") },
         ]}
       />
-      <ParityTable<ScentsxApBill>
+      <ParityTable<ScentsxApBill> selectable
         cardTitle title={tr("perfume.ap.bills", "Every bill")} rows={a.bills} rowKey={(r) => r.id} storageKey="perfume-ap-bills-v1" exportFilename={`TIO bills ${a.vendor.name}`} exportExcel emptyText="No bills."
         columns={[
           { className: "text-left", key: "display_id", label: "Bill", render: (r) => <Link className="underline" to={`/accounting/bills/${encodeURIComponent(r.id)}`}>{r.display_id ?? r.id.slice(0, 8)}</Link>, exportValue: (r) => r.display_id ?? "" },
@@ -222,7 +222,7 @@ function VendorStatement({ companyId, vendorId }: { companyId: string; vendorId:
         <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!s} onClick={() => openPrintableDocument(print)} data-testid="perfume-ap-statement-print">{tr("perfume.stmt.print", "Print / PDF")}</Button>
       </div>
       {q.isError ? <ListErrorState title={tr("perfume.stmt.error", "Couldn't load the statement")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} /> : (
-        <ParityTable<StmtRow>
+        <ParityTable<StmtRow> selectable
           rows={rows} rowKey={(r) => r.key} loading={q.isLoading} storageKey="perfume-ap-statement-v1" exportFilename={`TIO vendor statement ${from} to ${to}`} exportExcel emptyText="No statement."
           columns={[
             { key: "date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.date), exportValue: (r) => r.date },

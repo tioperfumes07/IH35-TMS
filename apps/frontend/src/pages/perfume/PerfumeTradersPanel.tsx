@@ -114,7 +114,7 @@ export function PerfumeTradersPanel() {
           <MultiSelectDropdown label={tr("perfume.trd.brands", "Brands")} allLabel={tr("perfume.trd.top_brands", "Top 8 brands")} searchable data-testid="perfume-trd-brands"
             options={(o?.brand_options ?? []).map((b) => ({ value: b.brand, label: `${b.brand} (${b.vendors})` }))} selected={brands} onChange={setBrands} />
         </div>
-        <ParityTable<MatrixRow>
+        <ParityTable<MatrixRow> selectable
           rows={o?.matrix ?? []}
           rowKey={(r) => r.vendor_id}
           loading={data.isLoading}
@@ -137,7 +137,7 @@ export function PerfumeTradersPanel() {
 
       <div className="grid gap-3 xl:grid-cols-2">
         <section id="perfume-trd-common" className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.trd.common", "Buyers on several exposed lists")}>
-          <ParityTable<Common>
+          <ParityTable<Common> selectable
             cardTitle title={tr("perfume.trd.common", "Buyers on several exposed lists")}
             rows={o?.common_buyers ?? []}
             rowKey={(r) => r.id}
@@ -158,7 +158,7 @@ export function PerfumeTradersPanel() {
           />
         </section>
         <section id="perfume-trd-exposed" className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.trd.exposed", "Exposed vendor lists")}>
-          <ParityTable<Exposed>
+          <ParityTable<Exposed> selectable
             cardTitle title={tr("perfume.trd.exposed", "Exposed vendor lists")}
             rows={o?.exposed_lists ?? []}
             rowKey={(r) => r.sender}
@@ -262,7 +262,7 @@ function TradeDetail({ trade, onClose, onChanged }: { trade: PerfumeTrade | null
       </div>
       <CompanyPick placeholder={tr("perfume.trd.add_buyer", "Match a buyer — type a company, person, email or city")} testId="perfume-trd-buyer-find"
         onPick={(id, name) => void act(() => addPerfumeTradeBuyer(trade.id, { company_id: id, offer_cents: trade.sell_cents }), `${name} matched`)} />
-      <ParityTable<PerfumeTradeBuyer>
+      <ParityTable<PerfumeTradeBuyer> selectable
         cardTitle title={tr("perfume.trd.buyers_title", "Buyers matched to this trade")}
         rows={trade.buyers}
         rowKey={(b) => b.id}
