@@ -733,6 +733,17 @@ export const getPerfumeItemProfile = (itemId: string) => apiRequest<PerfumeItemP
 /** Role (vendor / customer / both) + vendor / customer type on the one company record. */
 export const setPerfumeCompanyRole = (companyId: string, b: { role?: "vendor" | "customer" | "both" | null; vendor_type?: string | null; customer_type?: string | null }) =>
   apiRequest<{ changed: boolean; role: string | null; vendor_type: string | null; customer_type: string | null }>(`/api/v1/perfume/companies/${companyId}/role`, { method: "PATCH", body: b });
+/** M19: the company center — open A/R + A/P from the books' aging, every transaction (each opens its page), notes. */
+export type PerfumeCenterTxn = { key: string; type: "Quote" | "Sales order" | "Invoice" | "Payment" | "Credit memo" | "Purchase order" | "Bill" | "Bill payment" | "Vendor credit";
+  side: "customer" | "vendor"; id: string; number: string | null; date: string | null; due_date: string | null; status: string | null; amount_cents: number; open_cents: number | null;
+  tab: string | null; path: string | null };
+type PerfumeAging = { current: number; b1: number; b2: number; b3: number; total: number };
+export type PerfumeCompanyCenter = { company: { id: string; name: string } & Record<string, unknown>; notes: string | null; customer_ids: string[]; vendor_ids: string[];
+  open_ar_cents: number; open_ap_cents: number; ar_aging: PerfumeAging; ap_aging: PerfumeAging; quoted_cents: number; ordered_cents: number; bought_cents: number;
+  transactions: PerfumeCenterTxn[]; operating_company_id: string };
+export const getPerfumeCompanyCenter = (companyId: string) => apiRequest<PerfumeCompanyCenter>(`/api/v1/perfume/companies/${companyId}/center`);
+export const savePerfumeCompanyNotes = (companyId: string, notes: string | null) =>
+  apiRequest<{ updated: number }>(`/api/v1/perfume/companies/${companyId}/notes`, { method: "PUT", body: { notes } });
 export const getPerfumeCompanyActivity = (companyId: string) => apiRequest<PerfumeCompanyActivity>(`/api/v1/perfume/contacts/${companyId}/activity`);
 /* ------------------------------------------------------------------ lead history + reverse links (fully-wired items f + g, owner 2026-11-26 18:13 CT) */
 export type PerfumeLeadEvent = { id: string; entity: string; entity_id: string; action: string; detail: Record<string, unknown>; upload_id: string | null; created_at: string; by_name: string | null };
