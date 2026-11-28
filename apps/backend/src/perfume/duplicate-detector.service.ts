@@ -161,7 +161,7 @@ export async function listRecommendations(c: Q, f: { limit?: number } = {}): Pro
     `SELECT d.id::text, d.reasons, d.score::text, d.first_seen_at::text, ${CARD("a")} AS a, ${CARD("b")} AS b
        FROM perfume.duplicate_candidates d JOIN perfume.contact_companies a ON a.id = d.a_id JOIN perfume.contact_companies b ON b.id = d.b_id
       WHERE d.status = 'open' AND a.archived_at IS NULL AND b.archived_at IS NULL
-      ORDER BY d.score DESC, a.name LIMIT $1`, [Math.min(f.limit ?? 2000, 5000)])).rows;
+      ORDER BY d.score DESC, a.name LIMIT $1`, [Math.min(f.limit ?? 10000, 10000)])).rows;
   const open = (await c.query<{ n: number }>(`SELECT count(*)::int n FROM perfume.duplicate_candidates WHERE status = 'open'`)).rows[0]!.n;
   return {
     open,
