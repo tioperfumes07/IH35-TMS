@@ -651,7 +651,12 @@ export function runCensus({ writeCensus = false } = {}) {
   if (writeCensus) {
     const md = renderCensusMd(summary, byModule, designFiles);
     fs.mkdirSync(path.dirname(CENSUS_MD), { recursive: true });
-    fs.writeFileSync(CENSUS_MD, md);
+    // CENSUS-NO-CHURN (2026-11-28, LEAD): every run used to rewrite this TRACKED file with a fresh "Generated:" stamp, so the
+    // tree was dirty after each guard run and every seat's push re-ran, amended and drifted forever. The census is rewritten
+    // only when its content (everything but the stamp) changed; an unchanged census keeps the file byte-for-byte.
+    const stripStamp = (text) => text.replace(/^Generated: .*$/m, "Generated: <stamp>");
+    const current = fs.existsSync(CENSUS_MD) ? fs.readFileSync(CENSUS_MD, "utf8") : null;
+    if (current == null || stripStamp(current) !== stripStamp(md)) fs.writeFileSync(CENSUS_MD, md);
   }
 
   return { summary, rows, byModule };
