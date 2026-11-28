@@ -5,6 +5,7 @@
  * owner edits any price). Every change is in the history. Nothing is deleted — a quote or a line taken off is archived.
  * Never posts to accounting (owner: "maybe later").
  */
+import { DocCatalogPickers } from "./PerfumeDocCatalogPickers";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -285,10 +286,8 @@ function QuoteEditor({ id, onClose, onChanged, onOpen }: { id: string; onClose: 
         <span>{`${q.lines.length} line${q.lines.length === 1 ? "" : "s"} · ${q.lines.reduce((t, l) => t + l.qty, 0).toLocaleString("en-US")} units`}</span>
         <span data-testid="perfume-quote-total">{money(total, q.currency)}</span>
       </div>
+      <DocCatalogPickers doc={q} docDate={q.quote_date} withTax={true} onPatch={(b) => void patch(b)} testId="perfume-quotes-picks" dueAfter="invoice date" />
       <div className="flex flex-wrap gap-2">
-        <label className="flex-1 text-xs">{tr("perfume.quotes.terms", "Terms")}
-          <textarea className="block min-h-[56px] w-full rounded-sm border border-[#C6D1DC] p-2 text-xs" defaultValue={q.terms ?? ""} onBlur={(e) => { if (e.target.value !== (q.terms ?? "")) void patch({ terms: e.target.value || null }); }} />
-        </label>
         <label className="flex-1 text-xs">{tr("perfume.quotes.notes", "Notes")}
           <textarea className="block min-h-[56px] w-full rounded-sm border border-[#C6D1DC] p-2 text-xs" defaultValue={q.notes ?? ""} onBlur={(e) => { if (e.target.value !== (q.notes ?? "")) void patch({ notes: e.target.value || null }); }} />
         </label>

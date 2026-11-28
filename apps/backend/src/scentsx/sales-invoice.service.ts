@@ -14,6 +14,8 @@
 import type pg from "pg";
 import { createExpandedInvoice } from "../accounting/invoices.service.js";
 import { createInvoiceLineInClientTx } from "../accounting/invoice-line-create.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
+import { dueFromPickedTerms } from "../perfume/doc-catalogs.service.js";
 import { scopeToScentsx, ScentsxLinkInvalid, ScentsxLinkNotFound } from "./links.service.js";
 import { assertNotSanctionsBlocked, hasExportProof, hasResaleCertificate } from "./sanctions.service.js";
 
@@ -44,8 +46,10 @@ export async function billableLines(c: Q, salesOrderId: string): Promise<Billabl
 
 export async function invoiceSalesOrder(c: Q, uid: string, salesOrderId: string, channel: SalesChannel = "wholesale") {
   const co = await scopeToScentsx(c);
-  const so = await c.query<{ id: string; number: string; company_id: string | null; customer_name: string; currency: string }>(
-    `SELECT id::text, number, company_id::text, customer_name, currency FROM perfume.sales_orders WHERE id = $1::uuid AND archived_at IS NULL`,
+  const so = await c.query<{ id: string; number: string; company_id: string | null; customer_name: string; currency: string; payment_terms_id: string | null;
+    terms: string | null; tax_code: string | null }>(
+    `SELECT id::text, number, company_id::text, customer_name, currency, payment_terms_id::text, terms,
+            (SELECT t.display_name FROM catalogs.tax_codes t WHERE t.id = tax_code_id) AS tax_code FROM perfume.sales_orders WHERE id = $1::uuid AND archived_at IS NULL`,
     [salesOrderId]
   );
   const order = so.rows[0];
@@ -74,18 +78,24 @@ export async function invoiceSalesOrder(c: Q, uid: string, salesOrderId: string,
   const revenueAccountId = acct.rows[0]?.id;
   if (!revenueAccountId) throw new ScentsxLinkInvalid(`ScentsX revenue account ${REVENUE_ACCOUNT[channel]} is missing`);
 
+  // M20: the order's picked terms set the due date (issue date + the terms' days); none picked → the customer's terms (engine default).
+  const issueDate = companyBusinessDate();
+  const dueDate = (await dueFromPickedTerms(c, order.payment_terms_id, issueDate)) ?? undefined;
+  const pick = [order.terms ? `Terms ${order.terms}` : null, order.tax_code ? `Sales tax: ${order.tax_code}` : null].filter(Boolean).join(" · ");
   const inv = await createExpandedInvoice(c as never, {
     operatingCompanyId: co,
     userId: uid,
+    issueDate,
+    ...(dueDate ? { dueDate } : {}),
     invoiceType: "manual",
     customerId,
     billToEntityType: "customer",
     billToEntityId: customerId,
-    internalNotes: channel === "export"
+    internalNotes: (pick ? `${pick}. ` : "") + (channel === "export"
       ? `TIO Perfumes sales order ${order.number} (export). Export proof on file — no Texas sales tax.`
       : resale
         ? `TIO Perfumes sales order ${order.number} (${channel}). Resale certificate on file — no Texas sales tax.`
-        : `TIO Perfumes sales order ${order.number} (${channel}). NO resale certificate on file: add Texas sales tax on the Invoices page before finalizing.`,
+        : `TIO Perfumes sales order ${order.number} (${channel}). NO resale certificate on file: add Texas sales tax on the Invoices page before finalizing.`),
   });
   for (const l of lines) {
     const created = await createInvoiceLineInClientTx(c, {

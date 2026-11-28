@@ -5,6 +5,7 @@
  * the PO is received when every line is. Links both ways: vendor profile, the sales order. History, Excel, PDF.
  * Nothing is deleted. Received units are billed to ScentsX A/P from here (PurchaseBillForm, migration 202617120100).
  */
+import { DocCatalogPickers } from "./PerfumeDocCatalogPickers";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -239,10 +240,8 @@ function PoEditor({ id, onClose, onChanged }: { id: string; onClose: () => void;
         <span>{`${p.lines.length} line${p.lines.length === 1 ? "" : "s"} · ${p.lines.reduce((t, l) => t + l.qty, 0).toLocaleString("en-US")} units · ${p.lines.reduce((t, l) => t + l.qty_received, 0).toLocaleString("en-US")} received`}</span>
         <span data-testid="perfume-po-total">{money(total, p.currency)}</span>
       </div>
+      <DocCatalogPickers doc={p} docDate={p.order_date} withTax={false} onPatch={(b) => void patch(b)} testId="perfume-pos-picks" dueAfter="vendor bill date" />
       <div className="flex flex-wrap gap-2">
-        <label className="flex-1 text-xs">{tr("perfume.pos.terms", "Terms")}
-          <textarea className="block min-h-[56px] w-full rounded-sm border border-[#C6D1DC] p-2 text-xs" defaultValue={p.terms ?? ""} onBlur={(e) => { if (e.target.value !== (p.terms ?? "")) void patch({ terms: e.target.value || null }); }} />
-        </label>
         <label className="flex-1 text-xs">{tr("perfume.pos.notes", "Notes")}
           <textarea className="block min-h-[56px] w-full rounded-sm border border-[#C6D1DC] p-2 text-xs" defaultValue={p.notes ?? ""} onBlur={(e) => { if (e.target.value !== (p.notes ?? "")) void patch({ notes: e.target.value || null }); }} />
         </label>

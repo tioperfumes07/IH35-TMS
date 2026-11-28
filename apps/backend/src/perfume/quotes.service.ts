@@ -6,6 +6,7 @@
  * Wired both ways: a quote → its customer (perfume.contact_companies) and its items (perfume.items, cost from the current
  * supplier lists); a customer → its quotes (quotesOfCompany) and an item → the quotes it is on (quotesOfItem).
  */
+import { applyDocCatalogs, docCatalogColumns, docCatalogFields } from "./doc-catalogs.service.js";
 import type pg from "pg";
 import { z } from "zod";
 import ExcelJS from "exceljs";
@@ -24,6 +25,7 @@ export const quoteSchema = z.object({
   customer_name: text(300), customer_email: text(200), customer_phone: text(80),
   quote_date: date.optional(), valid_until: date.nullable().optional(),
   currency: z.enum(["USD", "MXN"]).optional(), terms: text(4000), notes: text(4000),
+  ...docCatalogFields,
 });
 export const quotePatchSchema = quoteSchema;
 export const lineSchema = z.object({
@@ -48,7 +50,7 @@ const TOTALS = `(SELECT coalesce(sum(l.qty * l.unit_price_cents), 0)::bigint FRO
   (SELECT coalesce(sum(l.qty), 0)::int FROM perfume.quote_lines l WHERE l.quote_id = q.id AND l.archived_at IS NULL) AS units`;
 const HEADER = `q.id, q.number, q.company_id, q.customer_name, q.customer_email, q.customer_phone, q.quote_date::text, q.valid_until::text,
   CASE WHEN q.status = 'sent' AND q.valid_until IS NOT NULL AND q.valid_until < current_date THEN 'expired' ELSE q.status END AS status,
-  q.currency, q.terms, q.notes, q.created_at, q.updated_at,
+  q.currency, q.terms, q.notes, q.created_at, q.updated_at, ${docCatalogColumns("q", true)},
   (SELECT o.id FROM perfume.sales_orders o WHERE o.quote_id = q.id AND o.archived_at IS NULL LIMIT 1) AS order_id,
   (SELECT o.number FROM perfume.sales_orders o WHERE o.quote_id = q.id AND o.archived_at IS NULL LIMIT 1) AS order_number`;
 
@@ -71,6 +73,7 @@ export type QuoteLine = { id: string; line_no: number; item_id: string | null; d
   unit_price_cents: number; cost_cents: number | null; cost_vendor_id: string | null; cost_vendor: string | null; item_name: string | null };
 export type QuoteFull = Record<string, unknown> & { id: string; number: string; company_id: string | null; customer_name: string; customer_email: string | null;
   customer_phone: string | null; quote_date: string; valid_until: string | null; status: string; currency: string; terms: string | null; notes: string | null;
+  payment_terms_id: string | null; shipping_method: string | null; terms_days: number | null; tax_code_id: string | null; tax_code_name: string | null;
   lines: QuoteLine[]; events: Array<Record<string, unknown>> };
 
 export async function getQuote(c: pg.PoolClient, id: string): Promise<QuoteFull> {
@@ -106,6 +109,7 @@ export async function createQuote(c: pg.PoolClient, uid: string, x: z.infer<type
      VALUES ($1,$2,$3,$4,coalesce($5::date, current_date),$6,coalesce($7,'USD'),$8,$9,$10) RETURNING id, number`,
     [x.company_id ?? null, name, x.customer_email ?? cu?.email ?? null, x.customer_phone ?? cu?.phone ?? null, x.quote_date ?? null, x.valid_until ?? null,
      x.currency ?? null, x.terms, x.notes, uid]);
+  await applyDocCatalogs(c, "quotes", r.rows[0]!.id, x);
   await quoteEvent(c, r.rows[0]!.id, uid, "created", { number: r.rows[0]!.number, customer: name });
   return r.rows[0]!;
 }
@@ -129,6 +133,7 @@ export async function updateQuote(c: pg.PoolClient, uid: string, id: string, x: 
     `UPDATE perfume.quotes SET company_id = $2, customer_name = $3, customer_email = $4, customer_phone = $5, quote_date = $6, valid_until = $7,
             currency = $8, terms = $9, notes = $10, updated_at = now() WHERE id = $1`,
     [id, next.company_id, next.customer_name, next.customer_email, next.customer_phone, next.quote_date, next.valid_until, next.currency, next.terms, next.notes]);
+  await applyDocCatalogs(c, "quotes", id, x);
   const changed = Object.keys(x).filter((k) => x[k as keyof typeof x] !== undefined);
   await quoteEvent(c, id, uid, "edited", { fields: changed });
 }
@@ -232,7 +237,8 @@ export async function removeLine(c: pg.PoolClient, uid: string, lineId: string) 
 export async function copyQuote(c: pg.PoolClient, uid: string, id: string) {
   const src = await getQuote(c, id);
   const n = await createQuote(c, uid, { company_id: src.company_id, customer_name: src.customer_name, customer_email: src.customer_email,
-    customer_phone: src.customer_phone, currency: src.currency as "USD" | "MXN", terms: src.terms, notes: src.notes });
+    customer_phone: src.customer_phone, currency: src.currency as "USD" | "MXN", terms: src.terms, notes: src.notes,
+    payment_terms_id: src.payment_terms_id, shipping_method: src.shipping_method, tax_code_id: src.tax_code_id });
   let no = 0;
   for (const l of src.lines) {
     no++;

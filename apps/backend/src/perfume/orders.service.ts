@@ -6,6 +6,7 @@
  * Wired both ways: order → its quote, customer and items; quote → its order (quotes HEADER order_id / order_number);
  * customer → its orders (ordersOfCompany); item → the orders it is on (ordersOfItem).
  */
+import { applyDocCatalogs, docCatalogColumns, docCatalogFields } from "./doc-catalogs.service.js";
 import type pg from "pg";
 import { z } from "zod";
 import ExcelJS from "exceljs";
@@ -28,6 +29,7 @@ export const orderSchema = z.object({
   location_code: z.string().min(1).max(40).nullable().optional(),
   order_date: date.optional(), ship_by: date.nullable().optional(),
   currency: z.enum(["USD", "MXN"]).optional(), terms: text(4000), notes: text(4000),
+  ...docCatalogFields,
 });
 export const orderLineSchema = z.object({
   item_id: z.string().uuid().nullable().optional(), description: text(400), upc: text(40),
@@ -53,14 +55,15 @@ const TOTALS = `(SELECT coalesce(sum(l.qty * l.unit_price_cents), 0)::bigint FRO
   (SELECT coalesce(sum(l.qty), 0)::int FROM perfume.sales_order_lines l WHERE l.order_id = o.id AND l.archived_at IS NULL) AS units,
   (SELECT coalesce(sum(l.qty_shipped), 0)::int FROM perfume.sales_order_lines l WHERE l.order_id = o.id AND l.archived_at IS NULL) AS units_shipped`;
 const HEADER = `o.id, o.number, o.quote_id, (SELECT q.number FROM perfume.quotes q WHERE q.id = o.quote_id) AS quote_number, o.company_id, o.customer_name,
-  o.customer_email, o.customer_phone, o.ship_to, o.order_date::text, o.ship_by::text, o.status, o.currency, o.terms, o.notes, o.created_at, o.updated_at, o.location_code,
+  o.customer_email, o.customer_phone, o.ship_to, o.order_date::text, o.ship_by::text, o.status, o.currency, o.terms, o.notes, o.created_at, o.updated_at, o.location_code, ${docCatalogColumns("o", true)},
   (SELECT count(*)::int FROM perfume.purchase_orders p WHERE p.sales_order_id = o.id AND p.archived_at IS NULL AND p.status <> 'cancelled') AS purchase_orders`;
 
 export type OrderLine = { id: string; line_no: number; item_id: string | null; description: string; upc: string | null; qty: number; qty_shipped: number;
   unit_price_cents: number; cost_cents: number | null; cost_vendor_id: string | null; cost_vendor: string | null };
 export type OrderFull = Record<string, unknown> & { id: string; number: string; quote_id: string | null; quote_number: string | null; company_id: string | null;
   customer_name: string; customer_email: string | null; customer_phone: string | null; ship_to: string | null; order_date: string; ship_by: string | null;
-  status: OrderStatus; currency: string; terms: string | null; notes: string | null; lines: OrderLine[]; events: Array<Record<string, unknown>> };
+  status: OrderStatus; currency: string; terms: string | null; notes: string | null;
+  payment_terms_id: string | null; shipping_method: string | null; terms_days: number | null; tax_code_id: string | null; tax_code_name: string | null; lines: OrderLine[]; events: Array<Record<string, unknown>> };
 
 export async function listOrders(c: pg.PoolClient, f: { status?: string; company_id?: string; item_id?: string; q?: string } = {}) {
   const where = ["o.archived_at IS NULL"];
@@ -98,6 +101,7 @@ export async function createOrder(c: pg.PoolClient, uid: string, x: z.infer<type
      VALUES ($1,$2,$3,$4,$5,coalesce($6::date, current_date),$7,coalesce($8,'USD'),$9,$10,$11,$12) RETURNING id, number`,
     [x.company_id ?? null, name, x.customer_email ?? cu?.email ?? null, x.customer_phone ?? cu?.phone ?? null, x.ship_to, x.order_date ?? null, x.ship_by ?? null,
      x.currency ?? null, x.terms, x.notes, uid, x.location_code ?? null]);
+  await applyDocCatalogs(c, "sales_orders", r.rows[0]!.id, x);
   await event(c, r.rows[0]!.id, uid, "created", { number: r.rows[0]!.number, customer: name });
   return r.rows[0]!;
 }
@@ -127,9 +131,11 @@ export async function orderFromQuote(c: pg.PoolClient, uid: string, quoteId: str
     }
   }
   const r = await c.query<{ id: string; number: string }>(
-    `INSERT INTO perfume.sales_orders (quote_id, company_id, customer_name, customer_email, customer_phone, ship_by, currency, terms, notes, created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id, number`,
-    [quoteId, q.company_id, q.customer_name, q.customer_email, q.customer_phone, x.ship_by ?? null, q.currency, q.terms, q.notes, uid]);
+    `INSERT INTO perfume.sales_orders (quote_id, company_id, customer_name, customer_email, customer_phone, ship_by, currency, terms, notes, created_by,
+                                     payment_terms_id, shipping_method, tax_code_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id, number`,
+    [quoteId, q.company_id, q.customer_name, q.customer_email, q.customer_phone, x.ship_by ?? null, q.currency, q.terms, q.notes, uid,
+     q.payment_terms_id, q.shipping_method, q.tax_code_id]);
   const o = r.rows[0]!;
   for (const l of q.lines) {
     await c.query(
@@ -154,6 +160,7 @@ export async function updateOrder(c: pg.PoolClient, uid: string, id: string, x: 
             location_code = $10, updated_at = now() WHERE id = $1`,
     [id, x.customer_name ?? b.customer_name, keep(x.customer_email, b.customer_email), keep(x.customer_phone, b.customer_phone), keep(x.ship_to, b.ship_to),
      keep(x.ship_by, b.ship_by), x.currency ?? b.currency, keep(x.terms, b.terms), keep(x.notes, b.notes), keep(x.location_code, b.location_code)]);
+  await applyDocCatalogs(c, "sales_orders", id, x);
   await event(c, id, uid, "edited", { fields: Object.keys(x).filter((k) => x[k as keyof typeof x] !== undefined) });
 }
 
