@@ -113,7 +113,11 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
           <PerfumeNameFormatCard onDone={() => void list.refetch()} />
         </>
       ) : (
-        <PerfumeCreateCompany role={initialRole === "vendor" ? "vendor" : "customer"} onCreated={(name) => { setQ(name); void list.refetch(); }} onOpen={(id) => setSelected(id)} />
+        <>
+          <PerfumeCreateCompany role={initialRole === "vendor" ? "vendor" : "customer"} onCreated={(name) => { setQ(name); void list.refetch(); }} onOpen={(id) => setSelected(id)} />
+          {/* L.29 E1 (CC3): the customers' purchase-history workbook creates the customer companies — on Customers, not Leads (owner 18:21 CT). */}
+          {initialRole === "customer" ? <CustomerSalesImportCard onDone={() => void list.refetch()} /> : null}
+        </>
       )}
       <PerfumeDuplicatesCard onDone={() => void list.refetch()} />
       <PerfumeDupRecommendations onDone={() => void list.refetch()} />
@@ -311,6 +315,110 @@ function ImportCard({ onDone }: { onDone: () => void }) {
           {state.error ? <b className="text-red-700"> — {state.error}</b> : null}
         </span>
       ) : <span className="text-[#64748B]">{tr("perfume.contacts.master_database_or_research_duplicate", "Master Database or a research file — duplicates are matched, never doubled.")}</span>}
+    </section>
+  );
+}
+
+type SalesImportPreview = { usaCount: number; mxCount: number; records: unknown[] };
+
+/** E1 (Lead L.29 2026-11-27): import TIO Perfumes USA + MX customer purchase history from the standard Excel report.
+ *  Parses "Clientes USA" (row 5+) and "Clientes México" (row 5+) sheets.  NO balances imported — name + role + country only.
+ *  Preview → owner Apply → POST /api/v1/perfume/contacts/import in batches of 500. */
+export function CustomerSalesImportCard({ onDone }: { onDone: () => void }) {
+  const { pushToast } = useToast();
+  const [preview, setPreview] = useState<SalesImportPreview | null>(null);
+  const [state, setState] = useState<{ done: number; total: number; tally: PerfumeContactImportTally | null; error: string | null } | null>(null);
+  const [parsing, setParsing] = useState(false);
+
+  const parse = async (f: File) => {
+    setParsing(true);
+    setPreview(null);
+    setState(null);
+    try {
+      const ExcelJS = (await import("exceljs")).default;
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(await f.arrayBuffer());
+      const usaSheet = wb.worksheets.find((s) => /clientes.?usa/i.test(s.name));
+      const mxSheet = wb.worksheets.find((s) => /m[eé]xico|mexico/i.test(s.name));
+      if (!usaSheet || !mxSheet) { pushToast("Could not find 'Clientes USA' and 'Clientes México' sheets in this file.", "error"); return; }
+      const records: unknown[] = [];
+      // USA sheet: row 4 = headers, row 5+ = data. Col 2 = Customer Name.
+      usaSheet.eachRow((row, n) => {
+        if (n < 5) return;
+        const name = String(row.getCell(2).value ?? "").trim();
+        if (!name) return;
+        records.push({ company: { name, role: "customer", country: "US", source: "TIO Sales History 2020-2026", status: "active" }, people: [] });
+      });
+      const usaCount = records.length;
+      // MX sheet: row 4 = headers, row 5+ = data. Col 2 = Customer Name.
+      mxSheet.eachRow((row, n) => {
+        if (n < 5) return;
+        const name = String(row.getCell(2).value ?? "").trim();
+        if (!name) return;
+        records.push({ company: { name, role: "customer", country: "MX", source: "TIO Sales History MX 2020-2025", status: "active" }, people: [] });
+      });
+      const mxCount = records.length - usaCount;
+      setPreview({ usaCount, mxCount, records });
+    } catch (e) {
+      pushToast(`Parse failed: ${e instanceof Error ? e.message : String(e)}`, "error");
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  const apply = async () => {
+    if (!preview) return;
+    const { records } = preview;
+    const sum: PerfumeContactImportTally = { records: 0, inserted: 0, matched: 0, by: {}, people_inserted: 0, people_existing: 0, origins: 0 };
+    setState({ done: 0, total: records.length, tally: null, error: null });
+    for (let i = 0; i < records.length; i += 500) {
+      try {
+        const t = await importPerfumeContacts(records.slice(i, i + 500));
+        for (const k of ["records", "inserted", "matched", "people_inserted", "people_existing", "origins"] as const) sum[k] += t[k];
+        for (const [k, v] of Object.entries(t.by)) sum.by[k] = (sum.by[k] ?? 0) + v;
+        setState({ done: Math.min(i + 500, records.length), total: records.length, tally: { ...sum, by: { ...sum.by } }, error: null });
+      } catch (e) {
+        setState({ done: i, total: records.length, tally: { ...sum }, error: userFacingApiError(e, "Import stopped") });
+        return;
+      }
+    }
+    pushToast(`Sales history import: ${sum.inserted.toLocaleString("en-US")} new · ${sum.matched.toLocaleString("en-US")} already on file`, "success");
+    setPreview(null);
+    onDone();
+  };
+
+  const busy = state != null && state.done < state.total && !state.error;
+
+  return (
+    <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3 text-xs" aria-label="Import customer sales history" data-testid="perfume-customer-sales-import">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-card-title">Import customer purchase history (Excel)</span>
+        <span className="text-[#64748B]">USA + MX sales history · role=customer · no balances · duplicates matched</span>
+      </div>
+      {!preview && !state && (
+        <div className="flex items-center gap-2">
+          <input type="file" accept=".xlsx,.xls" aria-label="Customer sales Excel file" disabled={parsing} data-testid="perfume-sales-import-file"
+            onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void parse(f); }} />
+          {parsing && <span className="text-[#64748B]">Parsing…</span>}
+        </div>
+      )}
+      {preview && !state && (
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="rounded border border-[#D1FAE5] bg-[#F0FDF4] px-3 py-2">
+            <span className="font-semibold text-[#15803D]">{(preview.usaCount + preview.mxCount).toLocaleString("en-US")} companies to import</span>
+            <span className="ml-2 text-[#64748B]">— {preview.usaCount.toLocaleString("en-US")} USA · {preview.mxCount.toLocaleString("en-US")} MX · role: customer · no balances</span>
+          </div>
+          <Button type="button" className="h-[30px] px-4 text-xs" disabled={busy} onClick={() => void apply()} data-testid="perfume-sales-import-apply">Apply — import now</Button>
+          <button type="button" className="text-xs text-[#64748B] underline" onClick={() => setPreview(null)}>Cancel</button>
+        </div>
+      )}
+      {state && (
+        <span data-testid="perfume-sales-import-status">
+          {state.done.toLocaleString("en-US")} of {state.total.toLocaleString("en-US")} posted
+          {state.tally ? ` · ${state.tally.inserted.toLocaleString("en-US")} new · ${state.tally.matched.toLocaleString("en-US")} matched` : ""}
+          {state.error ? <b className="text-red-700"> — {state.error}</b> : (state.done >= state.total ? " · done" : " · importing…")}
+        </span>
+      )}
     </section>
   );
 }
