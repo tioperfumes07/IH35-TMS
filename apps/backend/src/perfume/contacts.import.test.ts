@@ -81,4 +81,16 @@ describeIntegration("import into the contacts database (real Postgres, rolled ba
     const co = (await db.query(`SELECT phone, address, website FROM perfume.contact_companies WHERE domain = 'imptest-sig.com'`)).rows;
     expect(co).toEqual([{ phone: "212-327-0555", address: "2300 Marcus Ave, Suite C, New Hyde Park, NY 11042", website: "www.imptest-sig.com" }]);
   });
+
+  it("an email on file wins over a phone shared with another company (owner 2026-11-28)", async () => {
+    await importRecords(db as never, [
+      rec({ company: { name: "IMPTEST Spectrum", phone: "+1 (201) 555-0815" } }),
+      rec({ company: { name: "IMPTEST Perfumora", domain: "imptest-perfumora.com" }, people: [{ email: "sales@imptest-perfumora.com" }] }),
+    ], TEST_OWNER_USER_ID);
+    const t = await importRecords(db as never, [rec({ company: { name: "Spectrum NJ LLC", phone: "+1 (201) 555-0815", address: "200 Roosevelt Pl, Palisades Park, NJ 07650" },
+      people: [{ email: "sales@imptest-perfumora.com", phones: ["+1 (201) 555-0815"] }] })], TEST_OWNER_USER_ID);
+    expect(t.by).toEqual({ email: 1 });
+    const rows = (await db.query(`SELECT name, address FROM perfume.contact_companies WHERE name IN ('IMPTEST Spectrum', 'IMPTEST Perfumora') ORDER BY name`)).rows;
+    expect(rows).toEqual([{ name: "IMPTEST Perfumora", address: "200 Roosevelt Pl, Palisades Park, NJ 07650" }, { name: "IMPTEST Spectrum", address: null }]);
+  });
 });

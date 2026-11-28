@@ -90,11 +90,13 @@ export class ContactMatcher {
     const live = (id: string) => { const co = this.cos.get(id); return !!co && !co.archived && okDir(id); };
     if (q.externalId) { const id = this.byExternal.get(`${q.externalSource ?? ""}\u0000${q.externalId}`); if (id) return [id, "outside key"]; }
     if (q.placeId) { const id = this.byPlace.get(q.placeId); if (id) return [id, "place_id"]; }
+    // A person's email names ONE person at ONE company; a phone can be a shared main line, a relative's cell or a forwarding number
+    // (owner 2026-11-28: 96 signature records landed on another company that shares a phone). Email first, then phone.
+    for (const e of q.emails) { const id = (this.byEmail.get(e.toLowerCase()) ?? []).find(okDir); if (id) return [id, "email"]; }
     for (const p of q.phones) {
       const id = (this.byCoPhone.get(p) ?? []).find(live) ?? (this.byPersonPhone.get(p) ?? []).find(okDir);
       if (id) return [id, "phone"];
     }
-    for (const e of q.emails) { const id = (this.byEmail.get(e.toLowerCase()) ?? []).find(okDir); if (id) return [id, "email"]; }
     if (q.domain && !opts.freeMail?.has(q.domain)) { const id = (this.byDomain.get(q.domain) ?? []).find(live); if (id) return [id, "domain"]; }
     if (q.nameKey && q.city) { const id = (this.byNameCity.get(`${q.nameKey}\u0000${q.city.toLowerCase()}`) ?? []).find(live); if (id) return [id, "name + city"]; }
     return [null, null];
