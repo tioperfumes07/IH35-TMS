@@ -28,6 +28,7 @@ import {
   registerRealTrkOwnedUnits,
 } from "./owned-unit-fixed-asset-register.service.js";
 import { statusListCondition, statusListParam } from "../lib/status-list.js";
+import { FixedAssetRegisterError, registerAssetSchema, registerFixedAsset } from "./fixed-asset-register.service.js";
 
 const AUTOPOST_FLAG = "FIXED_ASSET_AUTOPOST_ENABLED";
 
@@ -376,6 +377,19 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
     salvage_value_cents: z.number().int().min(0).optional(),
     purchase_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     in_service_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  });
+
+  // ROUND L.31 M14 — register an asset that is not a truck (ScentsX fixtures, furniture, computers, leasehold); no JE.
+  app.post("/api/v1/accounting/fixed-assets/register", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (user.role !== "Owner" && user.role !== "Administrator") return reply.code(403).send({ error: "forbidden" });
+    const parsed = registerAssetSchema.safeParse(req.body ?? {});
+    if (!parsed.success) return validationError(reply, parsed.error);
+    return withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+      try { return reply.code(201).send(await registerFixedAsset(client as never, user.uuid, parsed.data)); }
+      catch (e) { if (e instanceof FixedAssetRegisterError) return reply.code(e.code === "class_not_found" ? 404 : 409).send({ error: e.code, message: e.message }); throw e; }
+    });
   });
 
   app.post("/api/v1/accounting/fixed-assets/register-unit", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
