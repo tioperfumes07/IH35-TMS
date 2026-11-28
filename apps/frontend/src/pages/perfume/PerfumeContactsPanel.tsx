@@ -231,7 +231,7 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
             columns={[
               { key: "name", label: "Name", sortable: true, render: (x) => <span className="font-semibold">{x.name ?? DASH}</span> },
               { key: "email", label: "Email", sortable: true, render: (x) => x.email ?? DASH },
-              { key: "phones", label: "Phones", render: (x) => x.phones.join(" · ") || DASH },
+              { key: "phones", sortable: true, label: "Phones", render: (x) => x.phones.join(" · ") || DASH },
               { key: "role", label: "Role", sortable: true, render: (x) => <RoleBadge role={x.role} /> },
               { key: "how_started", label: "How it started", sortable: true, render: (x) => x.how_started ?? DASH },
               { key: "first_contact_on", label: "First", sortable: true, cellClass: "text-right tabular-nums", render: (x) => usDate(x.first_contact_on) },

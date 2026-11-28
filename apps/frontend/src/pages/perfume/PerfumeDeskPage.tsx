@@ -265,13 +265,13 @@ function useCompPicks(view: PerfumeGridView) {
 }
 
 const FACETS: Array<{ key: PerfumeFacetKey; label: string; all: string }> = [
-  { key: "category", label: "Type", all: "All types" },
-  { key: "gender", label: "Gender", all: "All genders" },
-  { key: "brand", label: "Brand", all: "All brands" },
-  { key: "size", label: "Size ml", all: "All sizes" },
-  { key: "vendor", label: "Vendor", all: "All vendors" },
+  { key: "category", sortable: true, label: "Type", all: "All types" },
+  { key: "gender", sortable: true, label: "Gender", all: "All genders" },
+  { key: "brand", sortable: true, label: "Brand", all: "All brands" },
+  { key: "size", sortable: true, label: "Size ml", all: "All sizes" },
+  { key: "vendor", sortable: true, label: "Vendor", all: "All vendors" },
   // Owner 2026-11-27 15:40 CT: margins by group — the same group filter on every tab.
-  { key: "group", label: "Margin group", all: "All groups" },
+  { key: "group", sortable: true, label: "Margin group", all: "All groups" },
 ];
 const NO_PICKS: Record<PerfumeFacetKey, string[]> = { category: [], gender: [], brand: [], size: [], vendor: [], group: [] };
 

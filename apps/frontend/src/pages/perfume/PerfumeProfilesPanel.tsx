@@ -46,10 +46,10 @@ export function QuotesTable({ rows, storageKey }: { rows: PerfumeQuoteRow[]; sto
     <ParityTable<PerfumeQuoteRow> selectable cardTitle title={tr("perfume.profiles.quotes", "Quotes")} rows={rows} rowKey={(r) => r.id} storageKey={storageKey} exportFilename="TIO quotes" exportExcel emptyText="No quotes."
       columns={[
         { key: "number", label: "Quote", render: (r) => <DocLink tab="quotes" id={r.id}>{r.number}</DocLink>, exportValue: (r) => r.number },
-        { key: "quote_date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.quote_date) },
-        { key: "customer_name", label: "Customer", render: (r) => r.customer_name },
-        { key: "status", label: "Status", render: (r) => QUOTE_TEXT[r.status] ?? r.status },
-        { key: "total_cents", label: "Total", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.total_cents, r.currency), exportValue: (r) => Number(r.total_cents) / 100 },
+        { key: "quote_date", sortable: true, label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.quote_date) },
+        { key: "customer_name", sortable: true, label: "Customer", render: (r) => r.customer_name },
+        { key: "status", sortable: true, label: "Status", render: (r) => QUOTE_TEXT[r.status] ?? r.status },
+        { key: "total_cents", sortable: true, label: "Total", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.total_cents, r.currency), exportValue: (r) => Number(r.total_cents) / 100 },
       ]} />
   );
 }
@@ -58,11 +58,11 @@ export function OrdersTable({ rows, storageKey }: { rows: PerfumeOrderRow[]; sto
     <ParityTable<PerfumeOrderRow> selectable cardTitle title={tr("perfume.profiles.orders", "Sales orders")} rows={rows} rowKey={(r) => r.id} storageKey={storageKey} exportFilename="TIO sales orders" exportExcel emptyText="No sales orders."
       columns={[
         { key: "number", label: "Order", render: (r) => <DocLink tab="orders" id={r.id}>{r.number}</DocLink>, exportValue: (r) => r.number },
-        { key: "order_date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.order_date) },
-        { key: "customer_name", label: "Customer", render: (r) => r.customer_name },
-        { key: "status", label: "Status", render: (r) => ORDER_TEXT[r.status] ?? r.status },
-        { key: "units", label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.units.toLocaleString("en-US") },
-        { key: "total_cents", label: "Total", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.total_cents, r.currency), exportValue: (r) => Number(r.total_cents) / 100 },
+        { key: "order_date", sortable: true, label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.order_date) },
+        { key: "customer_name", sortable: true, label: "Customer", render: (r) => r.customer_name },
+        { key: "status", sortable: true, label: "Status", render: (r) => ORDER_TEXT[r.status] ?? r.status },
+        { key: "units", sortable: true, label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.units.toLocaleString("en-US") },
+        { key: "total_cents", sortable: true, label: "Total", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.total_cents, r.currency), exportValue: (r) => Number(r.total_cents) / 100 },
       ]} />
   );
 }
@@ -71,11 +71,11 @@ export function PosTable({ rows, storageKey }: { rows: PerfumePoRow[]; storageKe
     <ParityTable<PerfumePoRow> selectable cardTitle title={tr("perfume.profiles.pos", "Purchase orders")} rows={rows} rowKey={(r) => r.id} storageKey={storageKey} exportFilename="TIO purchase orders" exportExcel emptyText="No purchase orders."
       columns={[
         { key: "number", label: "PO", render: (r) => <DocLink tab="purchases" id={r.id}>{r.number}</DocLink>, exportValue: (r) => r.number },
-        { key: "order_date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.order_date) },
-        { key: "vendor_name", label: "Vendor", render: (r) => r.vendor_name },
+        { key: "order_date", sortable: true, label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.order_date) },
+        { key: "vendor_name", sortable: true, label: "Vendor", render: (r) => r.vendor_name },
         { key: "status", label: "Status", render: (r) => <Badge text={PO_STATUS_TEXT[r.status]} color={PO_STATUS_CLASS[r.status]} />, exportValue: (r) => PO_STATUS_TEXT[r.status] },
-        { key: "units", label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.units.toLocaleString("en-US") },
-        { key: "total_cents", label: "Cost", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.total_cents, r.currency), exportValue: (r) => Number(r.total_cents) / 100 },
+        { key: "units", sortable: true, label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.units.toLocaleString("en-US") },
+        { key: "total_cents", sortable: true, label: "Cost", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.total_cents, r.currency), exportValue: (r) => Number(r.total_cents) / 100 },
       ]} />
   );
 }
@@ -115,7 +115,7 @@ export function PerfumeSupplierProfilesPanel() {
             { key: "name", label: "Vendor", sortable: true, render: (v) => <span className="font-semibold">{v.name}</span> },
             { key: "short_name", label: "Short name", sortable: true, render: (v) => v.short_name ?? DASH },
             { key: "kind", label: "Kind", sortable: true, render: (v) => KIND_TEXT[v.kind] ?? v.kind, exportValue: (v) => KIND_TEXT[v.kind] ?? v.kind },
-            { key: "contact", label: "Contact", render: (v) => v.contact ?? DASH },
+            { key: "contact", sortable: true, label: "Contact", render: (v) => v.contact ?? DASH },
           ]} />
       </section>
     </div>
@@ -192,12 +192,12 @@ function VendorProfile({ id, onClose }: { id: string; onClose: () => void }) {
       <ParityTable<PerfumeVendorProfile["lists"][number]> selectable cardTitle title={tr("perfume.profiles.lists", "Price lists")} rows={p.lists} rowKey={(l) => l.id} storageKey="perfume-vendor-lists-v1"
         exportFilename="TIO vendor lists" exportExcel emptyText="No lists from this vendor."
         columns={[
-          { key: "list_date", label: "List date", cellClass: "text-right tabular-nums", render: (l) => usDate(l.list_date) },
-          { key: "file_name", label: "File", render: (l) => l.label ?? l.file_name },
-          { key: "state", label: "In use", render: (l) => (l.voided_at ? "Voided" : l.is_current ? "Current" : "Older"), exportValue: (l) => (l.voided_at ? "Voided" : l.is_current ? "Current" : "Older") },
-          { key: "rows_saved", label: "Lines", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.rows_saved.toLocaleString("en-US") },
-          { key: "matched", label: "Linked", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.matched.toLocaleString("en-US") },
-          { key: "waiting", label: "Waiting", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.waiting.toLocaleString("en-US") },
+          { key: "list_date", sortable: true, label: "List date", cellClass: "text-right tabular-nums", render: (l) => usDate(l.list_date) },
+          { key: "file_name", sortable: true, label: "File", render: (l) => l.label ?? l.file_name },
+          { key: "state", sortable: true, label: "In use", render: (l) => (l.voided_at ? "Voided" : l.is_current ? "Current" : "Older"), exportValue: (l) => (l.voided_at ? "Voided" : l.is_current ? "Current" : "Older") },
+          { key: "rows_saved", sortable: true, label: "Lines", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.rows_saved.toLocaleString("en-US") },
+          { key: "matched", sortable: true, label: "Linked", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.matched.toLocaleString("en-US") },
+          { key: "waiting", sortable: true, label: "Waiting", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.waiting.toLocaleString("en-US") },
         ]} />
       <PosTable rows={p.purchase_orders} storageKey="perfume-vendor-pos-v1" />
     </section>
@@ -270,31 +270,31 @@ function ItemProfile({ id }: { id: string }) {
         storageKey="perfume-item-vendor-lines-v1" exportFilename="TIO item vendor lines" exportExcel emptyText="No current list carries it."
         columns={[
           { key: "vendor", label: "Vendor", render: (l) => <DocLink tab="suppliers" id={l.vendor_id}>{l.vendor}</DocLink>, exportValue: (l) => l.vendor },
-          { key: "kind", label: "Kind", render: (l) => KIND_TEXT[l.kind] ?? l.kind, exportValue: (l) => KIND_TEXT[l.kind] ?? l.kind },
-          { key: "sku", label: "Their code", render: (l) => l.sku ?? DASH, exportValue: (l) => l.sku ?? "" },
-          { key: "description", label: "Their words", render: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" ") },
-          { key: "upc", label: "Barcode", render: (l) => l.upc ?? DASH, exportValue: (l) => l.upc ?? "" },
-          { key: "price_cents", label: "Price", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money(l.price_cents), exportValue: (l) => (l.price_cents == null ? "" : l.price_cents / 100) },
-          { key: "match_method", label: "Linked by", render: (l) => METHOD_TEXT[l.match_method ?? ""] ?? DASH, exportValue: (l) => METHOD_TEXT[l.match_method ?? ""] ?? "" },
-          { key: "list_date", label: "List date", cellClass: "text-right tabular-nums", render: (l) => usDate(l.list_date) },
+          { key: "kind", sortable: true, label: "Kind", render: (l) => KIND_TEXT[l.kind] ?? l.kind, exportValue: (l) => KIND_TEXT[l.kind] ?? l.kind },
+          { key: "sku", sortable: true, label: "Their code", render: (l) => l.sku ?? DASH, exportValue: (l) => l.sku ?? "" },
+          { key: "description", sortable: true, label: "Their words", render: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" ") },
+          { key: "upc", sortable: true, label: "Barcode", render: (l) => l.upc ?? DASH, exportValue: (l) => l.upc ?? "" },
+          { key: "price_cents", sortable: true, label: "Price", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money(l.price_cents), exportValue: (l) => (l.price_cents == null ? "" : l.price_cents / 100) },
+          { key: "match_method", sortable: true, label: "Linked by", render: (l) => METHOD_TEXT[l.match_method ?? ""] ?? DASH, exportValue: (l) => METHOD_TEXT[l.match_method ?? ""] ?? "" },
+          { key: "list_date", sortable: true, label: "List date", cellClass: "text-right tabular-nums", render: (l) => usDate(l.list_date) },
         ]} />
       <ParityTable<PerfumeItemProfile["remembered"][number]> selectable cardTitle title={tr("perfume.profiles.remembered", "Remembered — any of these links to this item by itself")} rows={p.remembered} rowKey={(a) => a.id}
         storageKey="perfume-item-remembered-v1" exportFilename="TIO item remembered names" exportExcel emptyText="Nothing remembered yet."
         columns={[
-          { key: "vendor", label: "Vendor", render: (a) => a.vendor },
-          { key: "what", label: "What", render: (a) => (a.sku ? "Their code" : "Their words"), exportValue: (a) => (a.sku ? "Their code" : "Their words") },
-          { key: "value", label: "Code / words", render: (a) => a.sku ?? a.text_key ?? DASH, exportValue: (a) => a.sku ?? a.text_key ?? "" },
-          { key: "method", label: "From", render: (a) => (a.method === "confirmed" ? "Confirmed by me" : "Linked by the desk"), exportValue: (a) => (a.method === "confirmed" ? "Confirmed by me" : "Linked by the desk") },
+          { key: "vendor", sortable: true, label: "Vendor", render: (a) => a.vendor },
+          { key: "what", sortable: true, label: "What", render: (a) => (a.sku ? "Their code" : "Their words"), exportValue: (a) => (a.sku ? "Their code" : "Their words") },
+          { key: "value", sortable: true, label: "Code / words", render: (a) => a.sku ?? a.text_key ?? DASH, exportValue: (a) => a.sku ?? a.text_key ?? "" },
+          { key: "method", sortable: true, label: "From", render: (a) => (a.method === "confirmed" ? "Confirmed by me" : "Linked by the desk"), exportValue: (a) => (a.method === "confirmed" ? "Confirmed by me" : "Linked by the desk") },
         ]} />
       <ParityTable<PerfumeLot> selectable cardTitle title={tr("perfume.profiles.lots", "Stock and lots (FIFO — each lot keeps its vendor and PO)")} rows={lots.data?.lots ?? []} rowKey={(l) => l.id}
         storageKey="perfume-item-lots-v1" exportFilename="TIO item lots" exportExcel emptyText="No stock of this item yet."
         columns={[
-          { key: "location_code", label: "Site", render: (l) => l.location_code },
-          { key: "lot_code", label: "Lot", render: (l) => l.lot_code ?? DASH, exportValue: (l) => l.lot_code ?? "" },
-          { key: "received_on", label: "Received", cellClass: "text-right tabular-nums", render: (l) => usDate(l.received_on) },
+          { key: "location_code", sortable: true, label: "Site", render: (l) => l.location_code },
+          { key: "lot_code", sortable: true, label: "Lot", render: (l) => l.lot_code ?? DASH, exportValue: (l) => l.lot_code ?? "" },
+          { key: "received_on", sortable: true, label: "Received", cellClass: "text-right tabular-nums", render: (l) => usDate(l.received_on) },
           { key: "qty_left", label: "Left", kind: "number", cellClass: "text-right tabular-nums", render: (l) => `${l.qty_left} of ${l.qty_in}`, exportValue: (l) => l.qty_left },
-          { key: "unit_cost_cents", label: "Cost", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money(l.unit_cost_cents), exportValue: (l) => Number(l.unit_cost_cents) / 100 },
-          { key: "vendor", label: "Vendor", render: (l) => l.vendor ?? DASH, exportValue: (l) => l.vendor ?? "" },
+          { key: "unit_cost_cents", sortable: true, label: "Cost", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money(l.unit_cost_cents), exportValue: (l) => Number(l.unit_cost_cents) / 100 },
+          { key: "vendor", sortable: true, label: "Vendor", render: (l) => l.vendor ?? DASH, exportValue: (l) => l.vendor ?? "" },
           { key: "po_number", label: "PO", render: (l) => (l.po_id && l.po_number ? <DocLink tab="purchases" id={l.po_id}>{l.po_number}</DocLink> : DASH), exportValue: (l) => l.po_number ?? "" },
         ]} />
       <QuotesTable rows={p.quotes} storageKey="perfume-item-quotes-v1" />

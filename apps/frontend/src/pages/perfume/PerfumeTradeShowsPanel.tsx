@@ -137,7 +137,7 @@ export function PerfumeTradeShowsPanel() {
             { key: "contacts", label: "Contacts", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (s) => s.contacts.toLocaleString() },
             { key: "meetings", label: "Meetings", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (s) => s.meetings.toLocaleString() },
             { key: "venue", label: "Venue", sortable: true, render: (s) => s.venue ?? DASH },
-            { key: "notes", label: "Notes", render: (s) => s.notes ?? DASH },
+            { key: "notes", sortable: true, label: "Notes", render: (s) => s.notes ?? DASH },
             { key: "source", label: "Source", sortable: true, render: (s) => s.source ?? DASH },
           ]}
         />
@@ -247,7 +247,7 @@ function ShowDetail({ show, onClose, onChanged }: { show: PerfumeShow | null; on
           { key: "company", label: "Company", sortable: true, render: (x) => <span className="font-semibold">{x.company}</span> },
           { key: "person", label: "Person", sortable: true, render: (x) => x.person ?? DASH },
           { key: "email", label: "Email", sortable: true, render: (x) => x.email ?? DASH },
-          { key: "phone", label: "Phone", render: (x) => x.phone ?? DASH },
+          { key: "phone", sortable: true, label: "Phone", render: (x) => x.phone ?? DASH },
           { key: "city", label: "City", sortable: true, render: (x) => [x.city, x.country].filter(Boolean).join(", ") || DASH },
           { key: "status", label: "Meeting", sortable: true, render: (x) => (
             <select aria-label={`Meeting with ${x.company}`} className={ctl} value={x.status} onClick={(e) => e.stopPropagation()}
@@ -260,7 +260,7 @@ function ShowDetail({ show, onClose, onChanged }: { show: PerfumeShow | null; on
                 onChange={(v) => void patch(x, { meeting_at: v ? new Date(v).toISOString() : null })} />
             </span>) },
           { key: "booth", label: "Booth", sortable: true, render: (x) => x.booth ?? DASH },
-          { key: "note", label: "Note", render: (x) => x.note ?? DASH },
+          { key: "note", sortable: true, label: "Note", render: (x) => x.note ?? DASH },
           { key: "remove", label: "", render: (x) => (
             <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={(e) => { e.stopPropagation(); void patch(x, { archived: true }); }}>
               {tr("perfume.shows.remove", "Take off")}

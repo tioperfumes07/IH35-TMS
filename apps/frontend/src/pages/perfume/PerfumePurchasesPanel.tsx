@@ -222,13 +222,13 @@ function PoEditor({ id, onClose, onChanged }: { id: string; onClose: () => void;
         exportExcel
         emptyText="No lines yet — add an item above."
         columns={[
-          { key: "line_no", label: "#", cellClass: "tabular-nums", render: (l) => l.line_no },
-          { key: "vendor_sku", label: "Their code", render: (l) => l.vendor_sku ?? DASH, exportValue: (l) => l.vendor_sku ?? "" },
+          { key: "line_no", sortable: true, label: "#", cellClass: "tabular-nums", render: (l) => l.line_no },
+          { key: "vendor_sku", sortable: true, label: "Their code", render: (l) => l.vendor_sku ?? DASH, exportValue: (l) => l.vendor_sku ?? "" },
           { key: "description", label: "Item (their words)", render: (l) => <>{l.description}{l.upc ? <span className="ml-1 text-[#64748B]">{l.upc}</span> : null}</>, exportValue: (l) => `${l.description}${l.upc ? ` ${l.upc}` : ""}` },
           { key: "qty", label: "Qty", render: (l) => <NumberCell value={l.qty} min={1} label={tr("perfume.pos.qty", "Qty")} testId={`perfume-po-qty-${l.line_no}`} onSave={(n) => updatePerfumePurchaseLine(l.id, { qty: n }).then(refresh)} />, exportValue: (l) => l.qty },
           { key: "qty_received", label: "Received", render: (l) => <NumberCell value={l.qty_received} label={tr("perfume.pos.received", "Received")} testId={`perfume-po-received-${l.line_no}`} onSave={(n) => updatePerfumePurchaseLine(l.id, { qty_received: n }).then(refresh)} />, exportValue: (l) => l.qty_received },
           { key: "unit_cost_cents", label: "Unit cost", render: (l) => <NumberCell value={l.unit_cost_cents} money label={tr("perfume.pos.cost", "Unit cost")} testId={`perfume-po-cost-${l.line_no}`} onSave={(n) => updatePerfumePurchaseLine(l.id, { unit_cost_cents: n }).then(refresh)} />, exportValue: (l) => l.unit_cost_cents / 100 },
-          { key: "total", label: "Total", cellClass: "text-right tabular-nums", render: (l) => money(l.qty * l.unit_cost_cents, p.currency), exportValue: (l) => (l.qty * l.unit_cost_cents) / 100 },
+          { key: "total", sortable: true, label: "Total", cellClass: "text-right tabular-nums", render: (l) => money(l.qty * l.unit_cost_cents, p.currency), exportValue: (l) => (l.qty * l.unit_cost_cents) / 100 },
           { key: "off", label: "", render: (l) => (
             <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" disabled={l.qty_received > 0}
               onClick={(e) => { e.stopPropagation(); void run(() => removePerfumePurchaseLine(l.id), undefined, "Not taken off"); }}>

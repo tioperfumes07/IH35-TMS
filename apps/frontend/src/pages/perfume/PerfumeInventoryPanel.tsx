@@ -115,12 +115,12 @@ export function PerfumeMovesPanel() {
           { key: "display_name", label: "Item", sortable: true, render: (m) => <DocLink tab="items" id={m.item_id}>{m.display_name}</DocLink>, exportValue: (m) => m.display_name },
           { key: "location_code", label: "Site", sortable: true, render: (m) => m.location_code },
           { key: "qty", label: "Qty", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (m) => (m.qty > 0 ? `+${m.qty}` : String(m.qty)), exportValue: (m) => m.qty },
-          { key: "unit_cost_cents", label: "Lot cost", kind: "number", cellClass: "text-right tabular-nums", render: (m) => money(m.unit_cost_cents), exportValue: (m) => Number(m.unit_cost_cents) / 100 },
-          { key: "lot_code", label: "Lot", render: (m) => m.lot_code ?? DASH, exportValue: (m) => m.lot_code ?? "" },
-          { key: "qty_after", label: "On hand after", kind: "number", cellClass: "text-right tabular-nums", render: (m) => m.qty_after.toLocaleString("en-US") },
-          { key: "avg_cost_after_cents", label: "Average after", kind: "number", cellClass: "text-right tabular-nums", render: (m) => money(m.avg_cost_after_cents), exportValue: (m) => Number(m.avg_cost_after_cents) / 100 },
-          { key: "doc", label: "Document", render: docOf, exportValue: (m) => m.po_number ?? m.so_number ?? m.transfer_number ?? m.count_number ?? m.reason ?? "" },
-          { key: "by_email", label: "By", render: (m) => m.by_email ?? DASH },
+          { key: "unit_cost_cents", sortable: true, label: "Lot cost", kind: "number", cellClass: "text-right tabular-nums", render: (m) => money(m.unit_cost_cents), exportValue: (m) => Number(m.unit_cost_cents) / 100 },
+          { key: "lot_code", sortable: true, label: "Lot", render: (m) => m.lot_code ?? DASH, exportValue: (m) => m.lot_code ?? "" },
+          { key: "qty_after", sortable: true, label: "On hand after", kind: "number", cellClass: "text-right tabular-nums", render: (m) => m.qty_after.toLocaleString("en-US") },
+          { key: "avg_cost_after_cents", sortable: true, label: "Average after", kind: "number", cellClass: "text-right tabular-nums", render: (m) => money(m.avg_cost_after_cents), exportValue: (m) => Number(m.avg_cost_after_cents) / 100 },
+          { key: "doc", sortable: true, label: "Document", render: docOf, exportValue: (m) => m.po_number ?? m.so_number ?? m.transfer_number ?? m.count_number ?? m.reason ?? "" },
+          { key: "by_email", sortable: true, label: "By", render: (m) => m.by_email ?? DASH },
         ]}
       />
     </section>
@@ -161,7 +161,7 @@ export function PerfumeTransfersPanel() {
             { key: "from_code", label: "From", sortable: true, render: (t) => t.from_code },
             { key: "to_code", label: "To", sortable: true, render: (t) => t.to_code },
             { key: "status", label: "Status", sortable: true, render: (t) => <Badge text={TR_TEXT[t.status]} color={TR_CLASS[t.status]} />, exportValue: (t) => TR_TEXT[t.status] },
-            { key: "units", label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (t) => t.units.toLocaleString("en-US") },
+            { key: "units", sortable: true, label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (t) => t.units.toLocaleString("en-US") },
             { key: "created_at", label: "Started", sortable: true, render: (t) => new Date(t.created_at).toLocaleDateString("en-US") },
           ]}
         />
@@ -193,9 +193,9 @@ function TransferEditor({ id, onChanged, onClose }: { id: string; onChanged: () 
       <ParityTable<typeof x.lines[number]> selectable
         cardTitle title={tr("perfume.inv.lines", "Lines")} rows={x.lines} rowKey={(l) => l.id} storageKey="perfume-transfer-lines-v1" exportFilename="TIO transfer lines" exportExcel emptyText="No lines yet — add an item above."
         columns={[
-          { key: "display_name", label: "Item", render: (l) => l.display_name },
-          { key: "qty", label: "Qty", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.qty.toLocaleString("en-US") },
-          { key: "on_hand_from", label: `On hand at ${x.from_code}`, kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.on_hand_from.toLocaleString("en-US") },
+          { key: "display_name", sortable: true, label: "Item", render: (l) => l.display_name },
+          { key: "qty", sortable: true, label: "Qty", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.qty.toLocaleString("en-US") },
+          { key: "on_hand_from", sortable: true, label: `On hand at ${x.from_code}`, kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.on_hand_from.toLocaleString("en-US") },
           { key: "off", label: "", render: (l) => (x.status === "draft"
             ? <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={(e) => { e.stopPropagation(); run(() => removePerfumeTransferLine(l.id)); }}>{tr("perfume.inv.take_off", "Take off")}</Button> : null) },
         ]}
@@ -263,10 +263,10 @@ export function PerfumeCountsPanel() {
             { key: "created_at", label: "Started", sortable: true, cellClass: "text-right tabular-nums", render: (k) => usDate(k.created_at), exportValue: (k) => k.created_at },
             { key: "location_code", label: "Site", sortable: true, render: (k) => k.location_code },
             { key: "status", label: "Status", sortable: true, render: (k) => <Badge text={CC_TEXT[k.status]} color={CC_CLASS[k.status]} />, exportValue: (k) => CC_TEXT[k.status] },
-            { key: "lines", label: "Lines", kind: "number", cellClass: "text-right tabular-nums", render: (k) => k.lines.toLocaleString("en-US") },
-            { key: "diff_value_cents", label: "Variance", kind: "number", cellClass: "text-right tabular-nums", render: (k) => money(k.diff_value_cents), exportValue: (k) => (k.diff_value_cents == null ? "" : k.diff_value_cents / 100) },
-            { key: "submitted_by_email", label: "Submitted by", render: (k) => k.submitted_by_email ?? DASH },
-            { key: "approved_by_email", label: "Posted by", render: (k) => k.approved_by_email ?? DASH },
+            { key: "lines", sortable: true, label: "Lines", kind: "number", cellClass: "text-right tabular-nums", render: (k) => k.lines.toLocaleString("en-US") },
+            { key: "diff_value_cents", sortable: true, label: "Variance", kind: "number", cellClass: "text-right tabular-nums", render: (k) => money(k.diff_value_cents), exportValue: (k) => (k.diff_value_cents == null ? "" : k.diff_value_cents / 100) },
+            { key: "submitted_by_email", sortable: true, label: "Submitted by", render: (k) => k.submitted_by_email ?? DASH },
+            { key: "approved_by_email", sortable: true, label: "Posted by", render: (k) => k.approved_by_email ?? DASH },
           ]}
         />
       </section>
@@ -332,10 +332,10 @@ function CountEditor({ id, onChanged, onClose }: { id: string; onChanged: () => 
             ? <CountCell value={l.counted_qty} label={`${tr("perfume.inv.counted", "Counted")} ${l.display_name}`} testId={`perfume-count-qty-${l.item_id}`}
                 onSave={(n) => setPerfumeCountLine(id, { item_id: l.item_id, counted_qty: n }).then(() => k.refetch())} />
             : l.counted_qty == null ? tr("perfume.inv.not_counted", "Not counted") : l.counted_qty.toLocaleString("en-US")), exportValue: (l) => l.counted_qty ?? "" },
-          { key: "expected_qty", label: "On hand when counted", kind: "number", cellClass: "text-right tabular-nums", render: (l) => (l.counted_at ? l.expected_qty.toLocaleString("en-US") : DASH), exportValue: (l) => (l.counted_at ? l.expected_qty : "") },
+          { key: "expected_qty", sortable: true, label: "On hand when counted", kind: "number", cellClass: "text-right tabular-nums", render: (l) => (l.counted_at ? l.expected_qty.toLocaleString("en-US") : DASH), exportValue: (l) => (l.counted_at ? l.expected_qty : "") },
           { key: "variance", label: "Variance", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (l) => (l.variance == null ? DASH : l.variance > 0 ? `+${l.variance}` : String(l.variance)), exportValue: (l) => l.variance ?? "" },
-          { key: "value", label: "Variance $", kind: "number", cellClass: "text-right tabular-nums", render: (l) => (l.variance == null ? DASH : money(l.variance * l.unit_cost_cents)), exportValue: (l) => (l.variance == null ? "" : (l.variance * l.unit_cost_cents) / 100) },
-          { key: "on_hand_now", label: "On hand now", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.on_hand_now.toLocaleString("en-US") },
+          { key: "value", sortable: true, label: "Variance $", kind: "number", cellClass: "text-right tabular-nums", render: (l) => (l.variance == null ? DASH : money(l.variance * l.unit_cost_cents)), exportValue: (l) => (l.variance == null ? "" : (l.variance * l.unit_cost_cents) / 100) },
+          { key: "on_hand_now", sortable: true, label: "On hand now", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.on_hand_now.toLocaleString("en-US") },
           { key: "counted_at", label: "Counted at", cellClass: "text-right tabular-nums", render: (l) => (l.counted_at ? `${usDate(l.counted_at)} ${l.counted_by_email ?? ""}` : DASH), exportValue: (l) => l.counted_at ?? "" },
         ]}
       />
@@ -384,10 +384,10 @@ export function PerfumeWriteoffsPanel() {
             { key: "location_code", label: "Site", sortable: true, render: (w) => w.location_code },
             { key: "reason", label: "Why", sortable: true, render: (w) => WO_REASON[w.reason], exportValue: (w) => WO_REASON[w.reason] },
             { key: "status", label: "Status", sortable: true, render: (w) => <Badge text={WO_TEXT[w.status]} color={CC_CLASS[w.status]} />, exportValue: (w) => WO_TEXT[w.status] },
-            { key: "units", label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (w) => w.units.toLocaleString("en-US") },
-            { key: "value_cents", label: "Value", kind: "number", cellClass: "text-right tabular-nums", render: (w) => money(w.value_cents), exportValue: (w) => (w.value_cents == null ? "" : w.value_cents / 100) },
-            { key: "submitted_by_email", label: "Submitted by", render: (w) => w.submitted_by_email ?? DASH },
-            { key: "approved_by_email", label: "Posted by", render: (w) => w.approved_by_email ?? DASH },
+            { key: "units", sortable: true, label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (w) => w.units.toLocaleString("en-US") },
+            { key: "value_cents", sortable: true, label: "Value", kind: "number", cellClass: "text-right tabular-nums", render: (w) => money(w.value_cents), exportValue: (w) => (w.value_cents == null ? "" : w.value_cents / 100) },
+            { key: "submitted_by_email", sortable: true, label: "Submitted by", render: (w) => w.submitted_by_email ?? DASH },
+            { key: "approved_by_email", sortable: true, label: "Posted by", render: (w) => w.approved_by_email ?? DASH },
           ]}
         />
       </section>
@@ -422,9 +422,9 @@ function WriteoffEditor({ id, onChanged, onClose }: { id: string; onChanged: () 
         cardTitle title={tr("perfume.inv.lines", "Lines")} rows={x.lines} rowKey={(l) => l.id} storageKey="perfume-wo-lines-v1" exportFilename="TIO write-off lines" exportExcel emptyText="No pieces yet — add an item above."
         columns={[
           { key: "display_name", label: "Item", render: (l) => <DocLink tab="items" id={l.item_id}>{l.display_name}</DocLink>, exportValue: (l) => l.display_name },
-          { key: "qty", label: "Pieces", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.qty.toLocaleString("en-US") },
-          { key: "lot_code", label: "Lot", render: (l) => l.lot_code ?? (l.lot_id ? tr("perfume.inv.named_lot", "named lot") : tr("perfume.inv.oldest", "oldest first")) },
-          { key: "on_hand", label: "On hand now", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.on_hand.toLocaleString("en-US") },
+          { key: "qty", sortable: true, label: "Pieces", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.qty.toLocaleString("en-US") },
+          { key: "lot_code", sortable: true, label: "Lot", render: (l) => l.lot_code ?? (l.lot_id ? tr("perfume.inv.named_lot", "named lot") : tr("perfume.inv.oldest", "oldest first")) },
+          { key: "on_hand", sortable: true, label: "On hand now", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.on_hand.toLocaleString("en-US") },
           { key: "off", label: "", render: (l) => (x.status === "draft"
             ? <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={() => run(() => removePerfumeWriteoffLine(l.id))} data-testid={`perfume-wo-remove-${l.id}`}>{tr("perfume.inv.remove", "Remove")}</Button> : null) },
         ]}
@@ -505,9 +505,9 @@ export function PerfumeSitesPanel() {
                 <option value="consignment">{tr("perfume.inv.kind_cons", "Consignment")}</option>
                 <option value="quarantine">{tr("perfume.inv.kind_quar", "Quarantine (not sold)")}</option>
               </select>)), exportValue: (s) => SITE_KIND[s.kind ?? ""] ?? "" },
-            { key: "units", label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (s) => Number(s.units).toLocaleString("en-US") },
-            { key: "items", label: "Items", kind: "number", cellClass: "text-right tabular-nums", render: (s) => Number(s.items).toLocaleString("en-US") },
-            { key: "fifo_value_cents", label: "FIFO value", kind: "number", cellClass: "text-right tabular-nums", render: (s) => money(s.fifo_value_cents), exportValue: (s) => Number(s.fifo_value_cents) / 100 },
+            { key: "units", sortable: true, label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (s) => Number(s.units).toLocaleString("en-US") },
+            { key: "items", sortable: true, label: "Items", kind: "number", cellClass: "text-right tabular-nums", render: (s) => Number(s.items).toLocaleString("en-US") },
+            { key: "fifo_value_cents", sortable: true, label: "FIFO value", kind: "number", cellClass: "text-right tabular-nums", render: (s) => money(s.fifo_value_cents), exportValue: (s) => Number(s.fifo_value_cents) / 100 },
             { key: "active", label: "Holds stock", render: (s) => (s.kind === "transit" ? DASH : (
               <input type="checkbox" checked={s.own && s.active} aria-label={tr("perfume.inv.holds", "Holds stock")} onChange={(e) => save(s.code, { own: e.target.checked, active: e.target.checked })} data-testid={`perfume-site-own-${s.code}`} />)),
               exportValue: (s) => (s.own && s.active ? "yes" : "no") },
@@ -521,10 +521,10 @@ export function PerfumeSitesPanel() {
             <div className="text-xs">{`${o.lists.join(", ") || tr("perfume.inv.no_file", "No current inventory file")} — ${o.lines.toLocaleString("en-US")} lines, ${o.units.toLocaleString("en-US")} units, ${money(o.value_cents)} at the file's cost. Skipped: ${o.skipped_no_cost.toLocaleString("en-US")} with no cost, ${o.skipped_unknown_site.toLocaleString("en-US")} at a site that does not hold stock.`}</div>
             <ParityTable<PerfumeOpeningSite> selectable rows={o.by_site} rowKey={(r) => r.code} storageKey="perfume-opening-v1" exportFilename="TIO opening stock" exportExcel emptyText="Nothing to bring in."
               columns={[
-                { key: "code", label: "Site", render: (r) => r.code },
-                { key: "lines", label: "Lines", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.lines.toLocaleString("en-US") },
-                { key: "units", label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.units.toLocaleString("en-US") },
-                { key: "value", label: "Value", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.value), exportValue: (r) => r.value / 100 },
+                { key: "code", sortable: true, label: "Site", render: (r) => r.code },
+                { key: "lines", sortable: true, label: "Lines", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.lines.toLocaleString("en-US") },
+                { key: "units", sortable: true, label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.units.toLocaleString("en-US") },
+                { key: "value", sortable: true, label: "Value", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.value), exportValue: (r) => r.value / 100 },
               ]} />
             <div className="flex flex-wrap items-end gap-2 text-xs">
               <label>{tr("perfume.inv.counted_on", "Stock counted on")} <DatePicker aria-label={tr("perfume.inv.counted_on", "Stock counted on")} value={onDate} onChange={setOnDate} /></label>

@@ -34,12 +34,12 @@ const when = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleSt
 const STATUS_TEXT: Record<PerfumeCampaign["status"], string> = { draft: "Draft", scheduled: "Scheduled", sending: "Sending", sent: "Sent", stopped: "Stopped", failed: "Failed" };
 const ROLES: Array<[PerfumeContactRole | "none", string]> = [["customer", "Customers"], ["vendor", "Vendors"], ["both", "Vendor + customer"], ["none", "Not classified"]];
 const FACETS: Array<{ facet: PerfumeContactFacet; key: keyof PerfumeCampaignFilters; label: string; all: string }> = [
-  { facet: "country", key: "countries", label: "Country", all: "All countries" },
-  { facet: "state", key: "states", label: "State", all: "All states" },
-  { facet: "city", key: "cities", label: "City", all: "All cities" },
-  { facet: "category", key: "categories", label: "Category", all: "All categories" },
-  { facet: "source", key: "sources", label: "Source", all: "All sources" },
-  { facet: "how", key: "hows", label: "How it started", all: "Every way" },
+  { facet: "country", key: "countries", sortable: true, label: "Country", all: "All countries" },
+  { facet: "state", key: "states", sortable: true, label: "State", all: "All states" },
+  { facet: "city", key: "cities", sortable: true, label: "City", all: "All cities" },
+  { facet: "category", key: "categories", sortable: true, label: "Category", all: "All categories" },
+  { facet: "source", key: "sources", sortable: true, label: "Source", all: "All sources" },
+  { facet: "how", key: "hows", sortable: true, label: "How it started", all: "Every way" },
 ];
 
 type Draft = PerfumeCampaignInput & { status?: PerfumeCampaign["status"] };
@@ -101,7 +101,7 @@ export function PerfumeCampaignPanel() {
             { key: "name", label: "Campaign", sortable: true, render: (c) => <span className="font-semibold">{c.name}</span> },
             { key: "status", label: "Status", sortable: true, render: (c) => STATUS_TEXT[c.status] },
             { key: "segment_name", label: "Segment", sortable: true, render: (c) => c.segment_name ?? DASH },
-            { key: "language", label: "Language", render: (c) => (c.language === "auto" ? "Each in their language" : c.language === "es" ? "Spanish" : "English") },
+            { key: "language", sortable: true, label: "Language", render: (c) => (c.language === "auto" ? "Each in their language" : c.language === "es" ? "Spanish" : "English") },
             { key: "scheduled_for", label: "Scheduled", sortable: true, render: (c) => when(c.scheduled_for) },
             { key: "recipients", label: "Recipients", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (c) => c.recipients.toLocaleString() },
             { key: "sent", label: "Sent", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (c) => c.sent.toLocaleString() },
@@ -329,13 +329,13 @@ function CampaignEditor({ id, onClose, onChanged }: { id: string | null; onClose
             emptyText="No batch yet."
             columns={[
               { key: "seq", label: "#", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (b) => String(b.seq) },
-              { key: "language", label: "Language", render: (b) => (b.language === "es" ? "Spanish" : "English") },
-              { key: "status", label: "Status", render: (b) => b.status },
-              { key: "recipients", label: "Addresses", kind: "number", cellClass: "text-right tabular-nums", render: (b) => b.recipients.toLocaleString() },
-              { key: "sent", label: "Sent", kind: "number", cellClass: "text-right tabular-nums", render: (b) => b.sent.toLocaleString() },
-              { key: "skipped", label: "Skipped", kind: "number", cellClass: "text-right tabular-nums", render: (b) => b.skipped.toLocaleString() },
-              { key: "failed", label: "Failed", kind: "number", cellClass: "text-right tabular-nums", render: (b) => b.failed.toLocaleString() },
-              { key: "error", label: "Error", render: (b) => b.error ?? DASH },
+              { key: "language", sortable: true, label: "Language", render: (b) => (b.language === "es" ? "Spanish" : "English") },
+              { key: "status", sortable: true, label: "Status", render: (b) => b.status },
+              { key: "recipients", sortable: true, label: "Addresses", kind: "number", cellClass: "text-right tabular-nums", render: (b) => b.recipients.toLocaleString() },
+              { key: "sent", sortable: true, label: "Sent", kind: "number", cellClass: "text-right tabular-nums", render: (b) => b.sent.toLocaleString() },
+              { key: "skipped", sortable: true, label: "Skipped", kind: "number", cellClass: "text-right tabular-nums", render: (b) => b.skipped.toLocaleString() },
+              { key: "failed", sortable: true, label: "Failed", kind: "number", cellClass: "text-right tabular-nums", render: (b) => b.failed.toLocaleString() },
+              { key: "error", sortable: true, label: "Error", render: (b) => b.error ?? DASH },
             ]}
           />
         ) : null}

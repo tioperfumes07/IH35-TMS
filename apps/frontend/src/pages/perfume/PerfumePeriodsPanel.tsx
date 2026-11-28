@@ -51,10 +51,10 @@ export function PerfumePeriodsPanel() {
           columns={[
             { className: "text-left", cellClass: "text-left font-semibold", key: "period_label", label: "Period", sortable: true, render: (p) => label(p), exportValue: (p) => label(p) },
             { key: "period_start", label: "Start", sortable: true, cellClass: "text-right tabular-nums", render: (p) => usDate(p.period_start), exportValue: (p) => p.period_start },
-            { key: "period_end", label: "End", cellClass: "text-right tabular-nums", render: (p) => usDate(p.period_end), exportValue: (p) => p.period_end },
-            { key: "fiscal_year", label: "Fiscal year", cellClass: "text-right tabular-nums", render: (p) => String(p.fiscal_year) },
+            { key: "period_end", sortable: true, label: "End", cellClass: "text-right tabular-nums", render: (p) => usDate(p.period_end), exportValue: (p) => p.period_end },
+            { key: "fiscal_year", sortable: true, label: "Fiscal year", cellClass: "text-right tabular-nums", render: (p) => String(p.fiscal_year) },
             { className: "text-left", cellClass: "text-left", key: "status", label: "Status", sortable: true, render: (p) => (p.status === "closed" ? "Closed" : p.status === "closing" ? "Closing" : "Open"), exportValue: (p) => p.status },
-            { key: "closed_at", label: "Closed on", cellClass: "text-right tabular-nums", render: (p) => (p.closed_at ? usDate(p.closed_at.slice(0, 10)) : DASH), exportValue: (p) => p.closed_at ?? "" },
+            { key: "closed_at", sortable: true, label: "Closed on", cellClass: "text-right tabular-nums", render: (p) => (p.closed_at ? usDate(p.closed_at.slice(0, 10)) : DASH), exportValue: (p) => p.closed_at ?? "" },
             { key: "act", label: "", render: (p) => (p.id === nextToClose
               ? <Button type="button" className="h-[28px] px-2 text-xs" onClick={(e) => { e.stopPropagation(); setAct({ kind: "close", p }); }} data-testid={`scentsx-pd-close-${p.id}`}>{tr("scentsx.pd.close", "Close month")}</Button>
               : p.id === lastClosed

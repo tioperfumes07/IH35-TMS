@@ -24,12 +24,12 @@ export function PerfumeVendorCredits({ credits, openBills, companyId, onDone }: 
         cardTitle title={tr("perfume.ap.credits", "Vendor credits")} rows={credits} rowKey={(r) => `${r.id}-${r.unapplied_cents}`} storageKey="perfume-ap-credits-v1" exportFilename="TIO vendor credits" exportExcel
         emptyText="No vendor credits."
         columns={[
-          { className: "text-left", key: "display_id", label: "Credit", render: (r) => r.display_id, exportValue: (r) => r.display_id },
-          { key: "issue_date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.issue_date), exportValue: (r) => r.issue_date },
-          { className: "text-left", key: "notes", label: "Memo", render: (r) => r.notes ?? DASH, exportValue: (r) => r.notes ?? "" },
-          { key: "amount_cents", label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.amount_cents), exportValue: (r) => r.amount_cents / 100 },
-          { key: "applied_cents", label: "Applied", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.applied_cents), exportValue: (r) => r.applied_cents / 100 },
-          { key: "unapplied_cents", label: "Left to apply", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (r) => money(r.unapplied_cents), exportValue: (r) => r.unapplied_cents / 100 },
+          { className: "text-left", key: "display_id", sortable: true, label: "Credit", render: (r) => r.display_id, exportValue: (r) => r.display_id },
+          { key: "issue_date", sortable: true, label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.issue_date), exportValue: (r) => r.issue_date },
+          { className: "text-left", key: "notes", sortable: true, label: "Memo", render: (r) => r.notes ?? DASH, exportValue: (r) => r.notes ?? "" },
+          { key: "amount_cents", sortable: true, label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.amount_cents), exportValue: (r) => r.amount_cents / 100 },
+          { key: "applied_cents", sortable: true, label: "Applied", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.applied_cents), exportValue: (r) => r.applied_cents / 100 },
+          { key: "unapplied_cents", sortable: true, label: "Left to apply", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (r) => money(r.unapplied_cents), exportValue: (r) => r.unapplied_cents / 100 },
           { key: "apply", label: "", render: (r) => (r.unapplied_cents > 0 && openBills.length ? (
             <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={() => setApplying(r)} data-testid={`perfume-ap-apply-credit-${r.id}`}>{tr("perfume.ap.apply_credit", "Apply to a bill")}</Button>) : DASH) },
         ]}

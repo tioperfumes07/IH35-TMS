@@ -120,11 +120,11 @@ export function ScentsxItemBooks() {
         hidePager page={1} pageSize={PAGE} emptyText="No items match."
         batchActions={(sel) => <button type="button" className={btn} disabled={!!busy} onClick={() => void makeTicked(sel)} data-testid="scentsx-item-books-make-ticked">{`Make ScentsX item (${sel.length})`}</button>}
         columns={[
-          { className: "text-left", key: "display_name", label: "Item", render: (r) => r.display_name, exportValue: (r) => r.display_name },
-          { className: "text-left", key: "category", label: "Category", render: (r) => r.category ?? DASH, exportValue: (r) => r.category ?? "" },
-          { className: "text-left", key: "inventory_account", label: "Inventory account", render: (r) => r.inventory_account ?? DASH, exportValue: (r) => r.inventory_account ?? "" },
-          { className: "text-left", key: "cogs_account", label: "COGS account", render: (r) => r.cogs_account ?? DASH, exportValue: (r) => r.cogs_account ?? "" },
-          { className: "text-left", key: "accounts_from", label: "Accounts from", render: (r) => (r.accounts_from === "role" ? "Default (no category)" : r.accounts_from === "category" ? "Its category" : "Item override"), exportValue: (r) => r.accounts_from },
+          { className: "text-left", key: "display_name", sortable: true, label: "Item", render: (r) => r.display_name, exportValue: (r) => r.display_name },
+          { className: "text-left", key: "category", sortable: true, label: "Category", render: (r) => r.category ?? DASH, exportValue: (r) => r.category ?? "" },
+          { className: "text-left", key: "inventory_account", sortable: true, label: "Inventory account", render: (r) => r.inventory_account ?? DASH, exportValue: (r) => r.inventory_account ?? "" },
+          { className: "text-left", key: "cogs_account", sortable: true, label: "COGS account", render: (r) => r.cogs_account ?? DASH, exportValue: (r) => r.cogs_account ?? "" },
+          { className: "text-left", key: "accounts_from", sortable: true, label: "Accounts from", render: (r) => (r.accounts_from === "role" ? "Default (no category)" : r.accounts_from === "category" ? "Its category" : "Item override"), exportValue: (r) => r.accounts_from },
           { className: "text-left", key: "catalog_item_name", label: "ScentsX item", render: (r) => (r.catalog_item_id ? <Link className="underline" to={`/catalogs/items?id=${encodeURIComponent(r.catalog_item_id)}`}>{r.catalog_item_name}</Link> : "Not yet"), exportValue: (r) => r.catalog_item_name ?? "" },
         ]}
       />

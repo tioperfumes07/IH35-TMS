@@ -129,7 +129,7 @@ export function PerfumeTradersPanel() {
             { key: "vendor", label: "Vendor", sortable: true, render: (r) => <span className="font-semibold">{r.vendor}</span> },
             { key: "carried", label: "Brands carried", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => `${r.carried} / ${o?.matrix_brands.length ?? 0}` },
             ...(o?.matrix_brands ?? []).map((b) => ({
-              key: `b_${b}`, label: b, cellClass: "text-right tabular-nums", render: (r: MatrixRow) => (r.brands[b] ? r.brands[b]!.toLocaleString() : DASH),
+              key: `b_${b}`, sortable: true, label: b, cellClass: "text-right tabular-nums", render: (r: MatrixRow) => (r.brands[b] ? r.brands[b]!.toLocaleString() : DASH),
             })),
           ]}
         />
@@ -151,7 +151,7 @@ export function PerfumeTradersPanel() {
             columns={[
               { key: "name", label: "Buyer", sortable: true, render: (r) => <span className="font-semibold">{r.name}</span> },
               { key: "lists", label: "Lists", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.lists.toLocaleString() },
-              { key: "senders", label: "Copied by", render: (r) => r.senders.join(", ") },
+              { key: "senders", sortable: true, label: "Copied by", render: (r) => r.senders.join(", ") },
               { key: "city", label: "City", sortable: true, render: (r) => [r.city, r.country].filter(Boolean).join(", ") || DASH },
               { key: "role", label: "Role", sortable: true, render: (r) => r.role ?? DASH },
             ]}
@@ -282,7 +282,7 @@ function TradeDetail({ trade, onClose, onChanged }: { trade: PerfumeTrade | null
             </select>) },
           { key: "offer_cents", label: "My offer", sortable: true, cellClass: "text-right tabular-nums", render: (b) => (
             <BuyerOffer buyer={b} onSave={(v) => void act(() => updatePerfumeTradeBuyer(b.id, { offer_cents: v }))} />) },
-          { key: "note", label: "Note", render: (b) => b.note ?? DASH },
+          { key: "note", sortable: true, label: "Note", render: (b) => b.note ?? DASH },
           { key: "remove", label: "", render: (b) => (
             <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={() => void act(() => updatePerfumeTradeBuyer(b.id, { archived: true }), `${b.company} taken off`)}>
               {tr("perfume.trd.take_off", "Take off")}</Button>) },

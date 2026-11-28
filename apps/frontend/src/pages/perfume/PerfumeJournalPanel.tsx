@@ -9,6 +9,7 @@
  * balanced or refused); listed with the engine's own list; each entry's lines open in its register on Financial statements.
  */
 import { CappedListNotice } from "../../components/CappedListNotice";
+import { accountIdByNumber, accountsWithNumbers, formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -32,8 +33,8 @@ const blank = (): Row => ({ account_id: "", side: "debit", cents: null, memo: ""
 
 /** Ready-made entries for the owner's own money (accounts by number in the ScentsX chart). Bank = the account picked in the pop-up. */
 const TEMPLATES: Array<{ key: string; label: string; memo: string; debit: string | "bank"; credit: string | "bank" }> = [
-  { key: "contribution", label: "Owner contribution", memo: "Owner contribution", debit: "bank", credit: "3000" },
-  { key: "draw", label: "Owner draw", memo: "Owner draw", debit: "3100", credit: "bank" },
+  { key: "contribution", sortable: true, label: "Owner contribution", memo: "Owner contribution", debit: "bank", credit: "3000" },
+  { key: "draw", sortable: true, label: "Owner draw", memo: "Owner draw", debit: "3100", credit: "bank" },
 ];
 
 export function PerfumeJournalPanel() {
@@ -44,7 +45,7 @@ export function PerfumeJournalPanel() {
   const [open, setOpen] = useState<string | null>(null);
   const [loan, setLoan] = useState<"in" | "repay" | null>(null);
   // Held per opening, not rebuilt each render — a background refetch must never reset the wizard mid-entry. Owner loans go to 2400.
-  const loanPrefill = useMemo<LoanApplicationPrefill | null>(() => (loan === "in" ? { direction: "in", relationship: "owner", counterparty_kind: "user", account_number: "2400", interest_rate_pct: "4.00", entry_date: todayCT() }
+  const loanPrefill = useMemo<LoanApplicationPrefill | null>(() => (loan === "in" ? { direction: "in", relationship: "owner", counterparty_kind: "user", pick_account_no: "2400", interest_rate_pct: "4.00", entry_date: todayCT() }
     : loan ? { direction: "out", target_type: "repayment", entry_date: todayCT() } : null), [loan]);
   if (co.isError) return <ListErrorState title={tr("scentsx.je.co_error", "Couldn't load ScentsX")} status={0} message={(co.error as Error)?.message} onRetry={() => void co.refetch()} />;
   return (
@@ -65,9 +66,9 @@ export function PerfumeJournalPanel() {
           emptyText="No manual journal entries yet — ScentsX opened at $0."
           columns={[
             { key: "entry_date", label: "Date", sortable: true, cellClass: "text-right tabular-nums", render: (j) => usDate(String(j.entry_date).slice(0, 10)), exportValue: (j) => String(j.entry_date) },
-            { className: "text-left", cellClass: "text-left", key: "memo", label: "Memo", render: (j) => j.memo ?? DASH, exportValue: (j) => j.memo ?? "" },
-            { key: "debit_total_cents", label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (j) => (j.debit_total_cents ? formatUsdCents(j.debit_total_cents) : DASH), exportValue: (j) => (j.debit_total_cents ?? 0) / 100 },
-            { className: "text-left", cellClass: "text-left", key: "status", label: "Status", render: (j) => (j.voided_at ? "Voided" : j.status), exportValue: (j) => (j.voided_at ? "Voided" : j.status) },
+            { className: "text-left", cellClass: "text-left", key: "memo", sortable: true, label: "Memo", render: (j) => j.memo ?? DASH, exportValue: (j) => j.memo ?? "" },
+            { key: "debit_total_cents", sortable: true, label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (j) => (j.debit_total_cents ? formatUsdCents(j.debit_total_cents) : DASH), exportValue: (j) => (j.debit_total_cents ?? 0) / 100 },
+            { className: "text-left", cellClass: "text-left", key: "status", sortable: true, label: "Status", render: (j) => (j.voided_at ? "Voided" : j.status), exportValue: (j) => (j.voided_at ? "Voided" : j.status) },
           ]}
         />
       )}
@@ -82,8 +83,8 @@ export function PerfumeJournalPanel() {
 
 function JournalModal({ companyId, accounts, template, onClose, onSaved }: { companyId: string; accounts: ScentsxAccount[]; template: (typeof TEMPLATES)[number] | null; onClose: () => void; onSaved: () => void }) {
   const { pushToast } = useToast();
-  const byNo = (n: string) => accounts.find((a) => a.account_number === n)?.id ?? "";
-  const banks = accounts.filter((a) => ["1000", "1010", "1020"].includes(a.account_number ?? ""));
+  const byNo = (n: string) => accountIdByNumber(accounts, n);
+  const banks = accountsWithNumbers(accounts, ["1000", "1010", "1020"]);
   const [bank, setBank] = useState(byNo("1000"));
   const [date, setDate] = useState(todayCT());
   const [memo, setMemo] = useState(template?.memo ?? "");
@@ -91,7 +92,7 @@ function JournalModal({ companyId, accounts, template, onClose, onSaved }: { com
   const [amount, setAmount] = useState<number | null>(null);
   const [rows, setRows] = useState<Row[]>([blank(), { ...blank(), side: "credit" }]);
   const [busy, setBusy] = useState(false);
-  const label = (a: ScentsxAccount) => [a.account_number, a.account_name].filter(Boolean).join(" · ");
+  const label = (a: ScentsxAccount) => formatAccountDisplayLabel(a);
   const lines: Row[] = template
     ? [{ account_id: template.debit === "bank" ? bank : byNo(template.debit), side: "debit", cents: amount, memo }, { account_id: template.credit === "bank" ? bank : byNo(template.credit), side: "credit", cents: amount, memo }]
     : rows;

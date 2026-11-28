@@ -5,6 +5,7 @@
  * loan engine (LoanApplicationWizard → POST /api/v1/accounting/related-party-loans, existing poster — no GL math here). Owner rule:
  * a loan always creates its loan document, one running loan per person, 4% default. QuickBooks-style pop-up.
  */
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -30,8 +31,8 @@ export function PerfumeLoansPanel() {
   // Held per opening (not rebuilt each render) so a background refetch never resets the wizard mid-entry.
   const prefill = useMemo<LoanApplicationPrefill | null>(() => {
     if (!open) return null;
-    if (open.kind === "owner") return { direction: "in", relationship: "owner", counterparty_kind: "user", account_number: "2400", interest_rate_pct: "4.00", entry_date: todayCT() };
-    if (open.kind === "note") return { direction: "in", relationship: "other", counterparty_kind: "other", account_number: "2500", interest_rate_pct: "4.00", entry_date: todayCT() };
+    if (open.kind === "owner") return { direction: "in", relationship: "owner", counterparty_kind: "user", pick_account_no: "2400", interest_rate_pct: "4.00", entry_date: todayCT() };
+    if (open.kind === "note") return { direction: "in", relationship: "other", counterparty_kind: "other", pick_account_no: "2500", interest_rate_pct: "4.00", entry_date: todayCT() };
     return { direction: "out", target_type: "repayment", account_id: open.f.account_id, counterparty_name: open.f.counterparty_name ?? "", entry_date: todayCT() };
   }, [open]);
   const sum = (k: keyof RelatedPartyLoanFacilityRow) => rows.reduce((s, f) => s + Number(f[k] ?? 0), 0);
@@ -57,14 +58,14 @@ export function PerfumeLoansPanel() {
           emptyText="No loans yet. Money the owner puts in as a loan goes to 2400; a bank or lender note goes to 2500."
           columns={[
             { className: "text-left", cellClass: "text-left font-semibold", key: "counterparty_name", label: "Lender", sortable: true, render: (f) => f.counterparty_name ?? DASH, exportValue: (f) => f.counterparty_name ?? "" },
-            { className: "text-left", cellClass: "text-left", key: "account_number", label: "Account", sortable: true, render: (f) => [f.account_number, f.account_name].filter(Boolean).join(" · ") || DASH, exportValue: (f) => `${f.account_number ?? ""} ${f.account_name ?? ""}`.trim() },
-            { className: "text-left", cellClass: "text-left", key: "relationship", label: "Type", render: (f) => String(f.relationship).replace(/_/g, " "), exportValue: (f) => String(f.relationship) },
+            { className: "text-left", cellClass: "text-left", key: "account_number", label: "Account", sortable: true, render: (f) => (f.account_name || f.account_number ? formatAccountDisplayLabel(f) : DASH), exportValue: (f) => formatAccountDisplayLabel(f) },
+            { className: "text-left", cellClass: "text-left", key: "relationship", sortable: true, label: "Type", render: (f) => String(f.relationship).replace(/_/g, " "), exportValue: (f) => String(f.relationship) },
             { key: "created_at", label: "Opened", sortable: true, cellClass: "text-right tabular-nums", render: (f) => (f.created_at ? usDate(f.created_at.slice(0, 10)) : DASH), exportValue: (f) => f.created_at ?? "" },
-            { key: "principal_advanced_cents", label: "Borrowed", kind: "number", cellClass: "text-right tabular-nums", render: (f) => formatUsdCents(f.principal_advanced_cents), exportValue: (f) => f.principal_advanced_cents / 100 },
-            { key: "principal_repaid_cents", label: "Repaid", kind: "number", cellClass: "text-right tabular-nums", render: (f) => formatUsdCents(f.principal_repaid_cents), exportValue: (f) => f.principal_repaid_cents / 100 },
-            { key: "accrued_interest_cents", label: "Interest accrued", kind: "number", cellClass: "text-right tabular-nums", render: (f) => formatUsdCents(f.accrued_interest_cents), exportValue: (f) => f.accrued_interest_cents / 100 },
+            { key: "principal_advanced_cents", sortable: true, label: "Borrowed", kind: "number", cellClass: "text-right tabular-nums", render: (f) => formatUsdCents(f.principal_advanced_cents), exportValue: (f) => f.principal_advanced_cents / 100 },
+            { key: "principal_repaid_cents", sortable: true, label: "Repaid", kind: "number", cellClass: "text-right tabular-nums", render: (f) => formatUsdCents(f.principal_repaid_cents), exportValue: (f) => f.principal_repaid_cents / 100 },
+            { key: "accrued_interest_cents", sortable: true, label: "Interest accrued", kind: "number", cellClass: "text-right tabular-nums", render: (f) => formatUsdCents(f.accrued_interest_cents), exportValue: (f) => f.accrued_interest_cents / 100 },
             { key: "open_balance_cents", label: "Owed now", kind: "number", sortable: true, cellClass: "text-right tabular-nums font-semibold", render: (f) => formatUsdCents(f.open_balance_cents), exportValue: (f) => f.open_balance_cents / 100 },
-            { className: "text-left", cellClass: "text-left", key: "status", label: "Status", render: (f) => f.status.replace(/_/g, " "), exportValue: (f) => f.status },
+            { className: "text-left", cellClass: "text-left", key: "status", sortable: true, label: "Status", render: (f) => f.status.replace(/_/g, " "), exportValue: (f) => f.status },
             { key: "repay", label: "", render: (f) => (Number(f.open_balance_cents) > 0 ? <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={(e) => { e.stopPropagation(); setOpen({ kind: "repay", f }); }} data-testid={`scentsx-ln-repay-${f.id}`}>{tr("scentsx.ln.repay", "Repay")}</Button> : DASH) },
           ]}
         />

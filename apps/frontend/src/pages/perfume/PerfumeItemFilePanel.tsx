@@ -164,7 +164,7 @@ export function PerfumeItemFilePanel() {
             { className: "text-left", key: "display_name", label: "Item", sortable: true, render: (r) => <DocLink tab="items" id={r.id}>{r.display_name}</DocLink>, exportValue: (r) => r.display_name },
             { className: "text-left", key: "tio_code", label: "TIO code", sortable: true, render: (r) => r.tio_code ?? DASH, exportValue: (r) => r.tio_code ?? "" },
             { className: "text-left", key: "pos_code", label: "POS code", sortable: true, render: (r) => r.pos_code ?? DASH, exportValue: (r) => r.pos_code ?? "" },
-            { className: "text-left", key: "ticket_description", label: "Ticket description", render: (r) => r.ticket_description ?? DASH, exportValue: (r) => r.ticket_description ?? "" },
+            { className: "text-left", key: "ticket_description", sortable: true, label: "Ticket description", render: (r) => r.ticket_description ?? DASH, exportValue: (r) => r.ticket_description ?? "" },
             { className: "text-left", key: "brand", label: "Brand", sortable: true, render: (r) => r.brand || DASH, exportValue: (r) => r.brand ?? "" },
             { className: "text-left", key: "family", label: "Family", sortable: true, render: (r) => (r.family_id ? <DocLink tab="families" id={r.family_id}>{r.family ?? ""}</DocLink> : DASH), exportValue: (r) => r.family ?? "" },
             { className: "text-left", key: "model", label: "Model", sortable: true, render: (r) => r.model ?? DASH, exportValue: (r) => r.model ?? "" },
@@ -173,7 +173,7 @@ export function PerfumeItemFilePanel() {
             { key: "size_ml", label: "Size ml", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.size_ml == null ? DASH : String(r.size_ml)), exportValue: (r) => r.size_ml ?? "" },
             { className: "text-left", key: "conc", label: "EDT / EDP / Parfum", sortable: true, render: (r) => r.conc || DASH, exportValue: (r) => r.conc ?? "" },
             { className: "text-left", key: "gender", label: "Gender", sortable: true, render: (r) => GENDER[r.gender ?? ""] ?? DASH, exportValue: (r) => GENDER[r.gender ?? ""] ?? "" },
-            { className: "text-left", key: "description", label: "Description", render: (r) => r.description ?? DASH, exportValue: (r) => r.description ?? "" },
+            { className: "text-left", key: "description", sortable: true, label: "Description", render: (r) => r.description ?? DASH, exportValue: (r) => r.description ?? "" },
             { key: "case_pack", label: "Case pack", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.case_pack == null ? DASH : String(r.case_pack)), exportValue: (r) => r.case_pack ?? "" },
             { key: "min_order_qty", label: "Min order", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.min_order_qty == null ? DASH : String(r.min_order_qty)), exportValue: (r) => r.min_order_qty ?? "" },
             { className: "text-left", key: "origin_country", label: "Origin", sortable: true, render: (r) => countryLabel(r.origin_country) || DASH, exportValue: (r) => r.origin_country ?? "" },
@@ -188,8 +188,8 @@ export function PerfumeItemFilePanel() {
             { className: "text-left", key: "price_locked", label: "Change price", sortable: true, render: (r) => yn(!r.price_locked), exportValue: (r) => yn(!r.price_locked) },
             { className: "text-left", key: "is_exclusive", label: "Exclusive", sortable: true, render: (r) => (r.is_exclusive ? "Y" : "N"), exportValue: (r) => (r.is_exclusive ? "Y" : "N") },
             { className: "text-left", key: "is_new_launch", label: "New launch", sortable: true, render: (r) => (r.is_new_launch ? "Y" : "N"), exportValue: (r) => (r.is_new_launch ? "Y" : "N") },
-            { className: "text-left", key: "hk_codes", label: "HK codes", render: (r) => codes(r.hk_codes), exportValue: (r) => r.hk_codes.join(", ") },
-            { className: "text-left", key: "upcs", label: "UPCs", render: (r) => codes(r.upcs), exportValue: (r) => r.upcs.join(", ") },
+            { className: "text-left", key: "hk_codes", sortable: true, label: "HK codes", render: (r) => codes(r.hk_codes), exportValue: (r) => r.hk_codes.join(", ") },
+            { className: "text-left", key: "upcs", sortable: true, label: "UPCs", render: (r) => codes(r.upcs), exportValue: (r) => r.upcs.join(", ") },
             { key: "lists_linked", label: "Lists linked", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => r.lists_linked.toLocaleString("en-US") },
             { key: "best_cost_cents", label: "Best supplier cost", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.best_cost_cents), exportValue: (r) => (r.best_cost_cents == null ? "" : r.best_cost_cents / 100) },
             { key: "my_avg_cost_cents", label: "My avg cost", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.my_avg_cost_cents), exportValue: (r) => (r.my_avg_cost_cents == null ? "" : r.my_avg_cost_cents / 100) },
@@ -326,8 +326,8 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
             exportFilename="TIO item HK codes" exportExcel emptyText="No HK code — add one above."
             columns={[
               { className: "text-left", key: "sku", label: "HK code", render: (r) => <button type="button" className="underline" onClick={() => open("linkage", r.sku)}>{r.sku}</button>, exportValue: (r) => r.sku },
-              { className: "text-left", key: "list", label: "From my list", render: (r) => r.list },
-              { className: "text-left", key: "method", label: "Linked", render: (r) => (r.method === "confirmed" ? "By me" : "By the desk"), exportValue: (r) => (r.method === "confirmed" ? "By me" : "By the desk") },
+              { className: "text-left", key: "list", sortable: true, label: "From my list", render: (r) => r.list },
+              { className: "text-left", key: "method", sortable: true, label: "Linked", render: (r) => (r.method === "confirmed" ? "By me" : "By the desk"), exportValue: (r) => (r.method === "confirmed" ? "By me" : "By the desk") },
             ]} />
         </div>
       </div>
@@ -336,21 +336,21 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
         exportFilename="TIO item linked lines" exportExcel emptyText="No list carries this item."
         columns={[
           { className: "text-left", key: "vendor", label: "List", render: (l) => <DocLink tab="suppliers" id={l.vendor_id}>{l.vendor}</DocLink>, exportValue: (l) => l.vendor },
-          { className: "text-left", key: "kind", label: "Kind", render: (l) => KIND[l.kind] ?? l.kind, exportValue: (l) => KIND[l.kind] ?? l.kind },
-          { className: "text-left", key: "sku", label: "Their code", render: (l) => l.sku ?? DASH, exportValue: (l) => l.sku ?? "" },
-          { className: "text-left", key: "upc", label: "Their UPC", render: (l) => l.upc ?? DASH, exportValue: (l) => l.upc ?? "" },
-          { className: "text-left", key: "description", label: "Their description", render: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" "), exportValue: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" ") },
-          { key: "price_cents", label: "Price", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money(l.price_cents), exportValue: (l) => (l.price_cents == null ? "" : l.price_cents / 100) },
-          { key: "list_date", label: "List date", cellClass: "text-right tabular-nums", render: (l) => usDate(l.list_date) },
+          { className: "text-left", key: "kind", sortable: true, label: "Kind", render: (l) => KIND[l.kind] ?? l.kind, exportValue: (l) => KIND[l.kind] ?? l.kind },
+          { className: "text-left", key: "sku", sortable: true, label: "Their code", render: (l) => l.sku ?? DASH, exportValue: (l) => l.sku ?? "" },
+          { className: "text-left", key: "upc", sortable: true, label: "Their UPC", render: (l) => l.upc ?? DASH, exportValue: (l) => l.upc ?? "" },
+          { className: "text-left", key: "description", sortable: true, label: "Their description", render: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" "), exportValue: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" ") },
+          { key: "price_cents", sortable: true, label: "Price", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money(l.price_cents), exportValue: (l) => (l.price_cents == null ? "" : l.price_cents / 100) },
+          { key: "list_date", sortable: true, label: "List date", cellClass: "text-right tabular-nums", render: (l) => usDate(l.list_date) },
         ]}
       />
       <ParityTable<PerfumeItemFile["events"][number]> selectable
         cardTitle title={tr("perfume.itemfile.history", "History")} rows={x.events} rowKey={(e) => e.id} storageKey="perfume-itemfile-history-v1" exportFilename="TIO item history" exportExcel emptyText="No changes yet."
         columns={[
           { key: "created_at", label: "When", cellClass: "text-right tabular-nums", render: (e) => new Date(e.created_at).toLocaleString("en-US", { timeZone: "America/Chicago" }) },
-          { className: "text-left", key: "kind", label: "What", render: (e) => EVENT[e.kind] ?? e.kind, exportValue: (e) => EVENT[e.kind] ?? e.kind },
-          { className: "text-left", key: "detail", label: "Detail", render: (e) => JSON.stringify(e.detail), exportValue: (e) => JSON.stringify(e.detail) },
-          { className: "text-left", key: "by_email", label: "By", render: (e) => e.by_email ?? DASH },
+          { className: "text-left", key: "kind", sortable: true, label: "What", render: (e) => EVENT[e.kind] ?? e.kind, exportValue: (e) => EVENT[e.kind] ?? e.kind },
+          { className: "text-left", key: "detail", sortable: true, label: "Detail", render: (e) => JSON.stringify(e.detail), exportValue: (e) => JSON.stringify(e.detail) },
+          { className: "text-left", key: "by_email", sortable: true, label: "By", render: (e) => e.by_email ?? DASH },
         ]}
       />
     </section>
@@ -392,15 +392,15 @@ export function PerfumeLinkagePanel() {
           rows={d?.lines ?? []} rowKey={(l) => `${l.line_id}-${l.item_id}`} loading={lk.isLoading && q.length > 0} storageKey="perfume-linkage-v1" exportFilename={`TIO linkage ${q}`} exportExcel
           emptyText={q ? "No line on a current list carries it." : "Type a UPC, a code or words above."}
           columns={[
-            { className: "text-left", key: "found_by", label: "Found by", render: (l) => FOUND[l.found_by], exportValue: (l) => FOUND[l.found_by] },
+            { className: "text-left", key: "found_by", sortable: true, label: "Found by", render: (l) => FOUND[l.found_by], exportValue: (l) => FOUND[l.found_by] },
             { className: "text-left", key: "vendor", label: "List", render: (l) => <DocLink tab="suppliers" id={l.vendor_id}>{l.vendor}</DocLink>, exportValue: (l) => l.vendor },
-            { className: "text-left", key: "kind", label: "Kind", render: (l) => KIND[l.kind] ?? l.kind, exportValue: (l) => KIND[l.kind] ?? l.kind },
-            { className: "text-left", key: "sku", label: "Their code", render: (l) => l.sku ?? DASH, exportValue: (l) => l.sku ?? "" },
-            { className: "text-left", key: "upc", label: "Their UPC", render: (l) => l.upc ?? DASH, exportValue: (l) => l.upc ?? "" },
-            { className: "text-left", key: "description", label: "Their description", render: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" "), exportValue: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" ") },
-            { key: "price_cents", label: "Price", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money(l.price_cents), exportValue: (l) => (l.price_cents == null ? "" : l.price_cents / 100) },
+            { className: "text-left", key: "kind", sortable: true, label: "Kind", render: (l) => KIND[l.kind] ?? l.kind, exportValue: (l) => KIND[l.kind] ?? l.kind },
+            { className: "text-left", key: "sku", sortable: true, label: "Their code", render: (l) => l.sku ?? DASH, exportValue: (l) => l.sku ?? "" },
+            { className: "text-left", key: "upc", sortable: true, label: "Their UPC", render: (l) => l.upc ?? DASH, exportValue: (l) => l.upc ?? "" },
+            { className: "text-left", key: "description", sortable: true, label: "Their description", render: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" "), exportValue: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" ") },
+            { key: "price_cents", sortable: true, label: "Price", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money(l.price_cents), exportValue: (l) => (l.price_cents == null ? "" : l.price_cents / 100) },
             { className: "text-left", key: "item", label: "Linked to", render: (l) => (l.item_id && l.item ? <DocLink tab="itemfile" id={l.item_id}>{l.item}</DocLink> : tr("perfume.linkage.not_linked", "Not linked")), exportValue: (l) => l.item ?? "" },
-            { key: "list_date", label: "List date", cellClass: "text-right tabular-nums", render: (l) => usDate(l.list_date) },
+            { key: "list_date", sortable: true, label: "List date", cellClass: "text-right tabular-nums", render: (l) => usDate(l.list_date) },
             { className: "text-left", key: "act", label: "", render: (l) => (target && l.item_id !== target.id
               ? <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={() => linkTo(l)} data-testid={`perfume-linkage-link-${l.line_id}`}>{tr("perfume.linkage.link", "Link to this item")}</Button> : null) },
           ]}
@@ -467,7 +467,7 @@ export function PerfumeStockLinkagePanel() {
               columns={[
                 { className: "text-left", key: "mine", label: "Our item", render: (p) => <DocLink tab="itemfile" id={p.mine_id}>{p.mine}</DocLink>, exportValue: (p) => p.mine },
                 { className: "text-left", key: "vend", label: "Vendors' item", render: (p) => <DocLink tab="itemfile" id={p.vend_id}>{p.vend}</DocLink>, exportValue: (p) => p.vend },
-                { key: "as_of", label: "As of", cellClass: "text-right tabular-nums", render: () => usDate(new Date().toISOString().slice(0, 10)) },
+                { key: "as_of", sortable: true, label: "As of", cellClass: "text-right tabular-nums", render: () => usDate(new Date().toISOString().slice(0, 10)) },
               ]}
             />
             {strict.data?.pairs.length ? (
@@ -479,9 +479,9 @@ export function PerfumeStockLinkagePanel() {
           emptyText="Every one of our items here is linked to a vendor."
           columns={[
             { className: "text-left", key: "display_name", label: "Our item", render: (r) => <DocLink tab="itemfile" id={r.id}>{r.display_name}</DocLink>, exportValue: (r) => r.display_name },
-            { className: "text-left", key: "hk", label: "HK code", render: (r) => r.hk ?? DASH, exportValue: (r) => r.hk ?? "" },
-            { className: "text-left", key: "my_desc", label: "My description", render: (r) => r.my_desc ?? DASH, exportValue: (r) => r.my_desc ?? "" },
-            { className: "text-left", key: "upcs", label: "UPC", render: (r) => codes(r.upcs ?? []), exportValue: (r) => (r.upcs ?? []).join(", ") },
+            { className: "text-left", key: "hk", sortable: true, label: "HK code", render: (r) => r.hk ?? DASH, exportValue: (r) => r.hk ?? "" },
+            { className: "text-left", key: "my_desc", sortable: true, label: "My description", render: (r) => r.my_desc ?? DASH, exportValue: (r) => r.my_desc ?? "" },
+            { className: "text-left", key: "upcs", sortable: true, label: "UPC", render: (r) => codes(r.upcs ?? []), exportValue: (r) => (r.upcs ?? []).join(", ") },
             { className: "text-left", key: "candidates", label: "Same bottle on the vendors' lists", exportValue: (r) => r.candidates.map((c) => c.display_name).join(" | "),
               render: (r) => (r.candidates.length ? (
                 <div className="space-y-1">
@@ -494,7 +494,7 @@ export function PerfumeStockLinkagePanel() {
                         c.best_cents != null ? `best cost ${money(c.best_cents)}` : null, c.upcs?.length ? `UPC ${c.upcs.join(", ")}` : null, c.sample].filter(Boolean).join(" · ")}</span>
                     </div>))}
                 </div>) : tr("perfume.stock_link.none", "No same-size, same-kind item on the vendors' lists — open the linkage screen and search by UPC or words.")) },
-            { key: "as_of", label: "As of", cellClass: "text-right tabular-nums", render: () => usDate(new Date().toISOString().slice(0, 10)) },
+            { key: "as_of", sortable: true, label: "As of", cellClass: "text-right tabular-nums", render: () => usDate(new Date().toISOString().slice(0, 10)) },
           ]}
         />
         <div className="flex items-center gap-2 text-xs">

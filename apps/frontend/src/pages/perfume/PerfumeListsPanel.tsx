@@ -577,9 +577,9 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
             storageKey="perfume-desk-import-preview-v1"
             hidePager
             columns={[
-              { key: "row_no", label: "Row" }, { key: "sku", label: "SKU" }, { key: "upc", label: "UPC" }, { key: "brand", label: "Brand" },
-              { key: "description", label: "Description" }, { key: "section", label: "Section" },
-              { key: "price", label: "Price", cellClass: "text-right tabular-nums", render: (r) => `$${r.price}` }, { key: "qty", label: "Qty" },
+              { key: "row_no", sortable: true, label: "Row" }, { key: "sku", sortable: true, label: "SKU" }, { key: "upc", sortable: true, label: "UPC" }, { key: "brand", sortable: true, label: "Brand" },
+              { key: "description", sortable: true, label: "Description" }, { key: "section", sortable: true, label: "Section" },
+              { key: "price", label: "Price", cellClass: "text-right tabular-nums", render: (r) => `$${r.price}` }, { key: "qty", sortable: true, label: "Qty" },
             ]}
           />}
           {ownList ? (

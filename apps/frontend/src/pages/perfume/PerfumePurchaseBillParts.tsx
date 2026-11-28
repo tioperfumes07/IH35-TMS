@@ -5,6 +5,7 @@
  * between GRNI and COGS, and books freight or other charges to the account picked. This screen only collects what is on the
  * vendor's invoice: their invoice number, dates, units and price per line, and extra charges.
  */
+import { accountsThatHaveNumbers } from "../../lib/show-account-numbers";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -39,7 +40,7 @@ export function PurchaseBillForm({ poId, poNumber, onDone }: { poId: string; poN
   const [lineAcct, setLineAcct] = useState<Record<string, string>>({});
   const [charges, setCharges] = useState<Charge[]>([]);
   const [busy, setBusy] = useState(false);
-  const postable = useMemo(() => (accts.data?.accounts ?? []).filter((a) => a.account_number), [accts.data]);
+  const postable = useMemo(() => accountsThatHaveNumbers(accts.data?.accounts ?? []), [accts.data]);
   if (q.isError) return <ListErrorState title={tr("perfume.pbill.error", "Couldn't load what is left to bill")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />;
   if (!q.data) return null;
   const lines = q.data.lines;
@@ -106,11 +107,11 @@ export function PurchaseBillForm({ poId, poNumber, onDone }: { poId: string; poN
           <ParityTable<ScentsxBillablePoLine> selectable
             rows={lines} rowKey={(l) => l.po_line_id} storageKey="perfume-po-bill-lines-v1" emptyText="No lines on this PO."
             columns={[
-              { key: "line_no", label: "#", kind: "number", cellClass: "text-right tabular-nums", render: (l) => String(l.line_no) },
-              { className: "text-left", key: "description", label: "Item", render: (l) => l.description, exportValue: (l) => l.description },
-              { key: "received", label: "Received", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.received.toLocaleString("en-US") },
-              { key: "billed", label: "Billed before", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.billed.toLocaleString("en-US") },
-              { key: "unit", label: "Received at", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money(receivedUnit(l)) },
+              { key: "line_no", sortable: true, label: "#", kind: "number", cellClass: "text-right tabular-nums", render: (l) => String(l.line_no) },
+              { className: "text-left", key: "description", sortable: true, label: "Item", render: (l) => l.description, exportValue: (l) => l.description },
+              { key: "received", sortable: true, label: "Received", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.received.toLocaleString("en-US") },
+              { key: "billed", sortable: true, label: "Billed before", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.billed.toLocaleString("en-US") },
+              { key: "unit", sortable: true, label: "Received at", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money(receivedUnit(l)) },
               { key: "qty", label: "Units billed", render: (l) => (
                 <input type="number" min={0} max={l.to_bill} className={`${ctl} w-[80px] text-right`} aria-label={`Units billed line ${l.line_no}`} disabled={l.to_bill <= 0}
                   value={l.to_bill > 0 ? qtyOf(l) : 0} onChange={(e) => setQty({ ...qty, [l.po_line_id]: e.target.value === "" ? 0 : Math.max(0, Math.floor(Number(e.target.value))) })}
@@ -124,7 +125,7 @@ export function PurchaseBillForm({ poId, poNumber, onDone }: { poId: string; poN
                   <option value="">{tr("perfume.pbill.pick", "Pick account")}</option>
                   {postable.map((a) => <option key={a.id} value={a.id}>{`${a.account_number} ${a.account_name}`}</option>)}
                 </select>) },
-              { key: "total", label: "Line total", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.to_bill > 0 ? money(qtyOf(l) * (priceOf(l) ?? 0)) : DASH },
+              { key: "total", sortable: true, label: "Line total", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.to_bill > 0 ? money(qtyOf(l) * (priceOf(l) ?? 0)) : DASH },
             ]}
           />
           <div className="space-y-1 text-xs" data-testid="perfume-po-bill-charges">
@@ -159,12 +160,12 @@ export function PurchaseBillForm({ poId, poNumber, onDone }: { poId: string; poN
         rows={q.data.bills} rowKey={(b) => b.id} storageKey="perfume-po-bill-list-v1" exportFilename={`${poNumber} bills`} exportExcel emptyText="No vendor bills on this PO yet."
         columns={[
           { className: "text-left", key: "display_id", label: "Bill", render: (b) => <Link className="underline" to={`/accounting/bills/${encodeURIComponent(b.id)}`}>{b.display_id ?? b.id.slice(0, 8)}</Link>, exportValue: (b) => b.display_id ?? "" },
-          { className: "text-left", key: "bill_number", label: "Vendor invoice", render: (b) => b.bill_number ?? DASH, exportValue: (b) => b.bill_number ?? "" },
-          { key: "bill_date", label: "Date", cellClass: "text-right tabular-nums", render: (b) => usDate(b.bill_date), exportValue: (b) => b.bill_date },
-          { key: "due_date", label: "Due", cellClass: "text-right tabular-nums", render: (b) => (b.due_date ? usDate(b.due_date) : DASH), exportValue: (b) => b.due_date ?? "" },
-          { key: "units", label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (b) => (b.units ?? 0).toLocaleString("en-US") },
-          { key: "amount_cents", label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (b) => money(b.amount_cents), exportValue: (b) => b.amount_cents / 100 },
-          { className: "text-left", key: "status", label: "Status", render: (b) => (b.voided ? "Voided" : b.status), exportValue: (b) => (b.voided ? "Voided" : b.status) },
+          { className: "text-left", key: "bill_number", sortable: true, label: "Vendor invoice", render: (b) => b.bill_number ?? DASH, exportValue: (b) => b.bill_number ?? "" },
+          { key: "bill_date", sortable: true, label: "Date", cellClass: "text-right tabular-nums", render: (b) => usDate(b.bill_date), exportValue: (b) => b.bill_date },
+          { key: "due_date", sortable: true, label: "Due", cellClass: "text-right tabular-nums", render: (b) => (b.due_date ? usDate(b.due_date) : DASH), exportValue: (b) => b.due_date ?? "" },
+          { key: "units", sortable: true, label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (b) => (b.units ?? 0).toLocaleString("en-US") },
+          { key: "amount_cents", sortable: true, label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (b) => money(b.amount_cents), exportValue: (b) => b.amount_cents / 100 },
+          { className: "text-left", key: "status", sortable: true, label: "Status", render: (b) => (b.voided ? "Voided" : b.status), exportValue: (b) => (b.voided ? "Voided" : b.status) },
         ]}
       />
     </section>

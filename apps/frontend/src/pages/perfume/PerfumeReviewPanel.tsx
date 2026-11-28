@@ -31,11 +31,11 @@ const SUGGEST_CHOICES: Array<{ value: PerfumeSuggestBucket; key: string; label: 
 ];
 
 const lineFilterDefs = (): Array<{ key: LineFilterKey; label: string; allLabel: string; name: (v: string) => string }> => [
-  { key: "gender", label: tr("perfume.review.f.gender", "Gender"), allLabel: tr("perfume.review.f.genderAll", "Men · Women · Unisex"), name: (v) => GENDER_NAMES[v] ?? v },
-  { key: "kind", label: tr("perfume.review.f.kind", "Set / tester"), allLabel: tr("perfume.review.f.kindAll", "Every kind"), name: (v) => KIND_NAMES[v] ?? v.charAt(0) + v.slice(1).toLowerCase() },
-  { key: "conc", label: tr("perfume.review.f.conc", "Type"), allLabel: tr("perfume.review.f.concAll", "Every type"), name: (v) => (v === "none" ? "Type not stated" : v) },
-  { key: "category", label: tr("perfume.review.f.category", "Category"), allLabel: tr("perfume.review.f.categoryAll", "Every category"), name: (v) => v },
-  { key: "brand", label: tr("perfume.review.f.brand", "Brand"), allLabel: tr("perfume.review.f.brandAll", "Every brand"), name: (v) => (v === "none" ? "Brand not read" : v) },
+  { key: "gender", sortable: true, label: tr("perfume.review.f.gender", "Gender"), allLabel: tr("perfume.review.f.genderAll", "Men · Women · Unisex"), name: (v) => GENDER_NAMES[v] ?? v },
+  { key: "kind", sortable: true, label: tr("perfume.review.f.kind", "Set / tester"), allLabel: tr("perfume.review.f.kindAll", "Every kind"), name: (v) => KIND_NAMES[v] ?? v.charAt(0) + v.slice(1).toLowerCase() },
+  { key: "conc", sortable: true, label: tr("perfume.review.f.conc", "Type"), allLabel: tr("perfume.review.f.concAll", "Every type"), name: (v) => (v === "none" ? "Type not stated" : v) },
+  { key: "category", sortable: true, label: tr("perfume.review.f.category", "Category"), allLabel: tr("perfume.review.f.categoryAll", "Every category"), name: (v) => v },
+  { key: "brand", sortable: true, label: tr("perfume.review.f.brand", "Brand"), allLabel: tr("perfume.review.f.brandAll", "Every brand"), name: (v) => (v === "none" ? "Brand not read" : v) },
 ];
 /** The choices are the values found on the waiting lines, each with how many lines it shows; a picked choice stays listed. */
 function facetOptions(found: PerfumeReviewFacet[] | undefined, picked: string[], name: (v: string) => string) {
@@ -186,7 +186,7 @@ export function PerfumeReviewPanel({ mine = null }: { mine?: "offer" | null } = 
             render: (r) => (r.suggestions[0] ? r.suggestions[0].display_name : <span className="text-gray-500">{tr("perfume.review.4", "No close item")}</span>) },
           { key: "alike", label: "% alike", kind: "number", sortable: true, sortValue: (r) => r.suggestions[0]?.score ?? 0, cellClass: "text-right tabular-nums",
             render: (r) => (r.suggestions[0] ? `${Math.round(r.suggestions[0].score * 100)}%` : "—") },
-          { key: "differs", label: "Differs by", allowWrap: true, minWidth: 160, render: (r) => r.suggestions[0]?.why || "—" },
+          { key: "differs", sortable: true, label: "Differs by", allowWrap: true, minWidth: 160, render: (r) => r.suggestions[0]?.why || "—" },
         ]}
         rowActions={(r) => <ConfirmControls row={r} />}
         rowActionsWidth={420}

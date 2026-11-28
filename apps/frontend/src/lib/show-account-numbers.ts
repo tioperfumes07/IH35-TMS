@@ -37,3 +37,18 @@ export function formatAccountDisplayLabel(
   if (show && number) return `${number} · ${name}`;
   return name;
 }
+
+/**
+ * ROUND L.31 (2026-11-28) — NON-DISPLAY number lookups. A screen that must find "the 1000 bank account" or "accounts 1000/1010/1020"
+ * (a template's fixed debit/credit, a default bank) matches on the number without ever rendering it. Those lookups live here, in the
+ * approved helper, so every page that DISPLAYS an account still goes through formatAccountDisplayLabel and the owner's toggle.
+ */
+export function accountIdByNumber<T extends { id: string; account_number?: string | null }>(accounts: readonly T[], number: string): string {
+  return accounts.find((a) => (a.account_number ?? "") === number)?.id ?? "";
+}
+export function accountsWithNumbers<T extends { account_number?: string | null }>(accounts: readonly T[], numbers: readonly string[]): T[] {
+  return accounts.filter((a) => numbers.includes(a.account_number ?? ""));
+}
+export function accountsThatHaveNumbers<T extends { account_number?: string | null }>(accounts: readonly T[]): T[] {
+  return accounts.filter((a) => Boolean(a.account_number));
+}

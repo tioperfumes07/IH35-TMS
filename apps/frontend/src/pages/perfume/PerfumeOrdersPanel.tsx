@@ -207,12 +207,12 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
         exportExcel
         emptyText="No lines yet — add an item above."
         columns={[
-          { key: "line_no", label: "#", cellClass: "tabular-nums", render: (l) => l.line_no },
+          { key: "line_no", sortable: true, label: "#", cellClass: "tabular-nums", render: (l) => l.line_no },
           { key: "description", label: "Item", render: (l) => <>{l.description}{l.upc ? <span className="ml-1 text-[#64748B]">{l.upc}</span> : null}</>, exportValue: (l) => `${l.description}${l.upc ? ` ${l.upc}` : ""}` },
           { key: "qty", label: "Qty", render: (l) => <NumberCell value={l.qty} min={1} label={tr("perfume.orders.qty", "Qty")} testId={`perfume-order-qty-${l.line_no}`} onSave={(n) => updatePerfumeOrderLine(l.id, { qty: n }).then(refresh)} />, exportValue: (l) => l.qty },
           { key: "qty_shipped", label: "Shipped", render: (l) => <NumberCell value={l.qty_shipped} label={tr("perfume.orders.shipped", "Shipped")} testId={`perfume-order-shipped-${l.line_no}`} onSave={(n) => updatePerfumeOrderLine(l.id, { qty_shipped: n }).then(refresh)} />, exportValue: (l) => l.qty_shipped },
           { key: "unit_price_cents", label: "Unit price", render: (l) => <NumberCell value={l.unit_price_cents} money label={tr("perfume.orders.price", "Unit price")} testId={`perfume-order-price-${l.line_no}`} onSave={(n) => updatePerfumeOrderLine(l.id, { unit_price_cents: n, ...(override.trim().length >= 3 ? { price_override_reason: override.trim() } : {}) }).then(() => { setOverride(""); refresh(); })} />, exportValue: (l) => l.unit_price_cents / 100 },
-          { key: "total", label: "Total", cellClass: "text-right tabular-nums", render: (l) => money(l.qty * l.unit_price_cents, o.currency), exportValue: (l) => (l.qty * l.unit_price_cents) / 100 },
+          { key: "total", sortable: true, label: "Total", cellClass: "text-right tabular-nums", render: (l) => money(l.qty * l.unit_price_cents, o.currency), exportValue: (l) => (l.qty * l.unit_price_cents) / 100 },
           { key: "cost_cents", label: "Best cost when added", cellClass: "text-right tabular-nums", render: (l) => (l.cost_cents == null ? DASH : `${money(l.cost_cents)}${l.cost_vendor ? ` · ${l.cost_vendor}` : ""}`) },
           { key: "off", label: "", render: (l) => (
             <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" disabled={l.qty_shipped > 0}
@@ -244,11 +244,11 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
         emptyText="None yet — press Buy."
         columns={[
           { key: "number", label: "PO", render: (p) => <DocLink tab="purchases" id={p.id} testId={`perfume-order-po-${p.number}`}>{p.number}</DocLink>, exportValue: (p) => p.number },
-          { key: "vendor_name", label: "Vendor", render: (p) => p.vendor_name },
+          { key: "vendor_name", sortable: true, label: "Vendor", render: (p) => p.vendor_name },
           { key: "status", label: "Status", render: (p) => <Badge text={PO_STATUS_TEXT[p.status]} color={PO_STATUS_CLASS[p.status]} />, exportValue: (p) => PO_STATUS_TEXT[p.status] },
-          { key: "units", label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (p) => p.units.toLocaleString("en-US") },
-          { key: "units_received", label: "Received", kind: "number", cellClass: "text-right tabular-nums", render: (p) => p.units_received.toLocaleString("en-US") },
-          { key: "total_cents", label: "Cost", kind: "number", cellClass: "text-right tabular-nums", render: (p) => money(p.total_cents, p.currency), exportValue: (p) => Number(p.total_cents) / 100 },
+          { key: "units", sortable: true, label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (p) => p.units.toLocaleString("en-US") },
+          { key: "units_received", sortable: true, label: "Received", kind: "number", cellClass: "text-right tabular-nums", render: (p) => p.units_received.toLocaleString("en-US") },
+          { key: "total_cents", sortable: true, label: "Cost", kind: "number", cellClass: "text-right tabular-nums", render: (p) => money(p.total_cents, p.currency), exportValue: (p) => Number(p.total_cents) / 100 },
         ]}
       />
       <DocCatalogPickers doc={o} docDate={o.order_date} withTax={true} onPatch={(b) => void patch(b)} testId="perfume-orders-picks" dueAfter="invoice date" />

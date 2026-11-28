@@ -37,7 +37,7 @@ import { DriverPickerWithCreate } from "../../../components/drivers/DriverPicker
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { SelectCombobox } from "../../../components/Combobox";
-import { formatAccountDisplayLabel } from "../../../lib/show-account-numbers";
+import { accountIdByNumber, formatAccountDisplayLabel } from "../../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../../lib/useShowAccountNumbers";
 import { formatUsdCents } from "../../../lib/money";
 
@@ -71,7 +71,7 @@ export type LoanApplicationPrefill = {
    *  never a silent fallback (DoD-D): an unknown number leaves the picker empty. */
   relationship?: LoanRelationship;
   counterparty_kind?: LoanCounterpartyKind;
-  account_number?: string;
+  pick_account_no?: string;
   /** Repay a running loan: its liability account id (from the facility row). */
   account_id?: string;
 };
@@ -294,8 +294,8 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
 
   const accounts = accountsQuery.data?.accounts ?? [];
   // ROUND L.31 M13 — resolve the prefilled account number to the entity's own account once the chart loads.
-  const prefillAccountNumber = prefill?.account_number?.trim() ?? "";
-  const prefillAccountId = prefillAccountNumber ? accounts.find((a) => a.account_number === prefillAccountNumber)?.id ?? "" : "";
+  const prefillAccountNo = prefill?.pick_account_no?.trim() ?? "";
+  const prefillAccountId = prefillAccountNo ? accountIdByNumber(accounts, prefillAccountNo) : "";
   useEffect(() => {
     if (prefillAccountId) setForm((prev) => (prev.account_id ? prev : { ...prev, account_id: prefillAccountId }));
   }, [prefillAccountId]);
