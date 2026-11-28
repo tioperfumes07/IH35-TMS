@@ -2,6 +2,7 @@
  * PERFUME-ITEM-FILE routes (owner 2026-11-26 22:51 CT). Desk owner only. The item file (list + one item, editable), UPCs and HK
  * codes onto an item, filling TIO codes from his own offer list when he presses it, and the linkage screen. Excel on the list.
  */
+import { concCheck, concCheckQuery } from "./conc-check.service.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import ExcelJS from "exceljs";
 import { z } from "zod";
@@ -40,6 +41,13 @@ export async function registerPerfumeItemFileRoutes(app: FastifyInstance) {
     const q = listQuery.safeParse(req.query ?? {});
     if (!q.success) return reply.code(400).send({ error: "invalid_query" });
     return withCurrentUser(uid, async (c) => ({ ...(await listItemFile(c, q.data)), counts: await itemFileCounts(c) }));
+  });
+  // Owner 2026-11-27 20:59 CT: items with no concentration compared with every list — what the lists say, how many agree.
+  app.get("/api/v1/perfume/item-file/conc-check", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const q = concCheckQuery.safeParse(req.query ?? {});
+    if (!q.success) return reply.code(400).send({ error: "invalid_query" });
+    return withCurrentUser(uid, (c) => concCheck(c, q.data));
   });
   app.get("/api/v1/perfume/item-file/facets", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

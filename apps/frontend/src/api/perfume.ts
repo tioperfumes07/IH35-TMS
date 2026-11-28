@@ -1124,3 +1124,10 @@ export const getPerfumeOrderInvoices = (orderId: string) =>
   apiRequest<{ invoices: PerfumeOrderInvoice[]; operating_company_id: string | null }>(`/api/v1/perfume/orders/${orderId}/invoices`);
 export const emailPerfumeOrderDocument = (orderId: string, b: { doc: "packing_slip" | "invoice"; invoice_id?: string; to: string; subject?: string; message?: string }) =>
   apiRequest<{ ok: true; batch_id: string; recipients: number; file: string }>(`/api/v1/perfume/orders/${orderId}/email-document`, { method: "POST", body: b });
+
+/* Concentration check (owner 2026-11-27 20:59 CT): items with no concentration compared with every list. */
+export type PerfumeConcRow = { id: string; display_name: string; product_type: string; size_ml: number | null; status: "proposed" | "conflict" | "none";
+  proposed: string | null; concs: string | null; agree_n: number; items_n: number; lines_n: number; evidence: string[] };
+export type PerfumeConcCheck = { total: number; counts: { proposed: number; conflict: number; none: number }; limit: number; offset: number; rows: PerfumeConcRow[] };
+export const getPerfumeConcCheck = (f: { product_type?: string; status?: string; q?: string; limit?: number; offset?: number }) =>
+  apiRequest<PerfumeConcCheck>(`/api/v1/perfume/item-file/conc-check?${Object.entries(f).filter(([, v]) => v !== undefined && v !== "").map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join("&")}`);

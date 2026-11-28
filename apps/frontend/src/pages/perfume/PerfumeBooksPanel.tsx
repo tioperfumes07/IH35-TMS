@@ -22,6 +22,7 @@ import { ScentsxCompliancePanel } from "./ScentsxCompliancePanel";
 import { ScentsxSalesReport } from "./ScentsxSalesReport";
 import { ScentsxItemAccountsBlock } from "./ScentsxItemAccounts";
 import { ScentsxItemBooks } from "./ScentsxItemBooks";
+import { PerfumeConcCheck } from "./PerfumeConcCheck";
 import { getScentsxInventoryTieOut } from "../../api/scentsx";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
@@ -106,6 +107,7 @@ export function PerfumeBooksPanel() {
       <InventoryTieOut />
       <ScentsxItemAccountsBlock />
       <ScentsxItemBooks />
+      <PerfumeConcCheck />
       <ScentsxSalesReport />
       {c && c.periods === 0 ? (
         <div className="rounded-[3px] border border-[#F59E0B] bg-[#FFFBEB] p-2 text-xs" data-testid="scentsx-books-no-period">
