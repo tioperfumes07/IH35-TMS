@@ -1,6 +1,7 @@
 /**
  * PERFUME-PROFILES routes (owner 2026-11-26 19:12 CT). Desk owner only. Reads, plus linking a vendor to its Contacts company.
  */
+import { CompanyDetailsError, companyDetailsSchema, updateCompanyDetails } from "./company-details.service.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -56,6 +57,15 @@ export async function registerPerfumeProfileRoutes(app: FastifyInstance) {
     const p = companyRoleSchema.safeParse(req.body ?? {});
     if (!p.success) return reply.code(400).send({ error: "validation_error", message: p.error.issues[0]?.message ?? "Invalid." });
     try { return await withCurrentUser(uid, (c) => setCompanyRole(c, uid, id.data, p.data)); } catch (e) { return fail(reply, e); }
+  });
+  // Owner 18:21 CT: the company profile's own Edit pop-up — contact fields + Relationship / Industry / Review tags / Business type.
+  app.patch("/api/v1/perfume/companies/:id/details", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    const p = companyDetailsSchema.safeParse(req.body ?? {});
+    if (!p.success) return reply.code(400).send({ error: "validation_error", message: p.error.issues[0]?.message ?? "Invalid." });
+    try { return await withCurrentUser(uid, (c) => updateCompanyDetails(c, uid, id.data, p.data)); }
+    catch (e) { if (e instanceof CompanyDetailsError) return reply.code(e.code === "not_found" ? 404 : 400).send({ error: e.code, message: e.message }); throw e; }
   });
   // The company's real name (owner 2026-11-27 18:32 CT): the check list, rename, and "this name is right".
   app.get("/api/v1/perfume/vendor-links/names", RL_READ, async (req, reply) => {
