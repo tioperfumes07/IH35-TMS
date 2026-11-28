@@ -20,6 +20,7 @@ Times are Laredo Central. Status reflects what has merged on main.
 | Q13 | 18:21 | "b&s global and b&s group should be the same, check emails, contact names etc." | detector: same contact e-mail, same contact on a near-same domain, same name without "(distributor)" notes / "(B&S Group)" alias, same brand initials on vendors | LEAD | THIS PR (dup-signals) |
 | Q14 | 18:21 | "we are missing in all lists or selectors to select all in teh page etc so i can merge all those" | duplicate lists use ParityTable select-all-on-page + select all matching; every bulk list must have it | LEAD (dup lists) · ALL seats (their lists) | THIS PR (dup lists) |
 | Q15 | 18:06 | "make sure all coders are doing their work now. no drifting no deviating" | ROUND L.27 (CC1) · L.28 (CC2) · L.29 (CC3) · L.30 (P1) with measured numbers + UTC deadlines | LEAD | POSTED 18:10 CT |
+| Q16 | 19:38 | "P1 HAS NOTHING ASSIGNED RIGHT NOW … DISTRIBUTE TO ALL CODERS … AR, AP, ASSETS, LIABILITIES … PAYMENTS, BILL PAYMENTS, CUSTOMER PAYMENTS … FAST MERGE LAW" | ROUND L.31 master M1–M27 + L.32 P1 · L.33 CC1 · L.34 CC2 · L.35 CC3 (docs/bus) | ALL | POSTED 19:50 CT |
 
 Measured on production 2026-11-27 (perfume.items): product_type "Woman" 6,447 (all gender W) · "Man" 5,250 (M) · "Unisex" 3,819 (U) ·
 "Perfume" 2,327 · "Tester Woman" 1,678 (W) · "Man Set" 1,251 (M) · "Woman Set" 1,235 (W) · "Tester Man" 1,060 (M). The gender is already
