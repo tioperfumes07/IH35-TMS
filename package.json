@@ -1190,7 +1190,7 @@
     "oslo": "^1.2.1",
     "pdfjs-dist": "4.10.38",
     "pg": "^8.23.1",
-    "plaid": "^49.0.0",
+    "plaid": "^52.0.0",
     "puppeteer": "^25.16.0",
     "rate-limiter-flexible": "^11.4.0",
     "resend": "^6.37.0",
