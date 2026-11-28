@@ -22,6 +22,8 @@ export const EMPTY_COMPANY_FORM: CompanyFormValues = { phone: "", website: "", a
 export type ContactRow = { name: string; title: string; email: string; phone: string };
 export const EMPTY_CONTACT: ContactRow = { name: "", title: "", email: "", phone: "" };
 
+/** The drop-downs fill their column like every other box of the form (the shared trigger is min-width only). */
+const MS_TRIGGER = "flex h-[34px] w-full items-center justify-between gap-1 rounded-sm border border-[#C6D1DC] bg-white px-2 text-xs text-gray-900 hover:bg-gray-50";
 const opts = (all: string[], cur: string[]) => [...new Set([...all, ...cur])].map((x) => ({ value: x, label: x }));
 
 function Field({ label, span, children }: { label: string; span: string; children: React.ReactNode }) {
@@ -41,20 +43,20 @@ export function CompanyFields({ v, set, lists, showTags = true, testPrefix }: {
     <div className="space-y-3" data-testid={`${testPrefix}-company-fields`}>
       <div className="grid grid-cols-12 gap-2">
         <Field label="Relationship (several)" span="col-span-12 md:col-span-6">
-          <MultiSelectDropdown label="Relationship" allLabel="None" options={opts(lists.category, v.relationships)} selected={v.relationships}
+          <MultiSelectDropdown className="w-full" triggerClassName={MS_TRIGGER} label="Relationship" allLabel="None" options={opts(lists.category, v.relationships)} selected={v.relationships}
             onChange={(x) => set({ ...v, relationships: x })} data-testid={`${testPrefix}-relationships`} />
         </Field>
         <Field label="Business type (several)" span="col-span-12 md:col-span-6">
-          <MultiSelectDropdown label="Business type" allLabel="None" options={opts(lists.segment, v.business_types)} selected={v.business_types}
+          <MultiSelectDropdown className="w-full" triggerClassName={MS_TRIGGER} label="Business type" allLabel="None" options={opts(lists.segment, v.business_types)} selected={v.business_types}
             onChange={(x) => set({ ...v, business_types: x })} data-testid={`${testPrefix}-business-types`} />
         </Field>
         <Field label="Industry" span={showTags ? "col-span-12 md:col-span-6" : "col-span-12"}>
-          <MultiSelectDropdown label="Industry" allLabel="None" options={opts(lists.industry, v.categories)} selected={v.categories}
+          <MultiSelectDropdown className="w-full" triggerClassName={MS_TRIGGER} label="Industry" allLabel="None" options={opts(lists.industry, v.categories)} selected={v.categories}
             onChange={(x) => set({ ...v, categories: x })} data-testid={`${testPrefix}-industry`} />
         </Field>
         {showTags ? (
           <Field label="Review tags" span="col-span-12 md:col-span-6">
-            <MultiSelectDropdown label="Review tags" allLabel="None" options={opts(lists.review_tag, v.review_tags)} selected={v.review_tags}
+            <MultiSelectDropdown className="w-full" triggerClassName={MS_TRIGGER} label="Review tags" allLabel="None" options={opts(lists.review_tag, v.review_tags)} selected={v.review_tags}
               onChange={(x) => set({ ...v, review_tags: x })} data-testid={`${testPrefix}-tags`} />
           </Field>
         ) : null}
