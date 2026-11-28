@@ -10,8 +10,9 @@ import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
 import { createBillInClientTx, payBillInClientTx } from "../accounting/bills.service.js";
 import { AP_AGING_OPEN_BILLS_SQL } from "../accounting/ap-aging.service.js";
+import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
 import { createVendorCreditInClientTx } from "../accounting/vendor-credits.service.js";
-import { apBucketOf, payablesAging, vendorAccount } from "./payables.service.js";
+import { apBucketOf, payablesAging, ScentsxVendorNotOnBooks, vendorAccount } from "./payables.service.js";
 
 describe("A/P bucket (the books' ladder: days past due)", () => {
   it("not yet due is Current; 1–30, 31–60, 61–90, 90+", () => {
@@ -46,8 +47,10 @@ describeIntegration("ScentsX payables (real Postgres, rolled back)", () => {
     const mk = async (no: string, billDate: string, due: string, cents: number) => (await createBillInClientTx(db as never, {
       operatingCompanyId: co, source: "manual", vendorId: vendor, billNumber: no, autoDisplayId: true, billDate, dueDate: due, amountCents: cents,
       lines: [{ amountCents: cents, accountId: acct, description: no }] }, u)).id;
-    const notDue = await mk("AP-1", "2026-11-20", "2026-12-20", 10000); // Current
-    const late45 = await mk("AP-2", "2026-09-01", "2026-10-13", 25000); // 45 days past due → 31–60
+    // The bill's A/P leg posts through the one engine (the route does this via postBillGlIfEnabled, flag ON for ScentsX live).
+    const post = async (billId: string) => { await postSourceTransactionInClientTx(db as never, { operating_company_id: co, source_transaction_type: "bill", source_transaction_id: billId }, { userId: u }); return billId; };
+    const notDue = await post(await mk("AP-1", "2026-11-20", "2026-12-20", 10000)); // Current
+    const late45 = await post(await mk("AP-2", "2026-09-01", "2026-10-13", 25000)); // 45 days past due → 31–60
     await payBillInClientTx(db as never, { operatingCompanyId: co, billId: late45, paymentDate: "2026-11-25", amountCents: 5000, paymentMethod: "ach", fromBankAccountId: bank, referenceNumber: "ACH 1" }, u);
 
     const aging = await payablesAging(db, { as_of: asOf });
@@ -73,5 +76,18 @@ describeIntegration("ScentsX payables (real Postgres, rolled back)", () => {
     const vc = await createVendorCreditInClientTx(db as never, { operatingCompanyId: co, vendorId: vendor, issueDate: "2026-11-26", amountCents: 4000, accountId: acct, notes: "returned 2 units", userId: u });
     const withCredit = await vendorAccount(db, vendor, { as_of: asOf });
     expect(withCredit.credits).toEqual([expect.objectContaining({ id: String(vc.id), amount_cents: 4000, applied_cents: 0, unapplied_cents: 4000, notes: "returned 2 units" })]);
+  });
+
+  it("L.37 red: a supplier's own id opens its linked ScentsX vendor; an unlinked supplier is refused as not on the books (never a bare error)", async () => {
+    const v = (await db.query<{ id: string }>(`INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_type) VALUES ($1::uuid, 'AP linked vendor', 'Other') RETURNING id::text`, [co])).rows[0]!.id;
+    const linked = (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ('AP linked supplier', 'buy') RETURNING id::text`)).rows[0]!.id;
+    await db.query(`INSERT INTO scentsx.vendor_links (operating_company_id, perfume_vendor_id, vendor_id) VALUES ($1::uuid, $2::uuid, $3::uuid)`, [co, linked, v]);
+    const bySupplier = await vendorAccount(db, linked, { as_of: "2026-11-27" });
+    expect(bySupplier.vendor).toMatchObject({ id: v, perfume_vendor_id: linked });
+
+    const unlinked = (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ('AP unlinked supplier', 'buy') RETURNING id::text`)).rows[0]!.id;
+    const err = await vendorAccount(db, unlinked, { as_of: "2026-11-27" }).catch((e) => e);
+    expect(err).toBeInstanceOf(ScentsxVendorNotOnBooks);
+    expect((err as ScentsxVendorNotOnBooks).supplierName).toBe("AP unlinked supplier");
   });
 });

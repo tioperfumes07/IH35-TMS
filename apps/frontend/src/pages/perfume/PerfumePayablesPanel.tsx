@@ -20,6 +20,7 @@ import { KpiCard } from "../../components/layout/KpiCard";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorState } from "../../components/ListErrorState";
+import { ApiError } from "../../api/client";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { openPrintableDocument } from "../../lib/openPrintableDocument";
@@ -89,6 +90,15 @@ function VendorAccount({ vendorId, asOf, onChanged }: { vendorId: string; asOf: 
   const [paying, setPaying] = useState<string | null>(null);
   const [selectedBillKeys, setSelectedBillKeys] = useState<string[]>([]);
   const [showMultiPay, setShowMultiPay] = useState(false);
+  const notOnBooks = acct.error instanceof ApiError && acct.error.status === 409 && (acct.error.data as { error?: string } | null)?.error === "vendor_not_on_books"
+    ? String((acct.error.data as { supplier_name?: string }).supplier_name ?? "") : null;
+  if (notOnBooks !== null) return (
+    <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3 text-xs" data-testid="perfume-ap-not-on-books">
+      <div className="text-card-title">{notOnBooks || tr("perfume.ap.supplier", "This supplier")}</div>
+      <p className="text-[#334155]">{tr("perfume.ap.not_on_books", "Not a ScentsX vendor yet — there is no payables account for this supplier on ScentsX's books. Make it a ScentsX vendor first; its bills and payments then show here.")}</p>
+      <Link className="font-semibold text-[#1D4ED8] underline" to="/perfume?tab=suppliers" data-testid="perfume-ap-make-vendor">{tr("perfume.ap.make_vendor", "Go to Vendor price lists → Make ScentsX vendor")}</Link>
+    </section>
+  );
   if (acct.isError) return <ListErrorState title={tr("perfume.ap.vendor_error", "Couldn't load the vendor's account")} status={0} message={(acct.error as Error)?.message} onRetry={() => void acct.refetch()} />;
   const a = acct.data;
   if (!a) return null;

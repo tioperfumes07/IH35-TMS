@@ -14,7 +14,7 @@ import { salesReport } from "./sales-report.service.js";
 import { agingQuery, agingReport, customerAccount } from "./receivables.service.js";
 import { createReturn, listReturns, returnableLines, returnSchema } from "./returns.service.js";
 import { billablePoLines, billPurchaseOrder, creditVendorReturn, purchaseBillSchema, purchaseOrderBills, vendorReturnCreditSchema } from "./purchase-bill.service.js";
-import { payablesAging, payablesQuery, vendorAccount } from "./payables.service.js";
+import { payablesAging, payablesQuery, ScentsxVendorNotOnBooks, vendorAccount } from "./payables.service.js";
 import { inventoryTieOut } from "./inventory-tieout.service.js";
 import { accountMapSchema, itemAccountMap, itemPostingAccounts, setCategoryAccounts, setItemAccounts } from "./item-accounts.service.js";
 import { hasExportProof, hasResaleCertificate, partyStatus, screenParty } from "./sanctions.service.js";
@@ -43,6 +43,7 @@ function fail(reply: FastifyReply, e: unknown) {
   if (e instanceof ScentsxNotSetUp) return reply.code(409).send({ error: "scentsx_not_set_up", message: e.message });
   if (e instanceof ScentsxLinkInvalid) return reply.code(400).send({ error: "invalid", message: e.message });
   if (e instanceof ScentsxLinkNotFound) return reply.code(404).send({ error: "not_found" });
+  if (e instanceof ScentsxVendorNotOnBooks) return reply.code(409).send({ error: "vendor_not_on_books", message: e.message, supplier_name: e.supplierName });
   throw e;
 }
 
