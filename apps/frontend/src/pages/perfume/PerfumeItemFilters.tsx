@@ -8,6 +8,7 @@ import { Button } from "../../components/Button";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { getPerfumeItemFacets, type PerfumeItemFacet, type PerfumeItemFilters } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
+import { countryLabel } from "./perfumeCountries";
 
 const GENDER: Record<string, string> = { M: "Man", W: "Woman", U: "Unisex", "": "Not set" };
 const opts = (rows: PerfumeItemFacet[] | undefined, label?: (v: string) => string) =>
@@ -34,7 +35,7 @@ export function PerfumeItemFilterBar({ value, onChange }: { value: PerfumeItemFi
       <MultiSelectDropdown label={tr("perfume.itemfilter.conc", "EDT / EDP / Parfum")} allLabel="All" options={opts(f.data?.conc)} selected={value.conc ?? []} onChange={set("conc")} data-testid="perfume-itemfilter-conc" />
       <MultiSelectDropdown label={tr("perfume.itemfilter.family", "Family")} allLabel="All families" searchable options={opts(f.data?.family)} selected={value.family ?? []} onChange={set("family")} data-testid="perfume-itemfilter-family" />
       <MultiSelectDropdown label={tr("perfume.itemfilter.scent", "Scent family")} allLabel="All scent families" searchable options={opts(f.data?.scent)} selected={value.scent ?? []} onChange={set("scent")} data-testid="perfume-itemfilter-scent" />
-      <MultiSelectDropdown label={tr("perfume.itemfilter.origin", "Origin")} allLabel="All countries" searchable options={opts(f.data?.origin)} selected={value.origin ?? []} onChange={set("origin")} data-testid="perfume-itemfilter-origin" />
+      <MultiSelectDropdown label={tr("perfume.itemfilter.origin", "Origin")} allLabel="All countries" searchable options={opts(f.data?.origin, (v) => countryLabel(v) || "Not set")} selected={value.origin ?? []} onChange={set("origin")} data-testid="perfume-itemfilter-origin" />
       {any ? <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => onChange({})} data-testid="perfume-itemfilter-clear">{tr("perfume.itemfilter.clear", "Clear filters")}</Button> : null}
     </div>
   );

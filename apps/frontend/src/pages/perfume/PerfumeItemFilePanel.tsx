@@ -24,6 +24,8 @@ import {
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 import { PerfumeItemFilterBar } from "./PerfumeItemFilters";
+import { PerfumeOriginSelect } from "./PerfumeOriginSelect";
+import { countryLabel } from "./perfumeCountries";
 import { FamilySelect } from "./PerfumeFamiliesPanel";
 import { ctl, DASH, DocLink, money, useOpenDoc, usDate } from "./perfumeDocParts";
 import { ItemControlFields, VendorSelect } from "./PerfumeItemControlFields";
@@ -174,7 +176,7 @@ export function PerfumeItemFilePanel() {
             { className: "text-left", key: "description", label: "Description", render: (r) => r.description ?? DASH, exportValue: (r) => r.description ?? "" },
             { key: "case_pack", label: "Case pack", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.case_pack == null ? DASH : String(r.case_pack)), exportValue: (r) => r.case_pack ?? "" },
             { key: "min_order_qty", label: "Min order", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.min_order_qty == null ? DASH : String(r.min_order_qty)), exportValue: (r) => r.min_order_qty ?? "" },
-            { className: "text-left", key: "origin_country", label: "Origin", sortable: true, render: (r) => r.origin_country ?? DASH, exportValue: (r) => r.origin_country ?? "" },
+            { className: "text-left", key: "origin_country", label: "Origin", sortable: true, render: (r) => countryLabel(r.origin_country) || DASH, exportValue: (r) => r.origin_country ?? "" },
             { className: "text-left", key: "hs_code", label: "HS code", sortable: true, render: (r) => r.hs_code ?? DASH, exportValue: (r) => r.hs_code ?? "" },
             { className: "text-left", key: "sold_by", label: "Sold by", sortable: true, render: (r) => (r.sold_by === "pack" ? `Pack of ${r.units_per_pack ?? "?"}` : "Piece"), exportValue: (r) => (r.sold_by === "pack" ? "Pack" : "Piece") },
             { key: "units_per_pack", label: "Units / pack", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.units_per_pack == null ? DASH : String(r.units_per_pack)), exportValue: (r) => r.units_per_pack ?? "" },
@@ -290,8 +292,8 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
           onChange={(e) => setEdit({ ...edit, min_order_qty: e.target.value === "" ? null : Number(e.target.value) })} data-testid="perfume-itemfile-moq" /></label>
         <label>{tr("perfume.itemfile.weight", "Weight g")} <input type="number" min={0} className={`${ctl} block w-[80px] text-right`} value={val("weight_g", it.weight_g ?? null) ?? ""}
           onChange={(e) => setEdit({ ...edit, weight_g: e.target.value === "" ? null : Number(e.target.value) })} data-testid="perfume-itemfile-weight" /></label>
-        <label>{tr("perfume.itemfile.origin", "Origin")} <input maxLength={2} className={`${ctl} block w-[60px] uppercase`} placeholder="FR" value={val("origin_country", it.origin_country ?? null) ?? ""}
-          onChange={(e) => setEdit({ ...edit, origin_country: e.target.value.toUpperCase() || null })} data-testid="perfume-itemfile-origin" /></label>
+        <label>{tr("perfume.itemfile.origin", "Origin")} <PerfumeOriginSelect value={val("origin_country", it.origin_country ?? null) ?? ""}
+          onChange={(c) => setEdit({ ...edit, origin_country: c || null })} testId="perfume-itemfile-origin" /></label>
         <label>{tr("perfume.itemfile.hs", "HS code")} <input className={`${ctl} block w-[110px]`} placeholder="3303.00" value={val("hs_code", it.hs_code ?? null) ?? ""}
           onChange={(e) => setEdit({ ...edit, hs_code: e.target.value || null })} data-testid="perfume-itemfile-hs" /></label>
         <label className="w-full">{tr("perfume.itemfile.description", "Description")}
@@ -583,7 +585,7 @@ function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void;
         </label>
         <label>{tr("perfume.itemfile.case_pack", "Case pack")} <input type="number" min={1} className={`${ctl} block w-[70px] text-right`} value={v.case_pack} onChange={(e) => setV({ ...v, case_pack: e.target.value })} data-testid="perfume-bulk-case-pack" /></label>
         <label>{tr("perfume.itemfile.moq", "Min order")} <input type="number" min={1} className={`${ctl} block w-[70px] text-right`} value={v.moq} onChange={(e) => setV({ ...v, moq: e.target.value })} data-testid="perfume-bulk-moq" /></label>
-        <label>{tr("perfume.itemfile.origin", "Origin")} <input maxLength={2} className={`${ctl} block w-[56px] uppercase`} value={v.origin} onChange={(e) => setV({ ...v, origin: e.target.value })} data-testid="perfume-bulk-origin" /></label>
+        <label>{tr("perfume.itemfile.origin", "Origin")} <PerfumeOriginSelect value={v.origin} onChange={(c) => setV({ ...v, origin: c })} testId="perfume-bulk-origin" /></label>
         <label>{tr("perfume.itemfile.hs", "HS code")} <input className={`${ctl} block w-[100px]`} value={v.hs} onChange={(e) => setV({ ...v, hs: e.target.value })} data-testid="perfume-bulk-hs" /></label>
         <label>{tr("perfume.itemfile.pref_vendor", "Preferred vendor")} <VendorSelect value={v.vendor} onChange={(x) => setV({ ...v, vendor: x })} testId="perfume-bulk-pref-vendor"
           head={<><option value="">{tr("perfume.bulk.keep", "— keep —")}</option><option value={CLEAR}>{tr("perfume.bulk.clear", "Clear")}</option></>} /></label>
@@ -694,7 +696,7 @@ export function ItemCreator({ onCreated }: { onCreated: (id: string) => void }) 
         <label>{tr("perfume.itemfile.case_pack", "Case pack")} <input type="number" min={1} className={`${ctl} block w-[80px] text-right`} value={v.case_pack} onChange={(e) => setV({ ...v, case_pack: e.target.value })} data-testid="perfume-new-case-pack" /></label>
         <label>{tr("perfume.itemfile.moq", "Min order")} <input type="number" min={1} className={`${ctl} block w-[80px] text-right`} value={v.moq} onChange={(e) => setV({ ...v, moq: e.target.value })} data-testid="perfume-new-moq" /></label>
         <label>{tr("perfume.itemfile.weight", "Weight g")} <input type="number" min={0} className={`${ctl} block w-[80px] text-right`} value={v.weight} onChange={(e) => setV({ ...v, weight: e.target.value })} data-testid="perfume-new-weight" /></label>
-        <label>{tr("perfume.itemfile.origin", "Origin")} <input maxLength={2} className={`${ctl} block w-[60px] uppercase`} placeholder="FR" value={v.origin} onChange={(e) => setV({ ...v, origin: e.target.value })} data-testid="perfume-new-origin" /></label>
+        <label>{tr("perfume.itemfile.origin", "Origin")} <PerfumeOriginSelect value={v.origin} onChange={(c) => setV({ ...v, origin: c })} testId="perfume-new-origin" /></label>
         <label>{tr("perfume.itemfile.hs", "HS code")} <input className={`${ctl} block w-[110px]`} placeholder="3303.00" value={v.hs} onChange={(e) => setV({ ...v, hs: e.target.value })} data-testid="perfume-new-hs" /></label>
         <label>{tr("perfume.itemfile.upc", "UPC")} <input inputMode="numeric" className={`${ctl} block w-[180px]`} value={v.upc} onChange={(e) => setV({ ...v, upc: e.target.value })} data-testid="perfume-new-upc" /></label>
         <label className="w-full">{tr("perfume.itemfile.description", "Description")}

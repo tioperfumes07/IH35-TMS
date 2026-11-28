@@ -5,6 +5,7 @@ import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
 import { applyCleanup, CLEANUP_PLAN, mergeCatalogValue, previewCleanup } from "./catalog-cleanup.service.js";
+import { addCatalogValue } from "./leads.service.js";
 
 describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("catalog cleanup (real Postgres, rolled back)", () => {
   let db: pg.Client;
@@ -68,5 +69,12 @@ describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("catalog cleanup (real Po
     expect(await row(b)).toEqual({ main_category: "Potential customer", categories: ["Beer"], review_tags: ["Market Directory"] });
     expect(await row(d)).toEqual({ main_category: "Supplier / Brand", categories: ["Cosmetics"], review_tags: [] });
     expect((await db.query(`SELECT count(*)::int n FROM perfume.lead_events WHERE entity_id = $1::uuid AND action = 'category_split'`, [b])).rows[0].n).toBe(1);
+  });
+
+  it("country of origin list holds the items' 2-letter codes (migration 202617210100); a name is refused", async () => {
+    const codes = (await db.query<{ value: string }>(`SELECT value FROM perfume.catalog_values WHERE kind = 'origin_country' AND archived_at IS NULL`)).rows.map((r) => r.value);
+    expect(codes).toEqual(expect.arrayContaining(["FR", "IT", "US", "AE"]));
+    expect(codes.every((x) => /^[A-Z]{2}$/.test(x))).toBe(true);
+    await expect(addCatalogValue(db as unknown as pg.PoolClient, TEST_OWNER_USER_ID, { kind: "origin_country", value: "Peru" })).rejects.toThrow(/2-letter code/);
   });
 });
