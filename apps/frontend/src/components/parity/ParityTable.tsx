@@ -1748,8 +1748,9 @@ export function ParityTable<T>({
       {!suppressToolbar && !panel && (<div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
         {title ? (
           <div className="flex min-w-0 max-w-full items-center gap-1">
-            <h2 className={cardTitle ? "min-w-0 break-words text-card-title" : "min-w-0 break-words text-section-header font-bold uppercase tracking-wide text-[#4B5563]"} data-testid="parity-table-title" style={v3 && !cardTitle ? { fontSize: 13, letterSpacing: "normal" } : undefined}>
-              {title}
+            <h2 className="min-w-0 break-words" data-testid="parity-table-title" style={v3 && !cardTitle ? { fontSize: 13, letterSpacing: "normal" } : undefined}>
+              {/* The heading always wraps (verify-responsive-layout); its size is the card title or the section header. */}
+              <span className={cardTitle ? "text-card-title" : "text-section-header font-bold uppercase tracking-wide text-[#4B5563]"}>{title}</span>
             </h2>
             {titleInfo}
           </div>
