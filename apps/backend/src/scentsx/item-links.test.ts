@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
-import { itemBooks, itemBooksQuery, makeItemsSchema, makeScentsxItems } from "./item-links.service.js";
+import { itemBooks, itemBooksQuery, makeItemsSchema, makeScentsxItems, syncScentsxItemAccounts } from "./item-links.service.js";
 import { setCategoryAccounts } from "./item-accounts.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -69,5 +69,19 @@ describeIntegration("ScentsX item books (real Postgres, rolled back)", () => {
     expect(r3).toMatchObject({ created: 1, remaining: 0 });
     expect(r3.made[0]!.perfume_item_id).toBe(c2);
     expect((await itemBooks(db, itemBooksQuery.parse({ q: "zzbooks", linked: "no" }))).total).toBe(0);
+
+    // BETA is re-categorized after its product was made: the product's expense drifts until the sync brings it to 5001.
+    await db.query(`UPDATE perfume.items SET category = 'ZZBooks Perfume' WHERE id = $1::uuid`, [b]);
+    expect((await itemBooks(db, itemBooksQuery.parse({ q: "zzbooks" }))).account_drift).toBeGreaterThanOrEqual(1);
+    const s1 = await syncScentsxItemAccounts(db, TEST_OWNER_USER_ID, 500);
+    expect(s1.updated).toBeGreaterThanOrEqual(1);
+    expect(s1.remaining).toBe(0);
+    const bp = (await db.query<{ id: string; exp: string }>(
+      `SELECT ci.id::text, ci.default_expense_account_id::text AS exp FROM scentsx.item_links l JOIN catalogs.items ci ON ci.id = l.catalog_item_id
+        WHERE l.perfume_item_id = $1::uuid AND l.voided_at IS NULL`, [b])).rows[0]!;
+    expect(bp.exp).toBe(cogs5001);
+    const ev = await db.query(`SELECT 1 FROM audit.audit_events WHERE payload->>'resource_id' = $1 AND payload->'changes' ? 'default_expense_account_id'`, [bp.id]);
+    expect(ev.rowCount).toBe(1);
+    expect((await syncScentsxItemAccounts(db, TEST_OWNER_USER_ID, 500)).updated).toBe(0);
   });
 });

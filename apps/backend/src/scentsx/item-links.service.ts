@@ -8,6 +8,8 @@ import type pg from "pg";
 import { z } from "zod";
 import { scopeToScentsx, ScentsxLinkInvalid } from "./links.service.js";
 import { insertCatalogItemInClientTx } from "../catalogs/items.service.js";
+import { appendCrudAudit } from "../audit/crud-audit.js";
+import { enqueueTmsItemPushRequested } from "../qbo/tms-item-push-chain.service.js";
 
 type Q = Pick<pg.PoolClient, "query">;
 
@@ -71,7 +73,7 @@ export async function itemBooks(c: Q, f: ItemBooksFilter) {
     return a ? `${a.n} ${a.name}` : null;
   };
   return {
-    total, linked, limit: f.limit, offset: f.offset,
+    total, linked, limit: f.limit, offset: f.offset, account_drift: await itemAccountDrift(c),
     income_accounts: ["4000", "4010", "4020"].map((n) => role.get(n)).filter(Boolean).map((a) => ({ number: a!.n, name: a!.name })),
     rows: rows.map((r) => ({
       id: r.id, display_name: r.display_name, category: r.category, conc: r.conc, accounts_from: r.src,
@@ -133,4 +135,44 @@ export async function makeScentsxItems(c: Q, uid: string, x: z.infer<typeof make
     remaining = Number((await c.query<{ n: string }>(`SELECT count(*)::text n FROM ${FROM} WHERE ${w}`, args)).rows[0]!.n);
   }
   return { created, already_linked: already, not_stock_items: not_stock, remaining, made };
+}
+
+/**
+ * The linked ScentsX products whose expense account no longer matches the item's COGS account (the item's category changed, or
+ * the category map changed after the product was made). Expected = item map, else category map, else role 5000.
+ */
+const DRIFT = `SELECT ci.id::text AS catalog_item_id, ci.item_name, ci.default_expense_account_id::text AS old_id,
+         coalesce(mi.cogs_account_id, mc.cogs_account_id, r5.id)::text AS new_id
+    FROM perfume.items i
+    JOIN scentsx.item_links l ON l.perfume_item_id = i.id AND l.voided_at IS NULL
+    JOIN catalogs.items ci ON ci.id = l.catalog_item_id
+    LEFT JOIN scentsx.item_account_map mi ON mi.scope = 'item' AND mi.item_id = i.id AND mi.archived_at IS NULL
+    LEFT JOIN scentsx.item_account_map mc ON mc.scope = 'category' AND lower(btrim(mc.category)) = lower(btrim(i.category)) AND mc.archived_at IS NULL
+    LEFT JOIN catalogs.accounts r5 ON r5.operating_company_id = $1::uuid AND r5.account_number = '5000' AND r5.deactivated_at IS NULL
+   WHERE ci.default_expense_account_id IS DISTINCT FROM coalesce(mi.cogs_account_id, mc.cogs_account_id, r5.id)
+     AND coalesce(mi.cogs_account_id, mc.cogs_account_id, r5.id) IS NOT NULL`;
+
+export async function itemAccountDrift(c: Q) {
+  const co = await scopeToScentsx(c);
+  return Number((await c.query<{ n: string }>(`SELECT count(*)::text n FROM (${DRIFT}) d`, [co])).rows[0]!.n);
+}
+
+/**
+ * Brings up to 500 drifted products in line: each catalogs.items row gets the expected expense account, with its own
+ * catalogs.items.updated audit row (old → new) and the QuickBooks item push queued, the same as an edit on Products & Services.
+ */
+export async function syncScentsxItemAccounts(c: Q, uid: string, max = 500) {
+  const co = await scopeToScentsx(c);
+  const rows = (await c.query<{ catalog_item_id: string; item_name: string; old_id: string | null; new_id: string }>(
+    `${DRIFT} ORDER BY ci.item_name LIMIT $2`, [co, Math.min(Math.max(max, 1), 500)])).rows;
+  for (const r of rows) {
+    await c.query(`UPDATE catalogs.items SET default_expense_account_id = $2::uuid, updated_at = now(), updated_by_user_id = $3::uuid WHERE id = $1::uuid`,
+      [r.catalog_item_id, r.new_id, uid]);
+    await appendCrudAudit(c as pg.PoolClient, uid, "catalogs.items.updated", {
+      resource_id: r.catalog_item_id, resource_type: "catalogs.items",
+      changes: { default_expense_account_id: { from: r.old_id, to: r.new_id } },
+    });
+    await enqueueTmsItemPushRequested(c as pg.PoolClient, { operating_company_id: co, item_id: r.catalog_item_id, operation: "update" });
+  }
+  return { updated: rows.length, remaining: await itemAccountDrift(c) };
 }
