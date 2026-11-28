@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { insertCatalogItemInClientTx } from "./items.service.js";
 import type { PoolClient } from "pg";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
@@ -201,53 +202,7 @@ export async function registerItemRoutes(app: FastifyInstance) {
 
     try {
       const created = await withScopedCompany(authUser.uuid, operatingCompanyId, async (client) => {
-        const res = await client.query(
-          `
-            INSERT INTO catalogs.items (
-              operating_company_id,
-              item_name, item_code, item_type, description, unit_price_cents,
-              default_income_account_id, default_expense_account_id, default_class_id,
-              qbo_item_id, taxable, notes, created_by_user_id, updated_by_user_id, category_id
-            ) VALUES (
-              $13,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12,$14
-            )
-            RETURNING
-              id, item_name, item_code, item_type, description, unit_price_cents,
-              default_income_account_id, default_expense_account_id, default_class_id,
-              qbo_item_id, taxable, notes,
-              created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
-          `,
-          [
-            b.item_name,
-            b.item_code ?? null,
-            b.item_type,
-            b.description ?? null,
-            b.unit_price_cents ?? null,
-            b.default_income_account_id ?? null,
-            b.default_expense_account_id ?? null,
-            b.default_class_id ?? null,
-            b.qbo_item_id ?? null,
-            b.taxable,
-            b.notes ?? null,
-            authUser.uuid,
-            operatingCompanyId,
-            b.category_id ?? null,
-          ]
-        );
-        const row = res.rows[0];
-        await appendCrudAudit(client, authUser.uuid, "catalogs.items.created", {
-          resource_id: row.id,
-          resource_type: "catalogs.items",
-          id: row.id,
-          item_name: row.item_name,
-          item_code: row.item_code,
-          item_type: row.item_type,
-        });
-        await enqueueTmsItemPushRequested(client, {
-          operating_company_id: operatingCompanyId,
-          item_id: String(row.id),
-          operation: "create",
-        });
+        const row = await insertCatalogItemInClientTx(client, authUser.uuid, operatingCompanyId, b);
         return row;
       });
       return reply.code(201).send(created);
