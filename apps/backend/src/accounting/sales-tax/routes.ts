@@ -157,7 +157,8 @@ export async function registerSalesTaxRoutes(app: FastifyInstance) {
             r.filed_at::text,
             r.paid_bill_id::text,
             b.bill_number AS paid_bill_number,
-            r.created_at::text
+            r.created_at::text,
+            count(*) OVER ()::int AS total_count
           FROM accounting.sales_tax_returns r
           JOIN accounting.sales_tax_agencies a
             ON a.id = r.agency_id
@@ -173,7 +174,9 @@ export async function registerSalesTaxRoutes(app: FastifyInstance) {
       );
       return res.rows;
     });
-    return { returns: rows };
+    // total = every return matching the filter (before LIMIT), so a capped list says so (CLS-SILENT-CAP).
+    const total = rows.length ? Number((rows[0] as { total_count: number }).total_count) : 0;
+    return { returns: rows.map(({ total_count: _t, ...r }: Record<string, unknown>) => r), total };
   });
 
   app.post("/api/v1/accounting/sales-tax/returns/prepare", async (req, reply) => {

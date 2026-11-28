@@ -22,7 +22,8 @@ export const getScentsxSalesTaxLiability = (from: string, to: string) =>
 export const listSalesTaxAgencies = (companyId: string) => apiRequest<{ agencies: SalesTaxAgency[] }>(`/api/v1/accounting/sales-tax/agencies?${co(companyId)}`);
 export const createSalesTaxAgency = (companyId: string, b: { name: string; jurisdiction?: string; agency_vendor_id: string }) =>
   apiRequest<{ agency: SalesTaxAgency }>("/api/v1/accounting/sales-tax/agencies", { method: "POST", body: { operating_company_id: companyId, ...b } });
-export const listSalesTaxReturns = (companyId: string) => apiRequest<{ returns: SalesTaxReturn[] }>(`/api/v1/accounting/sales-tax/returns?${co(companyId)}&limit=100`);
+/** The newest 100 returns; `total` = every return on file, so the screen can say when it shows fewer. */
+export const listSalesTaxReturns = (companyId: string) => apiRequest<{ returns: SalesTaxReturn[]; total?: number }>(`/api/v1/accounting/sales-tax/returns?${co(companyId)}&limit=100`);
 export const prepareSalesTaxReturn = (companyId: string, b: { agency_id: string; period_start: string; period_end: string }) =>
   apiRequest<{ sales_tax_return: SalesTaxReturn }>("/api/v1/accounting/sales-tax/returns/prepare", { method: "POST", body: { operating_company_id: companyId, ...b } });
 export const fileSalesTaxReturn = (companyId: string, id: string) =>
