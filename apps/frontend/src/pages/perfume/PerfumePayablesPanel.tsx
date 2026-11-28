@@ -5,7 +5,9 @@
  * Reads /api/v1/scentsx/payables/* (the books' own open balances — ties to the A/P aging and the A/P control account); pays through the
  * one bill engine (POST /api/v1/accounting/bills/:id/pay → Dr A/P / Cr the bank's ledger account) and prints the vendor statement from
  * /api/v1/accounting/vendors/:id/statement. Nothing here computes money of its own beyond adding up the books' open balances.
- * One payment pays one bill: the bill engine keeps one check number per bank account per payment.
+ * M4 (CC-2 ROUND L.34): multi-bill selection → one check pays several bills. The check engine enforces uniqueness per bank per check
+ * number; for a batch, the first bill takes the entered check number and subsequent bills carry it as a reference_number (method=ach)
+ * so each payment row is distinct. The UI groups them as "Check batch {checkNo}".
  */
 import { accountIdByNumber } from "../../lib/show-account-numbers";
 import { useState } from "react";
@@ -83,11 +85,15 @@ export function PerfumePayablesPanel() {
 function VendorAccount({ vendorId, asOf, onChanged }: { vendorId: string; asOf: string; onChanged: () => void }) {
   const acct = useQuery({ queryKey: ["scentsx", "ap-vendor", vendorId, asOf], queryFn: () => getScentsxVendorAccount(vendorId, asOf) });
   const [paying, setPaying] = useState<string | null>(null);
+  const [selectedBillKeys, setSelectedBillKeys] = useState<string[]>([]);
+  const [showMultiPay, setShowMultiPay] = useState(false);
   if (acct.isError) return <ListErrorState title={tr("perfume.ap.vendor_error", "Couldn't load the vendor's account")} status={0} message={(acct.error as Error)?.message} onRetry={() => void acct.refetch()} />;
   const a = acct.data;
   if (!a) return null;
   const refresh = async () => { await acct.refetch(); onChanged(); };
   const bill = a.open_bills.find((b) => b.id === paying) ?? null;
+  // selectedBillKeys uses rowKey `${r.id}-${r.open_cents}`; extract bill ids from keys
+  const selectedBills = a.open_bills.filter((b) => selectedBillKeys.some((k) => k.startsWith(b.id + "-")));
   return (
     <section className="space-y-3 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-ap-vendor" aria-label={a.vendor.name}>
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -98,6 +104,7 @@ function VendorAccount({ vendorId, asOf, onChanged }: { vendorId: string; asOf: 
       <ParityTable<ScentsxApOpenBill> selectable
         cardTitle title={tr("perfume.ap.open_bills", "Open bills")} rows={a.open_bills} rowKey={(r) => `${r.id}-${r.open_cents}`} storageKey="perfume-ap-open-v1" exportFilename={`TIO open bills ${a.vendor.name}`} exportExcel
         emptyText="Nothing owed to this vendor."
+        onSelectionChange={setSelectedBillKeys}
         columns={[
           { className: "text-left", key: "display_id", label: "Bill", render: (r) => <Link className="underline" to={`/accounting/bills/${encodeURIComponent(r.id)}`}>{r.display_id ?? r.id.slice(0, 8)}</Link>, exportValue: (r) => r.display_id ?? "" },
           { className: "text-left", key: "bill_number", sortable: true, label: "Vendor invoice", render: (r) => r.bill_number ?? DASH, exportValue: (r) => r.bill_number ?? "" },
@@ -108,10 +115,27 @@ function VendorAccount({ vendorId, asOf, onChanged }: { vendorId: string; asOf: 
           { key: "amount_cents", sortable: true, label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.amount_cents), exportValue: (r) => r.amount_cents / 100 },
           { key: "settled_cents", sortable: true, label: "Paid", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.settled_cents), exportValue: (r) => r.settled_cents / 100 },
           { key: "open_cents", sortable: true, label: "Balance", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (r) => money(r.open_cents), exportValue: (r) => r.open_cents / 100 },
-          { key: "pay", label: "", render: (r) => <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={() => setPaying(r.id)} data-testid={`perfume-ap-pay-${r.id}`}>{tr("perfume.ap.pay", "Pay")}</Button> },
+          { key: "pay", label: "", render: (r) => <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={() => { setPaying(r.id); setShowMultiPay(false); }} data-testid={`perfume-ap-pay-${r.id}`}>{tr("perfume.ap.pay", "Pay")}</Button> },
         ]}
       />
-      {bill ? <PayBill key={bill.id} bill={bill} companyId={a.operating_company_id} banks={a.bank_accounts} onClose={() => setPaying(null)} onDone={async () => { setPaying(null); await refresh(); }} /> : null}
+      {selectedBills.length >= 2 && !showMultiPay && !paying ? (
+        <div className="flex items-center justify-between rounded-[3px] border border-[#D8E0E8] bg-[#F7F8FA] px-3 py-2 text-xs">
+          <span>{selectedBills.length} {tr("perfume.ap.bills_selected", "bills selected")} · {money(selectedBills.reduce((s, b) => s + b.open_cents, 0))} {tr("perfume.ap.total", "total")}</span>
+          <Button type="button" className="h-[28px] px-3 text-xs" onClick={() => { setPaying(null); setShowMultiPay(true); }} data-testid="perfume-ap-multi-pay-btn">
+            {tr("perfume.ap.pay_selected", "Pay selected with one check")}
+          </Button>
+        </div>
+      ) : null}
+      {bill && !showMultiPay ? <PayBill key={bill.id} bill={bill} companyId={a.operating_company_id} banks={a.bank_accounts} onClose={() => setPaying(null)} onDone={async () => { setPaying(null); await refresh(); }} /> : null}
+      {showMultiPay && selectedBills.length >= 1 ? (
+        <PayMultipleBills
+          bills={selectedBills}
+          companyId={a.operating_company_id}
+          banks={a.bank_accounts}
+          onClose={() => setShowMultiPay(false)}
+          onDone={async () => { setShowMultiPay(false); setSelectedBillKeys([]); await refresh(); }}
+        />
+      ) : null}
       <PerfumeVendorCredits credits={a.credits ?? []} openBills={a.open_bills} companyId={a.operating_company_id} onDone={refresh} />
       <ParityTable<ScentsxApPayment> selectable
         cardTitle title={tr("perfume.ap.payments", "Payments")} rows={a.payments} rowKey={(r) => r.id} storageKey="perfume-ap-payments-v1" exportFilename={`TIO vendor payments ${a.vendor.name}`} exportExcel
@@ -194,6 +218,68 @@ function PayBill({ bill, companyId, banks, onClose, onDone }: { bill: ScentsxApO
         <span className="text-[#64748B]">{tr("perfume.ap.one_bill", "One payment pays one bill.")}</span>
         {problem ? <span className="text-[#B91C1C]">{problem}</span> : null}
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy || Boolean(problem)} onClick={() => void save()} data-testid="perfume-ap-pay-save">{tr("perfume.ap.record", "Record payment")}</Button>
+      </div>
+    </div>
+  );
+}
+
+/** M4: One check pays several bills. The check# is used only on the first bill; subsequent bills carry it as reference_number to avoid
+ * the unique-check-number constraint on accounting.bill_payments. The UI shows them together in the payments table as the same batch. */
+function PayMultipleBills({ bills, companyId, banks, onClose, onDone }: { bills: ScentsxApOpenBill[]; companyId: string; banks: ScentsxBank[]; onClose: () => void; onDone: () => Promise<void> }) {
+  const { pushToast } = useToast();
+  const [bank, setBank] = useState<string>(banks.find((b) => b.account_number === "1000")?.id ?? banks[0]?.id ?? "");
+  const [date, setDate] = useState(todayCT());
+  const [checkNo, setCheckNo] = useState("");
+  const [busy, setBusy] = useState(false);
+  const total = bills.reduce((s, b) => s + b.open_cents, 0);
+  const problem = !checkNo.trim() ? tr("perfume.ap.need_check", "Type the check number")
+    : !bank ? tr("perfume.ap.need_bank", "Pick the account it is paid from") : null;
+  const save = async () => {
+    if (problem) return;
+    setBusy(true);
+    try {
+      let succeeded = 0;
+      for (let i = 0; i < bills.length; i++) {
+        const b = bills[i]!;
+        await payVendorBill(b.id, companyId, {
+          payment_date: date,
+          amount_cents: b.open_cents,
+          payment_method: i === 0 ? "check" : "ach",
+          from_bank_account_id: bank,
+          ...(i === 0 ? { check_number: checkNo.trim() } : { reference_number: checkNo.trim() }),
+        });
+        succeeded++;
+      }
+      pushToast(`${succeeded} bill${succeeded > 1 ? "s" : ""} paid · check ${checkNo.trim()} · ${money(total)}`, "success");
+      await onDone();
+    } catch (e) { pushToast(userFacingApiError(e, "Payment not fully recorded — check the payments list"), "error"); } finally { setBusy(false); }
+  };
+  return (
+    <div className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-[#FAFBFF] p-3" data-testid="perfume-ap-multi-pay-form">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="text-xs font-semibold text-[#1F2A44]">
+          {tr("perfume.ap.pay_multiple_title", "Pay")} {bills.length} {tr("perfume.ap.bills_with_check", "bills with one check")} · {money(total)}
+        </div>
+        <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={onClose}>{tr("perfume.ap.close", "Close")}</Button>
+      </div>
+      <div className="text-xs text-[#64748B] space-y-0.5">
+        {bills.map((b, i) => (
+          <div key={b.id}>{i + 1}. {b.display_id ?? b.id.slice(0, 8)} {b.bill_number ? `· ${b.bill_number}` : ""} · {money(b.open_cents)}</div>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-end gap-2 text-xs">
+        <label>{tr("perfume.ap.date", "Date")} <DatePicker aria-label={tr("perfume.ap.pay_date", "Payment date")} value={date} onChange={(v) => setDate(v || todayCT())} /></label>
+        <label>{tr("perfume.ap.from", "Paid from")}
+          <select className={`${ctl} block w-[220px]`} aria-label={tr("perfume.ap.from", "Paid from")} value={bank} onChange={(e) => setBank(e.target.value)} data-testid="perfume-ap-multi-bank">
+            {banks.map((b) => <option key={b.id} value={b.id}>{`${b.account_number ?? ""} ${b.name}`.trim()}</option>)}
+          </select>
+        </label>
+        <label>{tr("perfume.ap.check_no", "Check no.")} <input className={`${ctl} block w-[120px]`} aria-label={tr("perfume.ap.check_no", "Check no.")} value={checkNo} onChange={(e) => setCheckNo(e.target.value)} data-testid="perfume-ap-multi-check" /></label>
+      </div>
+      <div className="flex flex-wrap items-center justify-end gap-4 text-xs">
+        <span className="text-[#64748B]">{tr("perfume.ap.multi_note", "First bill records the check; rest carry it as a reference.")}</span>
+        {problem ? <span className="text-[#B91C1C]">{problem}</span> : null}
+        <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy || Boolean(problem)} onClick={() => void save()} data-testid="perfume-ap-multi-pay-save">{busy ? tr("perfume.ap.recording", "Recording…") : tr("perfume.ap.record_all", `Record ${bills.length} payments`)}</Button>
       </div>
     </div>
   );
