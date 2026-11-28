@@ -66,7 +66,7 @@ describe("ScentsX books end to end (real Postgres, rolled back)", () => {
               (SELECT a.account_number FROM accounting.chart_of_accounts_roles x JOIN catalogs.accounts a ON a.id = x.account_id
                 WHERE x.operating_company_id = $1::uuid AND x.role = 'operating_bank' AND x.is_active) bank_role`, [co]
     );
-    expect(r.rows[0]).toMatchObject({ banks: 4, terms: 6, methods: 9, vtypes: 10, cats: 20, items: 9, bank_role: "1000" });
+    expect(r.rows[0]).toMatchObject({ banks: 4, terms: 6, methods: 9, vtypes: 10, cats: 20, items: 9 + 18 + 1, /* 9 sale items + migration 202617270100: one expense item per expense category (20 less freight-in and customs) + Supplier deposit */ bank_role: "1000" });
   });
 
   it("invoice → payment → bill → bill payment post on ScentsX's accounts and net A/R and A/P to zero", async () => {

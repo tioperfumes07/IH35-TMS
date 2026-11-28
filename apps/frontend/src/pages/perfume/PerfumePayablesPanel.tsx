@@ -73,6 +73,7 @@ export function PerfumePayablesPanel() {
             { key: "d31_60", label: "31–60", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.d31_60), exportValue: (r) => r.d31_60 / 100 },
             { key: "d61_90", label: "61–90", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.d61_90), exportValue: (r) => r.d61_90 / 100 },
             { key: "d90_plus", label: "90+", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => <span className={r.d90_plus > 0 ? "text-[#B91C1C]" : ""}>{money(r.d90_plus)}</span>, exportValue: (r) => r.d90_plus / 100 },
+            { key: "credits", label: "Vendor credits", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.credits ? <span className="text-[#166534]">{money(-r.credits)}</span> : money(0)), exportValue: (r) => -(r.credits ?? 0) / 100 },
             { key: "total", label: "A/P balance", kind: "number", sortable: true, cellClass: "text-right tabular-nums font-semibold", render: (r) => money(r.total), exportValue: (r) => r.total / 100 },
             { key: "bills", label: "Open bills", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => r.bills.toLocaleString("en-US") },
             { key: "oldest_past_due", label: "Most days past due", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.oldest_past_due > 0 ? r.oldest_past_due.toLocaleString("en-US") : DASH) },

@@ -377,7 +377,12 @@ export async function creditVendorReturn(c: Q, uid: string, poId: string, x: z.i
     if (rows.some((r) => r.l.po_line_id === l.po_line_id)) throw new ScentsxLinkInvalid("a PO line is on this credit twice");
     if (w.qty > l.to_credit) throw new ScentsxLinkInvalid(`${po.number} line ${l.line_no}: ${l.to_credit} billed and returned and not credited yet — ${w.qty} asked`);
     const netUnits = Math.max(1, l.billed - l.credited);
-    const received = Math.round((w.qty * (l.billed_received_value_cents - l.credited_received_value_cents)) / netUnits);
+    // The returned units left stock at their lot cost, which includes any landed cost capitalized into them (M15): that share is
+    // part of what the return move put on GRNI, so it is part of `received` here — else it stays on GRNI after the credit.
+    const landedPerUnit = Number((await c.query<{ v: string }>(
+      `SELECT coalesce(sum(capitalized_cents::numeric / nullif(units_on_hand, 0)), 0)::text AS v FROM scentsx.purchase_order_landed_costs
+        WHERE po_line_id = $1::uuid AND operating_company_id = $2::uuid`, [l.po_line_id, co])).rows[0]!.v);
+    const received = Math.round((w.qty * (l.billed_received_value_cents - l.credited_received_value_cents)) / netUnits + w.qty * landedPerUnit);
     const credit = Math.round((w.qty * (l.billed_value_cents - l.credited_value_cents)) / netUnits);
     rows.push({ l, qty: w.qty, received, credit });
   }

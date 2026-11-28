@@ -186,7 +186,8 @@ export const getScentsxItemPostingAccounts = (itemId: string) =>
   apiRequest<{ inventory_account_id: string | null; cogs_account_id: string | null; source: "item" | "category" | "role" }>(`/api/v1/scentsx/item-accounts/item/${encodeURIComponent(itemId)}`);
 
 /* ---- Receivables (owner 2026-11-27 13:50 CT — CONTROL's Aging Balance Report / Customer Account Status / Invoice History) ---- */
-export type ScentsxBuckets = { current: number; b1: number; b2: number; b3: number; total: number };
+/** credits = unapplied credit memos + unapplied payments (shown negative); total = buckets − credits = the A/R control account. */
+export type ScentsxBuckets = { current: number; b1: number; b2: number; b3: number; credits?: number; total: number };
 export type ScentsxAgingDays = { d1: number; d2: number; d3: number };
 export type ScentsxAgingRow = ScentsxBuckets & { customer_id: string; customer: string; perfume_company_id: string | null; invoices: number; oldest_days: number };
 export type ScentsxInvoicePayment = { payment_id: string; payment_no: string | null; date: string | null; method: string | null; reference: string | null; amount_cents: number;
@@ -250,10 +251,11 @@ export const getScentsxInquiryCustomers = () => apiRequest<{ customers: Array<{ 
 export const scentsxInquiryXlsxPath = (kind: "sales-lines" | "sales-invoices", f: ScentsxInquiryFilter) => `/api/v1/scentsx/inquiry/${kind}/export.xlsx?${inquiryQs(f)}`;
 
 /** Payables — A/P aging by vendor + vendor account (read only; bills are paid / voided through /api/v1/accounting/bills/:id/pay | void). */
-export type ScentsxApBuckets = { current: number; d1_30: number; d31_60: number; d61_90: number; d90_plus: number; total: number };
+/** credits = unapplied vendor credits (shown negative); total = open bills − credits = the A/P control account. */
+export type ScentsxApBuckets = { current: number; d1_30: number; d31_60: number; d61_90: number; d90_plus: number; credits?: number; total: number };
 export type ScentsxApAgingRow = ScentsxApBuckets & { vendor_id: string | null; vendor: string; perfume_vendor_id: string | null; bills: number; oldest_past_due: number };
 export type ScentsxApOpenBill = { id: string; display_id: string | null; bill_number: string | null; vendor_id: string | null; bill_date: string; due_date: string;
-  past_due: number; amount_cents: number; settled_cents: number; open_cents: number; bucket: keyof Omit<ScentsxApBuckets, "total">; purchase_order_id: string | null; po_number: string | null };
+  past_due: number; amount_cents: number; settled_cents: number; open_cents: number; bucket: keyof Omit<ScentsxApBuckets, "total" | "credits">; purchase_order_id: string | null; po_number: string | null };
 export type ScentsxApBill = { id: string; display_id: string | null; bill_number: string | null; bill_date: string; due_date: string; status: string; amount_cents: number;
   voided: boolean; po_number: string | null; purchase_order_id: string | null };
 export type ScentsxApPayment = { id: string; date: string; method: string; check_number: string | null; reference_number: string | null; amount_cents: number;
