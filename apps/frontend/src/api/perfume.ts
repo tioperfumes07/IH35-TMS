@@ -1142,7 +1142,7 @@ export const mergePerfumeCatalogValue = (id: string, intoId: string) =>
 export const createPerfumeCompany = (record: unknown) => apiRequest<{ id: string | null; existed: boolean }>("/api/v1/perfume/contacts/create", { method: "POST", body: record });
 /** Owner 18:21 CT: the company profile's Edit pop-up — contact fields + Relationship / Industry / Review tags / Business type. */
 export type PerfumeCompanyDetails = Partial<Record<"phone" | "website" | "domain" | "address" | "city" | "state" | "zip" | "country" | "notes" | "segment" | "main_category", string | null>>
-  & { categories?: string[]; review_tags?: string[] };
+  & { categories?: string[]; review_tags?: string[]; relationships?: string[]; business_types?: string[] };
 export const updatePerfumeCompanyDetails = (id: string, b: PerfumeCompanyDetails) =>
   apiRequest<{ changed: number }>(`/api/v1/perfume/companies/${encodeURIComponent(id)}/details`, { method: "PATCH", body: b });
 /** LEAD item 23: re-link the purchase history to companies (after customers are imported or merged). */

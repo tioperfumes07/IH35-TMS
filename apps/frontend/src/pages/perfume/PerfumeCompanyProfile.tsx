@@ -136,7 +136,9 @@ export function PerfumeCompanyProfile({ id, onClose, backLabel }: { id: string; 
               {field("Website", website)}
               {field("Customer type", s("customer_type"))}
               {field("Vendor type", s("vendor_type"))}
-              {field("Business type", s("segment"))}
+              {field("Relationship", s("relationships") ?? s("main_category"))}
+              {field("Business type", s("business_types") ?? s("segment"))}
+              {field("Industry", s("categories"))}
               {field("Owner", s("owner_name"))}
               {field("Region", s("region"))}
               {field("First contact", co?.["first_contact_on"] ? usDate(String(co["first_contact_on"])) : null)}
