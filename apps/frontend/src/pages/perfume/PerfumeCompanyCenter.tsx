@@ -49,7 +49,7 @@ export function PerfumeCompanyCenter({ companyId }: { companyId: string }) {
         <KpiCard label="Open balance — they owe us (A/R)" number={money(d.open_ar_cents)} to="/perfume?tab=receivables" />
         <KpiCard label="Overdue A/R" number={money(d.ar_aging.b1 + d.ar_aging.b2 + d.ar_aging.b3)} to="/perfume?tab=receivables" />
         <KpiCard label="Open balance — we owe them (A/P)" number={money(d.open_ap_cents)} to="/perfume?tab=payables" />
-        <KpiCard label="Transactions" number={d.transactions.length.toLocaleString("en-US")} />
+        <KpiCard label="Transactions" number={d.transactions.length.toLocaleString("en-US")} onClick={() => { setSide("all"); setType(""); setTab("txns"); }} />
       </div>
       <div className="flex flex-wrap gap-2">
         {tabBtn("txns", "Transactions")}
