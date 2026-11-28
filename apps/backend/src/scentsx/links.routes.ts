@@ -21,6 +21,7 @@ import { hasExportProof, hasResaleCertificate, partyStatus, screenParty } from "
 import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "../perfume/desk.routes.js";
 import { generalLedger, glQuery } from "./general-ledger.service.js";
+import { salesTaxLiability, salesTaxQuery, ScentsxSalesTaxNotMapped } from "./sales-tax.service.js";
 import {
   createLink, listDocumentLinks, scopeToScentsx, listLinks, scentsxAccountRegister, scentsxChart, scentsxSummary, ScentsxLinkInvalid, ScentsxLinkNotFound, ScentsxNotSetUp, voidLink, type LinkKind,
 } from "./links.service.js";
@@ -158,6 +159,16 @@ export async function registerScentsxLinkRoutes(app: FastifyInstance) {
     try { return await withCurrentUser(uid, async (c) => ({ accounts: await scentsxChart(c) })); } catch (e) { return fail(reply, e); }
   });
 
+  // ROUND L.31 M11 — sales tax liability for a period (read only; scentsx/sales-tax.service.ts).
+  app.get("/api/v1/scentsx/sales-tax/liability", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const q = salesTaxQuery.safeParse(req.query ?? {});
+    if (!q.success) return reply.code(400).send({ error: "invalid", issues: q.error.issues });
+    try { return await withCurrentUser(uid, (c) => salesTaxLiability(c, q.data)); } catch (e) {
+      if (e instanceof ScentsxSalesTaxNotMapped) return reply.code(409).send({ error: "sales_tax_account_not_mapped", message: e.message });
+      return fail(reply, e);
+    }
+  });
   // ROUND L.31 M16 remainder — the General Ledger (read only over posted lines; scentsx/general-ledger.service.ts).
   app.get("/api/v1/scentsx/general-ledger", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
