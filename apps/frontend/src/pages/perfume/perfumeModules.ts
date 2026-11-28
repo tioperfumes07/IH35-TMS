@@ -18,7 +18,7 @@ export const PERFUME_MODULES: PerfumeModule[] = [
   // shown as a Vendors center and a Customers center like QuickBooks. A vendor's price lists, payables and its profile live under
   // Vendors; a customer's accounts, ranking and receivables under Customers. Leads keeps every company not converted yet.
   { id: "vendors", label: "Vendors", Icon: Store, tabs: ["vendors", "suppliers", "payables", "vendorranking"] },
-  { id: "customers", label: "Customers", Icon: UserRound, tabs: ["customers", "accounts", "ranking", "receivables"] },
+  { id: "customers", label: "Customers", Icon: UserRound, tabs: ["customers", "accounts", "ranking", "salespeople", "receivables"] },
   { id: "campaigns", label: "Campaigns", Icon: Send, tabs: ["campaign", "sendlist"] },
   { id: "traders", label: "Traders", Icon: Handshake, tabs: ["traders"] },
   { id: "shows", label: "Trade shows", Icon: CalendarDays, tabs: ["shows"] },
