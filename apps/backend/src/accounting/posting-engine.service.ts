@@ -87,6 +87,9 @@ export const POSTING_SOURCE_TYPES = [
   // bank (or cash) ledger the money left from. sourceId = accounting.customer_refunds.id. The credit memo it refunds already
   // posted Cr A/R; this is the leg that clears that credit balance.
   "customer_refund",
+  // VENDOR REFUNDS (mirror of customer_refund) — a vendor pays back a vendor credit: Dr the bank (or cash) ledger the money came
+  // into / Cr ap_control. sourceId = accounting.vendor_refunds.id. The vendor credit it refunds already posted Dr A/P.
+  "vendor_refund",
   // ROUND 394 RULING 2 — a driver liability that is a DRIVER RECEIVABLE (accident damage, civil / internal
   // fine) posts at creation: Dr the receivable role (1255 / 1256) / Cr the matching recovery role.
   // sourceId = driver_finance.driver_liabilities.id. A write-off is the reversal of this posting.
@@ -2171,6 +2174,39 @@ async function buildCustomerRefundLines(client: DbClient, operatingCompanyId: st
   };
 }
 
+async function buildVendorRefundLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
+  const res = await client.query<{
+    id: string; display_id: string; refund_date: string; amount_cents: number; bank_ledger_account_id: string;
+    voided_at: string | null; method: string; reference: string | null; credit_label: string | null;
+  }>(
+    `SELECT r.id::text, r.display_id, r.refund_date::text, r.amount_cents::bigint AS amount_cents, r.bank_ledger_account_id::text,
+            r.voided_at::text, r.method, r.reference, vc.display_id AS credit_label
+       FROM accounting.vendor_refunds r
+       JOIN accounting.vendor_credits vc ON vc.id = r.vendor_credit_id AND vc.operating_company_id = r.operating_company_id
+      WHERE r.operating_company_id = $1::uuid AND r.id::text = $2
+      LIMIT 1
+      FOR UPDATE OF r`,
+    [operatingCompanyId, sourceId]
+  );
+  const refund = res.rows[0];
+  if (!refund) throw new PostingEngineError("SOURCE_NOT_FOUND", "Vendor refund not found");
+  if (refund.voided_at) throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided vendor refund is not posting-eligible");
+  const ap = await resolveApAccountForCompany(client, operatingCompanyId);
+  if (!ap) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AP account mapping is missing");
+  const amount = Number(refund.amount_cents ?? 0);
+  if (amount <= 0) throw new PostingEngineError("UNBALANCED_ENTRY", "Vendor refund amount_cents must be positive");
+  const label = `Vendor refund ${refund.display_id}${refund.credit_label ? ` of vendor credit ${refund.credit_label}` : ""}`;
+  const via = `${refund.method}${refund.reference ? ` ${refund.reference}` : ""}`;
+  return {
+    postingDate: refund.refund_date,
+    memo: `${label} (${via})`,
+    lines: [
+      { account_id: refund.bank_ledger_account_id, debit_or_credit: "debit", amount_cents: amount, description: `${label} — received by ${via}`, source_transaction_line_id: null, relationship_role: "source_transaction" },
+      { account_id: ap, debit_or_credit: "credit", amount_cents: amount, description: `${label} — vendor credit cleared`, source_transaction_line_id: null, relationship_role: "source_transaction" },
+    ],
+  };
+}
+
 async function buildVendorCreditOverpayLines(
   client: DbClient,
   operatingCompanyId: string,
@@ -3025,6 +3061,7 @@ async function buildPostingDraft(
   if (sourceType === "vendor_credit") return buildVendorCreditOverpayLines(client, operatingCompanyId, sourceId);
   if (sourceType === "credit_memo") return buildCreditMemoLines(client, operatingCompanyId, sourceId);
   if (sourceType === "customer_refund") return buildCustomerRefundLines(client, operatingCompanyId, sourceId);
+  if (sourceType === "vendor_refund") return buildVendorRefundLines(client, operatingCompanyId, sourceId);
   if (sourceType === "cash_advance") return buildCashAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
   if (sourceType === "driver_advance") return buildDriverAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
   if (sourceType === "bank_categorization") return buildBankCategorizationLines(client, operatingCompanyId, sourceId);

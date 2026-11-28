@@ -140,7 +140,7 @@ function VendorAccount({ vendorId, asOf, onChanged }: { vendorId: string; asOf: 
         />
       ) : null}
       <PerfumeSupplierDeposits a={a} onDone={refresh} />
-      <PerfumeVendorCredits credits={a.credits ?? []} openBills={a.open_bills} companyId={a.operating_company_id} onDone={refresh} />
+      <PerfumeVendorCredits credits={a.credits ?? []} openBills={a.open_bills} companyId={a.operating_company_id} vendorId={a.vendor.id} banks={a.bank_accounts} onDone={refresh} />
       <ParityTable<ScentsxApPayment> selectable
         cardTitle title={tr("perfume.ap.payments", "Payments")} rows={a.payments} rowKey={(r) => r.id} storageKey="perfume-ap-payments-v1" exportFilename={`TIO vendor payments ${a.vendor.name}`} exportExcel
         emptyText="No payments to this vendor."
