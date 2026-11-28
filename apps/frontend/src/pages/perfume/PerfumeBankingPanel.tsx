@@ -10,6 +10,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -97,6 +98,7 @@ export function PerfumeBankingPanel() {
 
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("scentsx.bk.transfers", "Transfers")}>
         <div className="text-card-title">{tr("scentsx.bk.transfers", "Transfers")}</div>
+        <CappedListNotice shown={transfers.data?.transfers.length ?? 0} limit={200} />
         <ParityTable<Transfer> selectable
           rows={transfers.data?.transfers ?? []} rowKey={(t) => t.id} loading={transfers.isLoading} storageKey="scentsx-transfers-v1" exportFilename="ScentsX transfers" exportExcel
           emptyText="No transfers yet."
