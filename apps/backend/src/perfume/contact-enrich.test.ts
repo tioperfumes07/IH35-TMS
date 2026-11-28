@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
-import { findContactInfo, pickEmail, siteHost } from "./contact-enrich.service.js";
+import { countryCode, findContactInfo, pickEmail, sameCompany, siteHost } from "./contact-enrich.service.js";
 import type { ProspectRow, SearchPage } from "./google-prospects.js";
 
 const place = (p: Partial<ProspectRow> & { place_id: string; name: string }): ProspectRow => ({ address: null, city: null, state: null, zip: null,
@@ -23,6 +23,23 @@ describe("contact info lookup — pure", () => {
     expect(pickEmail(`write jane@aabeauty.com`, "aabeauty.com")).toBe("jane@aabeauty.com");
     expect(pickEmail(`sales@shopify-mail.com other@gmail.com`, "aabeauty.com")).toBe("sales@shopify-mail.com");
     expect(pickEmail(`nothing here`, "aabeauty.com")).toBeNull();
+  });
+  it("same company: exact name with a research-file city, street address, or city; not another city's store", () => {
+    const g = (x: Partial<ProspectRow>) => place({ place_id: "p", name: "x", ...x });
+    expect(countryCode("United States")).toBe("US"); expect(countryCode("México")).toBe("MX");
+    // Research files wrote "US" / "Newark port" for the city — the exact name decides.
+    expect(sameCompany({ name_key: "fragrancenet com", city: "New York (Hauppauge) / Newark port", country: "United States" }, g({ city: "Hauppauge", address: "104 Parkway Dr S, Hauppauge, NY" }), "fragrancenet com")).toBe(true);
+    expect(sameCompany({ name_key: "victory international usa", city: "US", country: "United States" }, g({ city: "Edison" }), "victory international usa")).toBe(true);
+    // Our street address in Google's address.
+    expect(sameCompany({ name_key: "am beauty distributors", city: "New York", country: "US", address: "1573 Broadway, Hewlett, NY" }, g({ city: "Hewlett", address: "1573 Broadway, Hewlett, NY 11557" }), "am beauty distributors")).toBe(true);
+    // Same name, another real city, no address of ours there → not ours.
+    expect(sameCompany({ name_key: "rosas perfumes", city: "Albany", country: "US" }, g({ city: "Buffalo", address: "1 Elm St, Buffalo, NY" }), "rosas perfumes")).toBe(false);
+    // Partial name needs the place too.
+    expect(sameCompany({ name_key: "angel brand", city: "Newark port", country: "US" }, g({ city: "Newark", address: "5 Main St, Newark, NJ" }), "angel brand co")).toBe(true);
+    expect(sameCompany({ name_key: "angel brand", city: "Newark port", country: "US" }, g({ city: "Miami", address: "5 Main St, Miami, FL" }), "angel brand co")).toBe(false);
+    // Another country.
+    expect(sameCompany({ name_key: "perfumes plus", city: null, country: "MX" }, g({ country: "US" }), "perfumes plus")).toBe(false);
+    expect(sameCompany({ name_key: "perfumes plus", city: null, country: "US" }, g({ country: "US" }), "perfumes plus wholesale outlet")).toBe(false);
   });
 });
 

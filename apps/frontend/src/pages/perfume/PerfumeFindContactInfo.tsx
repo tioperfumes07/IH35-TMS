@@ -25,9 +25,10 @@ export function PerfumeFindContactInfo({ onChanged }: { onChanged: () => void })
   const run = async () => {
     stop.current = false; setRunning(true); setErr(null);
     let sum = { ...ZERO };
+    const since = new Date().toISOString();
     try {
       for (;;) {
-        const r = await findPerfumeContactInfo({ limit: 10 });
+        const r = await findPerfumeContactInfo({ limit: 10, since });
         sum = { looked_up: sum.looked_up + r.looked_up, phone: sum.phone + r.phone, website: sum.website + r.website, email: sum.email + r.email,
           no_match: sum.no_match + r.no_match, nothing: sum.nothing + r.nothing, error: sum.error + r.error };
         setTally(sum);

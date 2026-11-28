@@ -444,7 +444,7 @@ export type PerfumeFindContactInfoResult = { looked_up: number; phone: number; w
   remaining: { total: number; looked_up: number };
   rows: Array<{ id: string; name: string; result: "phone" | "website" | "email" | "nothing" | "no_match" | "error"; phone?: string | null; website?: string | null; email?: string | null; note?: string }> };
 export const getPerfumeNoContactInfo = () => apiRequest<PerfumeNoContactInfo>("/api/v1/perfume/contacts/no-contact-info");
-export const findPerfumeContactInfo = (body: { ids?: string[]; limit?: number }) =>
+export const findPerfumeContactInfo = (body: { ids?: string[]; limit?: number; since?: string }) =>
   apiRequest<PerfumeFindContactInfoResult>("/api/v1/perfume/contacts/find-contact-info", { method: "POST", body });
 export const importPerfumeContacts = (records: unknown[]) =>
   apiRequest<PerfumeContactImportTally>("/api/v1/perfume/contacts/import", { method: "POST", body: { records } });
