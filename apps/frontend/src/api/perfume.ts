@@ -392,7 +392,9 @@ export type PerfumeContactCounts = { companies: number; vendors: number; custome
 export type PerfumeContactRow = { id: string; name: string; domain: string | null; role: PerfumeContactRole | null; vendor_type: string | null;
   customer_type: string | null; main_category: string | null; categories: string[]; city: string | null; state: string | null; country: string | null;
   phone: string | null; website: string | null; maps_uri: string | null; google_rating: string | null; google_rating_count: number | null;
-  status: string; source: string; first_contact_on: string | null; last_email_on: string | null; people: number; with_email: number; how_started: string | null };
+  status: string; source: string; first_contact_on: string | null; last_email_on: string | null; people: number; with_email: number; how_started: string | null;
+  /** The main person of the company (most emails exchanged) — owner 2026-11-28 14:05 CT "which contact is it, the email or telephone". */
+  main_contact?: string | null; main_email?: string | null; main_phone?: string | null };
 export type PerfumeContactFacet = "country" | "state" | "city" | "category" | "relationship" | "industry" | "tag" | "source" | "how" | "region" | "ctype" | "vtype" | "segment" | "status" | "show" | "reach" | "kind";
 export type PerfumeContactList = { counts: PerfumeContactCounts; total: number; limit: number; offset: number; rows: PerfumeContactRow[];
   facets?: Record<PerfumeContactFacet, Array<{ value: string; count: number }>> };
@@ -731,6 +733,14 @@ export type PerfumeNameCheckRow = { vendor_id: string; vendor: string; company_i
 export const getPerfumeCompanyNameCheck = () => apiRequest<{ rows: PerfumeNameCheckRow[] }>("/api/v1/perfume/vendor-links/names");
 export const renamePerfumeCompany = (companyId: string, name: string) =>
   apiRequest<{ changed: boolean; name: string }>(`/api/v1/perfume/companies/${companyId}/name`, { method: "PATCH", body: { name } });
+/** Owner 2026-11-28 14:05 CT: the people of a company — add, change, remove (archive) from its profile. */
+export type PerfumePersonInput = { name?: string | null; title?: string | null; email?: string | null; other_emails?: string[]; phones?: string[]; role?: PerfumeContactRole | null };
+export const addPerfumePerson = (companyId: string, b: PerfumePersonInput) =>
+  apiRequest<{ person: { id: string } }>(`/api/v1/perfume/companies/${encodeURIComponent(companyId)}/people`, { method: "POST", body: b });
+export const updatePerfumePerson = (personId: string, b: PerfumePersonInput) =>
+  apiRequest<{ person: { id: string }; changed: string[] }>(`/api/v1/perfume/people/${encodeURIComponent(personId)}`, { method: "PATCH", body: b });
+export const removePerfumePerson = (personId: string, reason?: string) =>
+  apiRequest<{ removed: boolean }>(`/api/v1/perfume/people/${encodeURIComponent(personId)}/remove`, { method: "POST", body: { reason } });
 export const confirmPerfumeCompanyName = (companyId: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/companies/${companyId}/name-ok`, { method: "POST", body: {} });
 export const getPerfumeVendorLinkPreview = () => apiRequest<{ proposals: PerfumeLinkProposal[]; linked: number; unlinked: number }>("/api/v1/perfume/vendor-links/preview");
 export const applyPerfumeVendorLinks = (decisions: Array<{ vendor_id: string; company_id?: string; create_name?: string }>) =>

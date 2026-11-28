@@ -232,13 +232,15 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
           onRowClick={(r) => setSelected(r.id)}
           columns={[
             { key: "name", label: "Company", sortable: true, render: (r) => <span className="font-semibold text-[#14314F]">{r.name}</span> },
+            { key: "main_contact", label: "Contact", sortable: true, render: (r) => (r.main_contact ? <span>{r.main_contact}{r.people > 1 ? <span className="text-[#64748B]">{` +${r.people - 1}`}</span> : null}</span> : DASH), exportValue: (r) => r.main_contact ?? "" },
+            { key: "main_email", label: "Email", sortable: true, render: (r) => (r.main_email ? <a className="underline" href={`mailto:${r.main_email}`} onClick={(e) => e.stopPropagation()}>{r.main_email}</a> : <span className="text-[#8A4208]">{tr("perfume.contacts.needs_email", "needs email")}</span>), exportValue: (r) => r.main_email ?? "" },
+            { key: "main_phone", label: "Phone", sortable: true, render: (r) => r.main_phone ?? DASH, exportValue: (r) => r.main_phone ?? "" },
             { key: "role", label: "Role", sortable: true, render: (r) => <RoleBadge role={r.role} /> },
-            { key: "how_started", label: "How it started", sortable: true, render: (r) => r.how_started ?? DASH },
             { key: "city", label: "City · state · country", sortable: true, render: (r) => [r.city, r.state, r.country].filter(Boolean).join(" · ") || DASH },
-            { key: "phone", label: "Phone", sortable: true, render: (r) => r.phone ?? DASH },
+            { key: "how_started", label: "How it started", sortable: true, render: (r) => r.how_started ?? DASH },
             { key: "website", label: "Website", sortable: true, render: (r) => (r.website ? <a href={r.website} target="_blank" rel="noreferrer" className="text-[#14314F] underline">{r.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</a> : DASH) },
             { key: "people", label: "People", sortable: true, kind: "number", cellClass: "text-right tabular-nums" },
-            { key: "with_email", label: "With email", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.with_email ? r.with_email : <span className="text-[#8A4208]">{tr("perfume.contacts.needs_email", "needs email")}</span>) },
+            { key: "with_email", label: "With email", sortable: true, kind: "number", cellClass: "text-right tabular-nums" },
             { key: "first_contact_on", label: "First contact", sortable: true, cellClass: "text-right tabular-nums", render: (r) => usDate(r.first_contact_on) },
             { key: "last_email_on", label: "Last email", sortable: true, cellClass: "text-right tabular-nums", render: (r) => usDate(r.last_email_on) },
             { key: "source", label: "Source", sortable: true },

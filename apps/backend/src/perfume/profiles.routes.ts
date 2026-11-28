@@ -3,6 +3,7 @@
  */
 import { companyCenter, companyNotesSchema, saveCompanyNotes } from "./company-center.service.js";
 import { CompanyDetailsError, companyDetailsSchema, updateCompanyDetails } from "./company-details.service.js";
+import { addPerson, CompanyPeopleError, personSchema, removePerson, removePersonSchema, updatePerson } from "./company-people.service.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -67,6 +68,31 @@ export async function registerPerfumeProfileRoutes(app: FastifyInstance) {
     if (!p.success) return reply.code(400).send({ error: "validation_error", message: p.error.issues[0]?.message ?? "Invalid." });
     try { return await withCurrentUser(uid, (c) => updateCompanyDetails(c, uid, id.data, p.data)); }
     catch (e) { if (e instanceof CompanyDetailsError) return reply.code(e.code === "not_found" ? 404 : 400).send({ error: e.code, message: e.message }); throw e; }
+  });
+  // Owner 2026-11-28 14:05 CT: the people of a company — add, change, remove (archive) from the company profile.
+  const peopleFail = (reply: FastifyReply, e: unknown) => {
+    if (e instanceof CompanyPeopleError) return reply.code(e.code === "not_found" ? 404 : e.code === "email_in_use" ? 409 : 400).send({ error: e.code, message: e.message });
+    throw e;
+  };
+  app.post("/api/v1/perfume/companies/:id/people", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    const p = personSchema.safeParse(req.body ?? {});
+    if (!p.success) return reply.code(400).send({ error: "validation_error", message: p.error.issues[0]?.message ?? "Invalid." });
+    try { return reply.code(201).send(await withCurrentUser(uid, (c) => addPerson(c, uid, id.data, p.data))); } catch (e) { return peopleFail(reply, e); }
+  });
+  app.patch("/api/v1/perfume/people/:id", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    const p = personSchema.safeParse(req.body ?? {});
+    if (!p.success) return reply.code(400).send({ error: "validation_error", message: p.error.issues[0]?.message ?? "Invalid." });
+    try { return await withCurrentUser(uid, (c) => updatePerson(c, uid, id.data, p.data)); } catch (e) { return peopleFail(reply, e); }
+  });
+  app.post("/api/v1/perfume/people/:id/remove", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    const p = removePersonSchema.safeParse(req.body ?? {}); if (!p.success) return reply.code(400).send({ error: "validation_error" });
+    try { return await withCurrentUser(uid, (c) => removePerson(c, uid, id.data, p.data.reason)); } catch (e) { return peopleFail(reply, e); }
   });
   // The company's real name (owner 2026-11-27 18:32 CT): the check list, rename, and "this name is right".
   app.get("/api/v1/perfume/vendor-links/names", RL_READ, async (req, reply) => {
