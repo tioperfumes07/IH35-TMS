@@ -43,6 +43,7 @@ export const listSchema = z.object({
   regions: z.string().max(4000).optional(), ctypes: z.string().max(4000).optional(), vtypes: z.string().max(2000).optional(),
   segments: z.string().max(4000).optional(), statuses: z.string().max(400).optional(), shows: z.string().max(8000).optional(), reach: z.string().max(200).optional(),
   kinds: z.string().max(2000).optional(),
+  relationships: z.string().max(2000).optional(), industries: z.string().max(2000).optional(), tags: z.string().max(4000).optional(),
   limit: z.coerce.number().int().min(1).max(500).optional(),
   offset: z.coerce.number().int().min(0).optional(),
 });
@@ -63,7 +64,8 @@ export function contactQueryFrom(d: z.infer<typeof listSchema>) {
   return { ...d, countries: many(d.countries), states: many(d.states), cities: many(d.cities),
     categories: many(d.categories), sources: many(d.sources), hows: many(d.hows), regions: many(d.regions),
     ctypes: many(d.ctypes), vtypes: many(d.vtypes), segments: many(d.segments), statuses: many(d.statuses),
-    shows: many(d.shows), reach: many(d.reach), kinds: many(d.kinds) };
+    shows: many(d.shows), reach: many(d.reach), kinds: many(d.kinds),
+    relationships: many(d.relationships), industries: many(d.industries), tags: many(d.tags) };
 }
 
 export async function registerPerfumeContactsRoutes(app: FastifyInstance) {

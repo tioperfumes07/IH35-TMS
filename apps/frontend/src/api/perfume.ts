@@ -389,11 +389,11 @@ export type PerfumeContactRow = { id: string; name: string; domain: string | nul
   customer_type: string | null; main_category: string | null; categories: string[]; city: string | null; state: string | null; country: string | null;
   phone: string | null; website: string | null; maps_uri: string | null; google_rating: string | null; google_rating_count: number | null;
   status: string; source: string; first_contact_on: string | null; last_email_on: string | null; people: number; with_email: number; how_started: string | null };
-export type PerfumeContactFacet = "country" | "state" | "city" | "category" | "source" | "how" | "region" | "ctype" | "vtype" | "segment" | "status" | "show" | "reach" | "kind";
+export type PerfumeContactFacet = "country" | "state" | "city" | "category" | "relationship" | "industry" | "tag" | "source" | "how" | "region" | "ctype" | "vtype" | "segment" | "status" | "show" | "reach" | "kind";
 export type PerfumeContactList = { counts: PerfumeContactCounts; total: number; limit: number; offset: number; rows: PerfumeContactRow[];
   facets?: Record<PerfumeContactFacet, Array<{ value: string; count: number }>> };
 /** Several values per filter box ("|"-separated on the wire — a city name can hold a comma). */
-export type PerfumeContactPicks = Partial<Record<"countries" | "states" | "cities" | "categories" | "sources" | "hows" | "regions" | "ctypes" | "vtypes" | "segments" | "statuses" | "shows" | "reach" | "kinds", string[]>>;
+export type PerfumeContactPicks = Partial<Record<"countries" | "states" | "cities" | "categories" | "sources" | "hows" | "regions" | "ctypes" | "vtypes" | "segments" | "statuses" | "shows" | "reach" | "kinds" | "relationships" | "industries" | "tags", string[]>>;
 export function listPerfumeContacts(q: { role?: PerfumeContactRole | "none" | "all"; q?: string; source?: string; limit?: number; offset?: number } & PerfumeContactPicks) {
   const p = new URLSearchParams();
   for (const [k, v] of Object.entries(q)) {
@@ -523,7 +523,7 @@ export async function fetchPerfumeOfferExcel(): Promise<{ name: string; mime: st
 
 /* ------------------------------------------------------------------ leads: catalogs + contacts Excel round trip (owner 2026-11-26 17:38 CT) */
 
-export type PerfumeCatalogKind = "vendor_type" | "customer_type" | "category" | "segment" | "source_kind" | "product_type" | "gender" | "item_category" | "olfactory_family";
+export type PerfumeCatalogKind = "vendor_type" | "customer_type" | "category" | "industry" | "segment" | "source_kind" | "review_tag" | "product_type" | "gender" | "item_category" | "olfactory_family" | "origin_country";
 export type PerfumeCatalogs = { kinds: Array<{ kind: PerfumeCatalogKind; label: string; used_by?: "items" | "contacts" | "families"; values: Array<{ id: string; value: string; sort: number; contacts: number }> }> };
 export const listPerfumeCatalogs = () => apiRequest<PerfumeCatalogs>("/api/v1/perfume/catalogs");
 export const addPerfumeCatalogValue = (b: { kind: PerfumeCatalogKind; value: string }) => apiRequest<{ id: string }>("/api/v1/perfume/catalogs", { method: "POST", body: b });

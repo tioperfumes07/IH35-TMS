@@ -54,4 +54,19 @@ describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("catalog cleanup (real Po
     expect((await db.query(`SELECT vendor_type FROM perfume.contact_companies WHERE id = $1::uuid`, [co])).rows[0].vendor_type).toBe("Zqm Traders");
     expect((await db.query(`SELECT archived_at IS NOT NULL AS gone FROM perfume.catalog_values WHERE id = $1::uuid`, [a])).rows[0].gone).toBe(true);
   });
+
+  it("contact category split: Phone note → review tag, (Market Directory) → relationship + tag, relationship out of industries", async () => {
+    const mk = async (main: string | null, cats: string[]) => (await db.query<{ id: string }>(
+      `INSERT INTO perfume.contact_companies (name, source, main_category, categories) VALUES ('Zqs ' || gen_random_uuid(), 'test', $1, $2::text[]) RETURNING id::text`, [main, cats])).rows[0]!.id;
+    const a = await mk("Phone: Mexico - review", ["Phone: Mexico - review", "Perfume"]);
+    const b = await mk(null, ["Potential customer (Market Directory)", "Beer"]);
+    const d = await mk(null, ["Supplier / Brand", "Cosmetics"]);
+    const keys = ["split:tag:Phone: Mexico - review", "split:dir:Potential customer (Market Directory)", "split:rel:Supplier / Brand"];
+    await applyCleanup(db as unknown as pg.PoolClient, TEST_OWNER_USER_ID, keys);
+    const row = async (id: string) => (await db.query(`SELECT main_category, categories, review_tags FROM perfume.contact_companies WHERE id = $1::uuid`, [id])).rows[0];
+    expect(await row(a)).toEqual({ main_category: null, categories: ["Perfume"], review_tags: ["Phone: Mexico - review"] });
+    expect(await row(b)).toEqual({ main_category: "Potential customer", categories: ["Beer"], review_tags: ["Market Directory"] });
+    expect(await row(d)).toEqual({ main_category: "Supplier / Brand", categories: ["Cosmetics"], review_tags: [] });
+    expect((await db.query(`SELECT count(*)::int n FROM perfume.lead_events WHERE entity_id = $1::uuid AND action = 'category_split'`, [b])).rows[0].n).toBe(1);
+  });
 });

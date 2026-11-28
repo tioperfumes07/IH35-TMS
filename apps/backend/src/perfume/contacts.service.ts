@@ -21,7 +21,9 @@ export type ContactListQuery = { role?: ContactRole | "none" | "all"; q?: string
    *  free is one), vendor type, business type, status, trade show, and how to reach them (email / phone only / neither). */
   regions?: string[]; ctypes?: string[]; vtypes?: string[]; segments?: string[]; statuses?: string[]; shows?: string[]; reach?: string[];
   /** Owner 2026-11-26 17:38 CT: leads "categorized … from research or the source" — any of the lead source kinds (email, leaked email, phone, research …). */
-  kinds?: string[] };
+  kinds?: string[];
+  /** Owner 2026-11-27 16:54 CT "not mix" (migration 202617200100): relationship (main_category), industry (categories[]), review tags. */
+  relationships?: string[]; industries?: string[]; tags?: string[] };
 
 /** "How to reach" — the company has a person with an email, only a phone, or neither. */
 export const REACH_SQL = `CASE WHEN EXISTS (SELECT 1 FROM perfume.contact_people p WHERE p.company_id = co.id AND p.archived_at IS NULL AND p.email IS NOT NULL) THEN 'Has email'
@@ -29,7 +31,7 @@ export const REACH_SQL = `CASE WHEN EXISTS (SELECT 1 FROM perfume.contact_people
   ELSE 'No email or phone' END`;
 
 /** The values the filter boxes offer, each with how many companies carry it (role + search applied, the boxes themselves not). */
-export const CONTACT_FACETS = ["country", "state", "city", "category", "source", "how", "region", "ctype", "vtype", "segment", "status", "show", "reach", "kind"] as const;
+export const CONTACT_FACETS = ["country", "state", "city", "category", "relationship", "industry", "tag", "source", "how", "region", "ctype", "vtype", "segment", "status", "show", "reach", "kind"] as const;
 export type ContactFacet = typeof CONTACT_FACETS[number];
 
 export async function contactCounts(c: pg.PoolClient) {
@@ -63,6 +65,9 @@ export function contactWhere(q: ContactListQuery): { where: string[]; args: unkn
   if (q.cities?.length) add("co.city = ANY(?::text[])", q.cities);
   if (q.sources?.length) add("co.source = ANY(?::text[])", q.sources);
   if (q.categories?.length) { args.push(q.categories); where.push(`(co.main_category = ANY($${args.length}::text[]) OR co.categories && $${args.length}::text[])`); }
+  if (q.relationships?.length) add("co.main_category = ANY(?::text[])", q.relationships);
+  if (q.industries?.length) add("co.categories && ?::text[]", q.industries);
+  if (q.tags?.length) add("co.review_tags && ?::text[]", q.tags);
   if (q.hows?.length) add("EXISTS (SELECT 1 FROM perfume.contact_origins o WHERE o.company_id = co.id AND o.how = ANY(?::text[]))", q.hows);
   if (q.regions?.length) add("co.region = ANY(?::text[])", q.regions);
   if (q.ctypes?.length) add("co.customer_type = ANY(?::text[])", q.ctypes);
@@ -108,6 +113,7 @@ export async function contactFacets(c: pg.PoolClient, q: ContactListQuery): Prom
   const expr: Record<ContactFacet, string> = {
     country: "co.country", state: "co.state", city: "co.city", source: "co.source",
     category: "unnest(array_remove(array_cat(ARRAY[co.main_category], coalesce(co.categories, '{}'::text[])), NULL))",
+    relationship: "co.main_category", industry: "unnest(co.categories)", tag: "unnest(co.review_tags)",
     how: "(SELECT o.how FROM perfume.contact_origins o WHERE o.company_id = co.id ORDER BY o.occurred_on NULLS LAST, o.created_at LIMIT 1)",
     region: "co.region", ctype: "co.customer_type", vtype: "co.vendor_type", segment: "co.segment", status: "co.status",
     show: `unnest(ARRAY(SELECT s.name FROM perfume.trade_show_contacts x JOIN perfume.trade_shows s ON s.id = x.show_id
@@ -115,7 +121,7 @@ export async function contactFacets(c: pg.PoolClient, q: ContactListQuery): Prom
     reach: REACH_SQL,
     kind: `unnest(ARRAY(SELECT DISTINCT k FROM (SELECT o.source_kind AS k FROM perfume.contact_origins o WHERE o.company_id = co.id UNION SELECT co.source_kind) z WHERE k IS NOT NULL))`,
   };
-  const own: Record<ContactFacet, keyof ContactListQuery> = { country: "countries", state: "states", city: "cities", source: "sources", category: "categories", how: "hows",
+  const own: Record<ContactFacet, keyof ContactListQuery> = { country: "countries", state: "states", city: "cities", source: "sources", category: "categories", relationship: "relationships", industry: "industries", tag: "tags", how: "hows",
     region: "regions", ctype: "ctypes", vtype: "vtypes", segment: "segments", status: "statuses", show: "shows", reach: "reach", kind: "kinds" };
   for (const f of CONTACT_FACETS) {
     const { where, args } = contactWhere({ ...q, [own[f]]: undefined });

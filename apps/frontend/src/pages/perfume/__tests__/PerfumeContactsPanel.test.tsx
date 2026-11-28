@@ -14,7 +14,7 @@ vi.mock("../../../api/client", async (importOriginal) => ({ ...(await importOrig
 let plan: PerfumeGooglePlan;
 const list: PerfumeContactList = {
   facets: { country: [{ value: "MX", count: 1 }, { value: "US", count: 1 }], state: [{ value: "Tamps.", count: 1 }],
-    city: [{ value: "Nuevo Laredo", count: 1 }, { value: "Laredo", count: 1 }], category: [{ value: "Perfume", count: 1 }],
+    city: [{ value: "Nuevo Laredo", count: 1 }, { value: "Laredo", count: 1 }], category: [{ value: "Perfume", count: 1 }], relationship: [{ value: "Customer", count: 1 }], industry: [{ value: "Perfume", count: 1 }], tag: [],
     source: [{ value: "Google", count: 1 }, { value: "Master Database", count: 1 }], how: [{ value: "Email", count: 1 }] },
   counts: { companies: 3, vendors: 1, customers: 1, both: 1, unclassified: 0, from_google: 1, needs_email: 1, people: 4, with_email: 3, phone_only: 1 },
   total: 3, limit: 300, offset: 0,
@@ -90,7 +90,7 @@ describe("Contacts", () => {
     await waitFor(() => expect(gets.length).toBeGreaterThan(0));
     await screen.findAllByText("Perfume Center");
     const box = await screen.findByTestId("perfume-contacts-filter-city");
-    for (const f of ["country", "state", "category", "source", "how"]) expect(screen.getByTestId(`perfume-contacts-filter-${f}`)).toBeTruthy();
+    for (const f of ["country", "state", "relationship", "industry", "tag", "source", "how"]) expect(screen.getByTestId(`perfume-contacts-filter-${f}`)).toBeTruthy();
     fireEvent.click(within(box).getByRole("button", { name: /All cities/ }));
     fireEvent.change(screen.getByTestId("perfume-contacts-filter-city-search"), { target: { value: "nuevo" } });
     await waitFor(() => expect(screen.getByText("Nuevo Laredo (1)")).toBeTruthy());

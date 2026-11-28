@@ -32,10 +32,10 @@ const NOTES: Partial<Record<PerfumeCatalogKind, string>> = {
 /** Owner 2026-11-27 16:54 CT: "you need to have header for each type and not confuse … separate all the types and categories … not mix".
  *  One section per thing the list describes; each list is its own catalog. */
 const GROUPS: Array<{ key: string; title: string; note: string; kinds: string[] }> = [
-  { key: "contacts", title: "Contacts & leads", note: "Every company and lead: where it came from, its relationship and its business type.", kinds: ["category", "source_kind", "segment"] },
+  { key: "contacts", title: "Contacts & leads", note: "Every company and lead: its relationship to us, its industry, its business type, where it came from, and review tags (notes to check).", kinds: ["category", "industry", "segment", "source_kind", "review_tag"] },
   { key: "customers", title: "Customers", note: "The kind of customer (on companies with role customer or both).", kinds: ["customer_type"] },
   { key: "vendors", title: "Vendors", note: "The kind of vendor (on companies with role vendor or both).", kinds: ["vendor_type"] },
-  { key: "items", title: "Items", note: "Product type is the kind only (Regular, Tester, Set, Mini …); the gender is its own list.", kinds: ["product_type", "gender", "item_category", "olfactory_family"] },
+  { key: "items", title: "Items", note: "Product type is the kind only (Regular, Tester, Set, Mini …); the gender is its own list.", kinds: ["product_type", "gender", "item_category", "olfactory_family", "origin_country"] },
 ];
 
 export function PerfumeCatalogsPanel() {
