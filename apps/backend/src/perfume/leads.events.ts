@@ -42,5 +42,7 @@ export async function historyOf(c: pg.PoolClient, entity: LeadEntity, id: string
 export async function companyHistory(c: pg.PoolClient, companyId: string) {
   return (await c.query(
     `SELECT ${HISTORY_COLS} FROM perfume.lead_events e LEFT JOIN identity.users u ON u.id = e.created_by
-      WHERE (e.entity = 'company' AND e.entity_id = $1) OR e.company_id = $1 ORDER BY e.created_at DESC, e.id LIMIT 500`, [companyId])).rows;
+      WHERE (e.entity = 'company' AND e.entity_id = $1) OR e.company_id = $1
+         OR e.company_id IN (SELECT m.id FROM perfume.contact_companies m WHERE m.merged_into_id = $1)
+      ORDER BY e.created_at DESC, e.id LIMIT 500`, [companyId])).rows;
 }

@@ -4,7 +4,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
-import { companyLocations, duplicateGroups, mergeDuplicateGroups } from "./company-merge.service.js";
+import { companyLocations, duplicateGroups, mergeCompanies, mergeDuplicateGroups } from "./company-merge.service.js";
+import { companyHistory } from "./leads.events.js";
 
 describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("company merge (real Postgres, rolled back)", () => {
   let db: pg.Client;
@@ -38,5 +39,23 @@ describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("company merge (real Post
     const h = (await db.query(`SELECT action FROM perfume.lead_events WHERE action IN ('merged_into', 'merged_from') AND company_id = $1 ORDER BY action`, [a])).rows.map((x) => x.action);
     expect(h).toEqual(["merged_from", "merged_into", "merged_into"]);
     expect((await duplicateGroups(db)).find((x) => x.key === g.key)).toBeUndefined(); // nothing left to merge
+  });
+
+  it("owner 11-28 14:05 CT: merging as the app role (ih35_app) succeeds with an account-event row — append-only logs are not rewritten, the history still shows them", async () => {
+    const mk = async (name: string) => (await db.query<{ id: string }>(
+      `INSERT INTO perfume.contact_companies (name, source, role) VALUES ($1, 'test', 'customer') RETURNING id::text`, [name])).rows[0]!.id;
+    const keep = await mk("ZZ Oberlender Keep");
+    const dup = await mk("ZZ Oberlender Dup");
+    await db.query(`INSERT INTO perfume.customer_account_events (company_id, kind, detail, created_by) VALUES ($1::uuid, 'changed', '{"t":"x"}'::jsonb, $2::uuid)`, [dup, TEST_OWNER_USER_ID]);
+    await db.query(`INSERT INTO perfume.lead_events (entity, entity_id, company_id, action, detail, created_by) VALUES ('company', $1::uuid, $1::uuid, 'created', '{}'::jsonb, $2::uuid)`, [dup, TEST_OWNER_USER_ID]);
+    await db.query("SAVEPOINT as_app");
+    await db.query("SET LOCAL ROLE ih35_app");
+    const merged = await mergeCompanies(db as never, TEST_OWNER_USER_ID, keep, [dup], "test");
+    expect(merged).toBe(1);
+    const hist = (await companyHistory(db as never, keep)).map((e: { action: string }) => e.action);
+    expect(hist).toContain("created"); // the duplicate's own history shows on the company that stays
+    await db.query("RESET ROLE");
+    await db.query("RELEASE SAVEPOINT as_app");
+    expect((await db.query(`SELECT company_id::text FROM perfume.customer_account_events WHERE company_id = $1`, [dup])).rows).toHaveLength(1); // never rewritten
   });
 });

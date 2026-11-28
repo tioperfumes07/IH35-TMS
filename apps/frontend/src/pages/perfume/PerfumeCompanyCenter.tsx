@@ -23,11 +23,14 @@ function Opener({ t }: { t: PerfumeCenterTxn }) {
   return <>{label}</>;
 }
 
-export function PerfumeCompanyCenter({ companyId }: { companyId: string }) {
+/** `view` — the company profile page (owner 2026-11-28 14:02 CT "similar to QuickBooks … under that the tabs") shows ONE part per tab:
+ *  the header carries the balances, so with a view the KPI strip and the inner tab buttons are left out. */
+export function PerfumeCompanyCenter({ companyId, view }: { companyId: string; view?: "txns" | "statement" | "notes" }) {
   const qc = useQueryClient();
   const { pushToast } = useToast();
   const q = useQuery({ queryKey: ["perfume", "company-center", companyId], queryFn: () => getPerfumeCompanyCenter(companyId) });
-  const [tab, setTab] = useState<"txns" | "statement" | "notes">("txns");
+  const [tabState, setTab] = useState<"txns" | "statement" | "notes">("txns");
+  const tab = view ?? tabState;
   const [side, setSide] = useState<"all" | "customer" | "vendor">("all");
   const [type, setType] = useState<string>("");
   const [notes, setNotes] = useState("");
@@ -45,17 +48,17 @@ export function PerfumeCompanyCenter({ companyId }: { companyId: string }) {
   );
   return (
     <div className="space-y-3" data-testid="perfume-company-center">
-      <div className="grid grid-cols-2 gap-[10px] md:grid-cols-4">
+      {view ? null : <div className="grid grid-cols-2 gap-[10px] md:grid-cols-4">
         <KpiCard label="Open balance — they owe us (A/R)" number={money(d.open_ar_cents)} to="/perfume?tab=receivables" />
         <KpiCard label="Overdue A/R" number={money(d.ar_aging.b1 + d.ar_aging.b2 + d.ar_aging.b3)} to="/perfume?tab=receivables" />
         <KpiCard label="Open balance — we owe them (A/P)" number={money(d.open_ap_cents)} to="/perfume?tab=payables" />
         <KpiCard label="Transactions" number={d.transactions.length.toLocaleString("en-US")} />
-      </div>
-      <div className="flex flex-wrap gap-2">
+      </div>}
+      {view ? null : <div className="flex flex-wrap gap-2">
         {tabBtn("txns", "Transactions")}
         {tabBtn("statement", "Statement")}
         {tabBtn("notes", "Notes")}
-      </div>
+      </div>}
       {tab === "txns" ? (
         <>
           <div className="flex flex-wrap items-center gap-2 text-xs">

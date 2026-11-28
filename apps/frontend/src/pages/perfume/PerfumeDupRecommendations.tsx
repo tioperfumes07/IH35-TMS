@@ -15,13 +15,17 @@ import { confirmPerfumeDuplicates, dismissPerfumeDuplicates, getPerfumeDupRecomm
 import { tr } from "./perfumeI18n";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { ctl, DocLink, usDate } from "./perfumeDocParts";
+import { useSearchParams } from "react-router-dom";
+
+/** Owner 2026-11-28 13:57 CT: a company opened from Customers stays in Customers (its profile page), never sent to All leads. */
+function HereTab() { const [p] = useSearchParams(); return p.get("tab") ?? "contacts"; }
 
 const REASON: Record<string, string> = { same_name: "Same name", similar_name: "Similar name", same_phone: "Same phone", same_domain: "Same website / e-mail domain", same_address: "Same address",
   same_contact_email: "Same contact e-mail", same_contact_similar_domain: "Same contact, near-same domain", same_core_name: "Same name without notes / alias", same_brand_initials: "Same brand initials (vendors)" };
 const where = (c: PerfumeDupCard) => [c.city, c.state].filter(Boolean).join(", ");
 const Side = ({ c, stays }: { c: PerfumeDupCard; stays: boolean }) => (
   <div className={stays ? "font-semibold" : ""}>
-    <DocLink tab="contacts" id={c.id}>{c.name}</DocLink>
+    <DocLink tab={HereTab()} id={c.id}>{c.name}</DocLink>
     <div className="text-section-header font-normal text-[#64748B]">{[c.role, where(c), c.phone, c.domain, c.people ? `${c.people} people` : null].filter(Boolean).join(" · ") || "—"}</div>
   </div>
 );
