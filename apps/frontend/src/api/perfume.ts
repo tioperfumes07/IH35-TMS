@@ -445,6 +445,14 @@ export const unapprovePerfumeContacts = (ids: string[]) =>
   apiRequest<{ sent_back: number; kept: Array<{ id: string; name: string; reason: string }> }>("/api/v1/perfume/contacts/unapprove", { method: "POST", body: { ids } });
 export const restorePerfumeContacts = (ids: string[]) =>
   apiRequest<{ restored: number }>("/api/v1/perfume/contacts/restore", { method: "POST", body: { ids } });
+/** Owner 2026-11-28 14:24 CT: leads with no email or phone — how many, and the lookup that finds it (Google Places + the company's own website). */
+export type PerfumeNoContactInfo = { configured: boolean; total: number; looked_up: number };
+export type PerfumeFindContactInfoResult = { looked_up: number; phone: number; website: number; email: number; no_match: number; nothing: number; error: number;
+  remaining: { total: number; looked_up: number };
+  rows: Array<{ id: string; name: string; result: "phone" | "website" | "email" | "nothing" | "no_match" | "error"; phone?: string | null; website?: string | null; email?: string | null; note?: string }> };
+export const getPerfumeNoContactInfo = () => apiRequest<PerfumeNoContactInfo>("/api/v1/perfume/contacts/no-contact-info");
+export const findPerfumeContactInfo = (body: { ids?: string[]; limit?: number }) =>
+  apiRequest<PerfumeFindContactInfoResult>("/api/v1/perfume/contacts/find-contact-info", { method: "POST", body });
 export const importPerfumeContacts = (records: unknown[]) =>
   apiRequest<PerfumeContactImportTally>("/api/v1/perfume/contacts/import", { method: "POST", body: { records } });
 

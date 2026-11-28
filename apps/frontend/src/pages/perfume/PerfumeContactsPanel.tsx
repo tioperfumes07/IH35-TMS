@@ -30,6 +30,7 @@ import {
 import { createScentsxCustomer, getEligibleScentsxCustomers, getScentsxCompany, linkScentsxCustomer, type EligibleScentsxContact } from "../../api/scentsx";
 import { tr } from "./perfumeI18n";
 import { PerfumeNameFormatCard } from "./PerfumeNameFormatCard";
+import { PerfumeFindContactInfo } from "./PerfumeFindContactInfo";
 import { PerfumeCreateCompany } from "./PerfumeCreateCompany";
 import { PerfumeDuplicatesCard } from "./PerfumeDuplicatesCard";
 import { PerfumeDupRecommendations } from "./PerfumeDupRecommendations";
@@ -277,6 +278,7 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
           ]}
         />
         <div className="text-xs text-[#64748B]">{list.data ? `Showing ${list.data.rows.length.toLocaleString("en-US")} of ${list.data.total.toLocaleString("en-US")}` : ""}</div>
+        <PerfumeFindContactInfo onChanged={() => void list.refetch()} />
       </section>
 
       {askDelete ? (
