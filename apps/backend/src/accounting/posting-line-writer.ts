@@ -114,6 +114,9 @@ export const PARTYLESS_SOURCE_TYPES = [
   // SCENTSX purchase bills (202617120100) — the vendor's price difference on received units, between GRNI and COGS; the vendor
   // rides on the bill it belongs to (source id = the bill), never on this entry (apps/backend/src/scentsx/purchase-bill.service.ts).
   "scentsx_purchase_price_variance",
+  // SCENTSX M15 (202617250100) — a PO bill's landed cost (freight-in 5100 / customs 5110) moved into inventory for the units still on
+  // hand; the vendor rides on the bill (source id = the bill), never on this entry (apps/backend/src/scentsx/purchase-bill.service.ts).
+  "scentsx_landed_cost",
   // legacy aliases still read by reports; no live writer posts under them
   "payment", "settlement"
 ] as const;

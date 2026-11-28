@@ -149,6 +149,21 @@ describe("vendor bill from a received PO", () => {
     await waitFor(() => expect(calls).toContainEqual(["/api/v1/scentsx/purchase-orders/p1/bill", expect.objectContaining({ vendor_invoice_number: "INV-77",
       lines: [{ po_line_id: "pl1", qty: 6, unit_price_cents: 1100 }], charges: [{ account_id: "a5000", description: "Freight in", amount_cents: 1200 }] })]));
   });
+  it("M15: a landed-cost charge (customs) goes as a landed kind with no account, so the server spreads it into item cost", async () => {
+    mount(<PerfumePurchasesPanel />, "/perfume?tab=purchases&open=p1");
+    const box = await screen.findByTestId("perfume-po-bills");
+    await waitFor(() => expect(box.textContent).toContain("6 units received and not billed"));
+    fireEvent.click(within(box).getByTestId("perfume-po-bill-open"));
+    const f = await within(box).findByTestId("perfume-po-bill-form");
+    fireEvent.change(within(f).getByTestId("perfume-po-bill-no"), { target: { value: "INV-78" } });
+    fireEvent.click(within(f).getByTestId("perfume-po-bill-add-charge"));
+    fireEvent.change(within(f).getByLabelText("Charge 1 account"), { target: { value: "landed:customs" } });
+    fireEvent.change(within(f).getByLabelText("Charge 1 description"), { target: { value: "Broker" } });
+    fireEvent.change(within(f).getByLabelText("Charge 1 amount"), { target: { value: "5.00" } });
+    fireEvent.click(within(f).getByTestId("perfume-po-bill-save"));
+    await waitFor(() => expect(calls).toContainEqual(["/api/v1/scentsx/purchase-orders/p1/bill", expect.objectContaining({ vendor_invoice_number: "INV-78",
+      charges: [{ landed: "customs", description: "Broker", amount_cents: 500 }] })]));
+  });
 });
 
 describe("profiles", () => {

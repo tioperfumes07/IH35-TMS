@@ -67,9 +67,12 @@ export function PurchaseBillForm({ poId, poNumber, onDone }: { poId: string; poN
           return { po_line_id: l.po_line_id, qty: qtyOf(l), ...(typed != null ? { unit_price_cents: typed } : {}),
             ...(l.item_id ? {} : { account_id: lineAcct[l.po_line_id] }) };
         }),
-        charges: charges.map((c, i) => ({ account_id: c.account_id, description: c.description.trim(), amount_cents: chargeCents[i]! })),
+        // M15: a landed cost (freight in / customs) is spread over the stocked lines into the on-hand units' cost.
+        charges: charges.map((c, i) => (c.account_id.startsWith("landed:")
+          ? { landed: c.account_id.slice(7) as "freight_in" | "customs", description: c.description.trim(), amount_cents: chargeCents[i]! }
+          : { account_id: c.account_id, description: c.description.trim(), amount_cents: chargeCents[i]! })),
       });
-      pushToast(`${res.display_id ?? "Bill"} posted — ${money(res.amount_cents)} to A/P${res.variance_cents ? ` · price difference ${money(-res.variance_cents)} to COGS` : ""}`, "success");
+      pushToast(`${res.display_id ?? "Bill"} posted — ${money(res.amount_cents)} to A/P${res.variance_cents ? ` · price difference ${money(-res.variance_cents)} to COGS` : ""}${res.landed?.allocated_cents ? ` · landed cost ${money(res.landed.capitalized_cents)} into item cost, ${money(res.landed.expensed_cents)} on units already gone` : ""}`, "success");
       setOpen(false); setInvoiceNo(""); setQty({}); setPrice({}); setCharges([]);
       await q.refetch(); onDone();
     } catch (e) { pushToast(userFacingApiError(e, "Bill not posted"), "error"); } finally { setBusy(false); }
@@ -129,6 +132,8 @@ export function PurchaseBillForm({ poId, poNumber, onDone }: { poId: string; poN
               <div key={i} className="flex flex-wrap items-center gap-2">
                 <select className={`${ctl} w-[240px]`} aria-label={`Charge ${i + 1} account`} value={c.account_id} onChange={(e) => setCharges(charges.map((x, j) => (j === i ? { ...x, account_id: e.target.value } : x)))}>
                   <option value="">{tr("perfume.pbill.pick", "Pick account")}</option>
+                  <option value="landed:freight_in">{tr("perfume.pbill.landed_freight", "Landed cost — Freight in (5100), into item cost")}</option>
+                  <option value="landed:customs">{tr("perfume.pbill.landed_customs", "Landed cost — Customs / broker (5110), into item cost")}</option>
                   {postable.map((a) => <option key={a.id} value={a.id}>{`${a.account_number} ${a.account_name}`}</option>)}
                 </select>
                 <input className={`${ctl} w-[220px]`} aria-label={`Charge ${i + 1} description`} placeholder={tr("perfume.pbill.charge_what", "Freight, handling …")} value={c.description}

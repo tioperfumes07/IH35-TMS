@@ -916,6 +916,7 @@
     "scentsx.pagares",
     "scentsx.party_kyc",
     "scentsx.purchase_order_bill_lines",
+    "scentsx.purchase_order_landed_costs",
     "scentsx.purchase_order_vendor_credit_lines",
     "scentsx.resale_certificates",
     "scentsx.sales_order_invoice_lines",
