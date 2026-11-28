@@ -102,9 +102,9 @@ export function PerfumeCompanyProfile({ id, onClose, backLabel }: { id: string; 
           ) : null}
         </div>
         <div className="grid grid-cols-3 gap-[10px]" data-testid="perfume-profile-balances">
-          <KpiCard label="Open balance (they owe us)" number={money(center.data?.open_ar_cents)} />
-          <KpiCard label="Overdue" number={money(center.data ? center.data.ar_aging.b1 + center.data.ar_aging.b2 + center.data.ar_aging.b3 : null)} />
-          <KpiCard label="We owe them (A/P)" number={money(center.data?.open_ap_cents)} />
+          <KpiCard label="Open balance (they owe us)" number={money(center.data?.open_ar_cents)} onClick={() => setTab("statement")} />
+          <KpiCard label="Overdue" number={money(center.data ? center.data.ar_aging.b1 + center.data.ar_aging.b2 + center.data.ar_aging.b3 : null)} onClick={() => setTab("statement")} />
+          <KpiCard label="We owe them (A/P)" number={money(center.data?.open_ap_cents)} onClick={() => setTab("statement")} />
         </div>
         <div className="grid gap-x-6 gap-y-0.5 text-xs text-[#1F2A44] md:grid-cols-3" data-testid="perfume-profile-contactline">
           <div>{addr ?? DASH}{cityShown ? <><br />{cityShown}</> : null}{s("country") ? <><br />{s("country")}</> : null}</div>
