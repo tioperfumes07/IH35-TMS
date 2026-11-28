@@ -261,7 +261,7 @@ export function PayMultipleBills({ bills, vendorId, companyId, banks, onClose, o
       </div>
       <div className="text-xs text-[#64748B] space-y-0.5">
         {bills.map((b, i) => (
-          <div key={b.id}>{i + 1}. {b.display_id ?? b.id.slice(0, 8)} {b.bill_number ? `· ${b.bill_number}` : ""} · {money(b.open_cents)}</div>
+          <div key={b.id}>{i + 1}. {b.display_id ?? b.bill_number ?? "Bill (no number)"} {b.bill_number ? `· ${b.bill_number}` : ""} · {money(b.open_cents)}</div>
         ))}
       </div>
       <div className="flex flex-wrap items-end gap-2 text-xs">

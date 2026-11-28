@@ -53,7 +53,7 @@ export function PerfumeOrderDocuments({ orderId, number, customerEmail }: { orde
         </label>
         {doc === "invoice" && invoices.length > 1 ? (
           <select className={ctl} value={invoiceId} onChange={(e) => setInvoiceId(e.target.value)} aria-label="Invoice" data-testid="perfume-order-email-invoice">
-            <option value="">Newest</option>{invoices.map((i) => <option key={i.id} value={i.id}>{i.display_id ?? i.id.slice(0, 8)}</option>)}
+            <option value="">Newest</option>{invoices.map((i) => <option key={i.id} value={i.id}>{i.display_id ?? "Invoice (no number yet)"}</option>)}
           </select>
         ) : null}
         <label className="min-w-[260px] flex-1">To <input className={`${ctl} w-full`} value={to} onChange={(e) => setTo(e.target.value)} placeholder="name@company.com, …" data-testid="perfume-order-email-to" /></label>

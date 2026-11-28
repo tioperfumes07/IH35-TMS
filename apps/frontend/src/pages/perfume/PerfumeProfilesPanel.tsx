@@ -31,6 +31,7 @@ import { ScentsxItemAccountLine } from "./ScentsxItemAccounts";
 import { VendorLinkReview } from "./PerfumeVendorLinkReview";
 import { CompanyNameCheck } from "./PerfumeCompanyNameCheck";
 import { ScentsxVendorLink } from "./ScentsxVendorLink";
+import { ScentsxBulkVendors } from "./ScentsxBulkVendors";
 import { CompanyRoleEditor } from "./PerfumeCompanyRole";
 
 const KIND_TEXT: Record<string, string> = { buy: "Supplier", sell: "Competitor", both: "Supplier + competitor", offer: "My offer list", inventory: "My inventory" };
@@ -88,6 +89,7 @@ export function PerfumeSupplierProfilesPanel() {
   const vendors = useQuery({ queryKey: ["perfume", "vendors"], queryFn: listPerfumeVendors });
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<string | null>(openId);
+  const [picked, setPicked] = useState<string[]>([]);
   useEffect(() => { if (openId) setSelected(openId); }, [openId]);
   const rows = useMemo(() => (vendors.data?.vendors ?? []).filter((v) => !q.trim() || `${v.name} ${v.short_name ?? ""}`.toLowerCase().includes(q.trim().toLowerCase()))
     .sort((a, b) => a.name.localeCompare(b.name)), [vendors.data, q]);
@@ -107,9 +109,12 @@ export function PerfumeSupplierProfilesPanel() {
       <VendorLinkReview />
       <CompanyNameCheck />
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.profiles.suppliers", "Supplier profiles")}>
-        <input type="search" className={`${ctl} w-full max-w-[420px]`} aria-label={tr("perfume.profiles.find_vendor", "Find a vendor")} placeholder={tr("perfume.profiles.find_vendor_ph", "Find a vendor")}
-          value={q} onChange={(e) => setQ(e.target.value)} data-testid="perfume-suppliers-search" />
-        <ParityTable<PerfumeVendor> selectable rows={rows} rowKey={(v) => v.id} loading={vendors.isLoading} storageKey="perfume-suppliers-v1" exportFilename="TIO vendors" exportExcel
+        <div className="flex flex-wrap items-center gap-2">
+          <input type="search" className={`${ctl} w-full max-w-[420px]`} aria-label={tr("perfume.profiles.find_vendor", "Find a vendor")} placeholder={tr("perfume.profiles.find_vendor_ph", "Find a vendor")}
+            value={q} onChange={(e) => setQ(e.target.value)} data-testid="perfume-suppliers-search" />
+          <ScentsxBulkVendors suppliers={rows} selectedIds={picked} />
+        </div>
+        <ParityTable<PerfumeVendor> selectable selectedKeys={picked} onSelectionChange={setPicked} rows={rows} rowKey={(v) => v.id} loading={vendors.isLoading} storageKey="perfume-suppliers-v1" exportFilename="TIO vendors" exportExcel
           emptyText="No vendor matches." onRowClick={(v) => { setSelected(v.id); open("suppliers", v.id); window.scrollTo({ top: 0 }); }}
           columns={[
             { key: "name", label: "Vendor", sortable: true, render: (v) => <span className="font-semibold">{v.name}</span> },
