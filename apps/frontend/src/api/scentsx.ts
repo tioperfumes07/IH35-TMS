@@ -8,6 +8,8 @@ export type ScentsxCompany = {
 export type ScentsxAccount = {
   id: string; account_number: string | null; account_name: string; account_type: string; account_subtype: string | null;
   roles: string[]; debit_cents: string; credit_cents: string;
+  /** QuickBooks "Is sub-account of" — the parent account (1201–1216 under 1200 Inventory, 5001–5016 under 5000 COGS). */
+  parent_account_id?: string | null;
 };
 export const getScentsxCompany = () => apiRequest<{ company: ScentsxCompany }>("/api/v1/scentsx/company");
 export const listScentsxAccounts = () => apiRequest<{ accounts: ScentsxAccount[] }>("/api/v1/scentsx/accounts");

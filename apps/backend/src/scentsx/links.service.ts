@@ -132,9 +132,9 @@ export async function scentsxChart(c: Q) {
   const co = await scopeToScentsx(c);
   const r = await c.query<{
     id: string; account_number: string | null; account_name: string; account_type: string; account_subtype: string | null;
-    roles: string[]; debit_cents: string; credit_cents: string;
+    roles: string[]; debit_cents: string; credit_cents: string; parent_account_id: string | null;
   }>(
-    `SELECT a.id::text, a.account_number, a.account_name, a.account_type, a.account_subtype,
+    `SELECT a.id::text, a.account_number, a.account_name, a.account_type, a.account_subtype, a.parent_account_id::text AS parent_account_id,
             coalesce((SELECT array_agg(r.role ORDER BY r.role) FROM accounting.chart_of_accounts_roles r
                        WHERE r.account_id = a.id AND r.operating_company_id = a.operating_company_id AND r.is_active), '{}') AS roles,
             coalesce((SELECT sum(p.amount_cents) FILTER (WHERE p.debit_or_credit = 'debit') FROM accounting.journal_entry_postings p

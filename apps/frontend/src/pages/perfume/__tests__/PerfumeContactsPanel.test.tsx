@@ -46,6 +46,7 @@ beforeEach(() => {
       posts.push([path, opts.body]);
       return { deleted: 1, people: 21, already_deleted: 0, not_found: 0, kept: [{ id: "c2", name: "Perfumería La Rosa", reason: "has quotes" }] };
     }
+    if (opts?.method === "POST" && path === "/api/v1/perfume/contacts/duplicates/merge-one") { posts.push([path, opts.body]); return { merged: 1 }; }
     if (opts?.method === "POST" && path === "/api/v1/perfume/contacts/restore") { posts.push([path, opts.body]); return { restored: 1 }; }
     if (opts?.method === "POST") { posts.push([path, opts.body]); return { run_id: "run-1" }; }
     throw new Error(`unexpected ${path}`);
@@ -121,5 +122,25 @@ describe("Contacts", () => {
     expect((await screen.findByTestId("perfume-contacts-kept")).textContent).toContain("Perfumería La Rosa (has quotes)");
     fireEvent.click(screen.getByTestId("perfume-contacts-undo-delete"));
     await waitFor(() => expect(posts[1]).toEqual(["/api/v1/perfume/contacts/restore", { ids: ["c1"] }]));
+  });
+
+  it("select several → Merge asks which company stays, confirms in the page, and merges the others into it", async () => {
+    mount();
+    const panel = await screen.findByTestId("perfume-contacts-panel");
+    await waitFor(() => expect(within(panel).getAllByText("Perfume Center").length).toBeGreaterThan(0));
+    const merge = screen.getByTestId("perfume-contacts-merge") as HTMLButtonElement;
+    expect(merge.disabled).toBe(true);
+    const row = (name: string) => within(panel).getAllByText(name).map((el) => el.closest("tr")).find(Boolean)!;
+    fireEvent.click(within(row("Perfume Center")).getByRole("checkbox"));
+    expect(merge.disabled).toBe(true); // one company cannot merge
+    fireEvent.click(within(row("Perfumería La Rosa")).getByRole("checkbox"));
+    await waitFor(() => expect(merge.disabled).toBe(false));
+    expect(merge.textContent).toContain("Merge 2 selected");
+    fireEvent.click(merge);
+    const modal = await screen.findByTestId("perfume-contacts-merge-modal");
+    fireEvent.click(within(modal).getByTestId("perfume-contacts-merge-keep-c2"));
+    expect(posts).toHaveLength(0);
+    fireEvent.click(within(modal).getByTestId("perfume-contacts-merge-confirm"));
+    await waitFor(() => expect(posts[0]).toEqual(["/api/v1/perfume/contacts/duplicates/merge-one", { keep: "c2", ids: ["c1"] }]));
   });
 });

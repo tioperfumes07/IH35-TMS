@@ -21,7 +21,7 @@ import { ApiError } from "../../api/client";
 import { listCustomers } from "../../api/catalog-customers";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import {
-  deletePerfumeContacts, restorePerfumeContacts, type PerfumeContactDeleteResult,
+  deletePerfumeContacts, restorePerfumeContacts, mergeOnePerfumeDuplicate, type PerfumeContactDeleteResult,
   getPerfumeContact, getPerfumeGooglePlan, importPerfumeContacts, listPerfumeContacts, perfumeGoogleSearch, startPerfumeGoogleRun, stopPerfumeGoogleRun,
   type PerfumeContactFacet, type PerfumeContactImportTally, type PerfumeContactPicks, type PerfumeContactProfile, type PerfumeContactRole, type PerfumeContactRow, type PerfumeGoogleResult, type PerfumeGoogleRun,
 } from "../../api/perfume";
@@ -104,6 +104,22 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
       await list.refetch();
     } catch (e) { pushToast(userFacingApiError(e, "Not deleted"), "error"); } finally { setBusy(false); }
   };
+  // Owner 2026-11-28 13:46 CT: "ALL LISTS SELECTOR HAVE A CONFIRM OR MERGE, OR DELETE". Select 2+ → Merge: pick the one that stays,
+  // Confirm. The same engine as the duplicate pop-up (POST /contacts/duplicates/merge-one): people, quotes, orders, vendor records
+  // and history move to the one that stays; the others become its merged locations (history records it).
+  const [askMerge, setAskMerge] = useState(false);
+  const [keepId, setKeepId] = useState<string | null>(null);
+  const checkedRows = (list.data?.rows ?? []).filter((r) => checked.includes(r.id));
+  const doMerge = async () => {
+    if (!keepId) return;
+    setBusy(true);
+    try {
+      const r = await mergeOnePerfumeDuplicate(keepId, checked.filter((x) => x !== keepId));
+      pushToast(`${r.merged.toLocaleString("en-US")} merged into ${checkedRows.find((x) => x.id === keepId)?.name ?? "the one that stays"}`, "success");
+      setChecked([]); setAskMerge(false); setKeepId(null);
+      await list.refetch();
+    } catch (e) { pushToast(userFacingApiError(e, "Not merged"), "error"); } finally { setBusy(false); }
+  };
   const undoDelete = async () => {
     if (!lastDeleted) return;
     setBusy(true);
@@ -184,6 +200,10 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
           <Button type="button" variant="danger" className="h-[34px] px-3 text-xs" disabled={!checked.length || busy} onClick={() => setAskDelete(true)} data-testid="perfume-contacts-delete">
             {`Delete ${checked.length ? checked.length.toLocaleString("en-US") + " " : ""}selected`}
           </Button>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={checked.length < 2 || busy}
+            onClick={() => { setKeepId(checked[0] ?? null); setAskMerge(true); }} data-testid="perfume-contacts-merge">
+            {`Merge ${checked.length >= 2 ? checked.length.toLocaleString("en-US") + " " : ""}selected`}
+          </Button>
           {lastDeleted && lastDeleted.ids.length ? (
             <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={busy} onClick={() => void undoDelete()} data-testid="perfume-contacts-undo-delete">
               {`Undo — put back the ${lastDeleted.result.deleted.toLocaleString("en-US")} just deleted`}
@@ -232,6 +252,30 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
               <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => setAskDelete(false)}>{tr("perfume.cat.cancel", "Cancel")}</Button>
               <Button type="button" variant="danger" className="h-[34px] px-3 text-xs" disabled={busy} onClick={() => void doDelete()} data-testid="perfume-contacts-delete-confirm">
                 {`Delete ${checked.length.toLocaleString("en-US")}`}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      ) : null}
+      {askMerge ? (
+        <Modal open onClose={() => setAskMerge(false)} title={`Merge ${checked.length.toLocaleString("en-US")} companies into one?`} size="sm" data-testid="perfume-contacts-merge-modal">
+          <div className="space-y-3 text-xs">
+            <p>Pick the company that stays. The others merge into it: their people, quotes, orders, vendor records and history move to it, and they leave the lists as its merged locations.</p>
+            <fieldset className="space-y-1" aria-label="Company that stays">
+              {checkedRows.map((r) => (
+                <label key={r.id} className="flex items-center gap-2">
+                  <input type="radio" name="perfume-merge-keep" aria-label={`Keep ${r.name}`} checked={keepId === r.id} onChange={() => setKeepId(r.id)} data-testid={`perfume-contacts-merge-keep-${r.id}`} />
+                  <span className="font-semibold">{r.name}</span>
+                  <span className="text-[#64748B]">{[r.city, r.state, r.country].filter(Boolean).join(" · ") || DASH}</span>
+                  <span className="text-[#64748B]">{`${r.people} people`}</span>
+                </label>
+              ))}
+              {checkedRows.length < checked.length ? <p className="text-[#8A4208]">{`${checked.length - checkedRows.length} selected are not on this page — clear the filters to see them before merging.`}</p> : null}
+            </fieldset>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => setAskMerge(false)}>{tr("perfume.cat.cancel", "Cancel")}</Button>
+              <Button type="button" variant="primary" className="h-[34px] px-3 text-xs" disabled={busy || !keepId || checkedRows.length < checked.length} onClick={() => void doMerge()} data-testid="perfume-contacts-merge-confirm">
+                {`Confirm merge into ${checkedRows.find((x) => x.id === keepId)?.name ?? "…"}`}
               </Button>
             </div>
           </div>
