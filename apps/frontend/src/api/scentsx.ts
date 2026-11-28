@@ -257,3 +257,15 @@ export const getScentsxVendorAccount = (vendorId: string, asOf: string) =>
   apiRequest<ScentsxVendorAccount>(`/api/v1/scentsx/payables/vendors/${encodeURIComponent(vendorId)}?as_of=${encodeURIComponent(asOf)}`);
 export const creditScentsxVendorReturn = (poId: string, b: { credit_date: string; notes?: string | null; lines: Array<{ po_line_id: string; qty: number }> }) =>
   apiRequest<{ vendor_credit_id: string; display_id: string; amount_cents: number; variance_cents: number; units: number }>(`/api/v1/scentsx/purchase-orders/${encodeURIComponent(poId)}/vendor-credit`, { method: "POST", body: b });
+
+/* M21 Items → books: each item's ScentsX accounts + its Products & Services row; bulk "Make ScentsX item". */
+export type ScentsxItemBooksFilter = { q?: string; category?: string; conc?: string; linked?: "yes" | "no" };
+export type ScentsxItemBookRow = { id: string; display_name: string; category: string | null; conc: string | null; accounts_from: "item" | "category" | "role";
+  inventory_account: string | null; cogs_account: string | null; catalog_item_id: string | null; catalog_item_name: string | null };
+export type ScentsxItemBooks = { total: number; linked: number; limit: number; offset: number; income_accounts: Array<{ number: string; name: string }>; rows: ScentsxItemBookRow[] };
+const qs = (o: Record<string, string | number | undefined>) => Object.entries(o).filter(([, v]) => v !== undefined && v !== "").map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join("&");
+export const getScentsxItemBooks = (f: ScentsxItemBooksFilter & { limit?: number; offset?: number }) =>
+  apiRequest<ScentsxItemBooks>(`/api/v1/scentsx/item-books?${qs(f as Record<string, string | number | undefined>)}`);
+export type ScentsxMakeItemsResult = { created: number; already_linked: number; not_stock_items: number; remaining: number | null; made: Array<{ perfume_item_id: string; catalog_item_id: string; item_name: string }> };
+export const makeScentsxItems = (b: { item_ids: string[] } | { filter: ScentsxItemBooksFilter; max?: number }) =>
+  apiRequest<ScentsxMakeItemsResult>("/api/v1/scentsx/item-books/make-items", { method: "POST", body: b });

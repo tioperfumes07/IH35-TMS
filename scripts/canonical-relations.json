@@ -912,6 +912,7 @@
     "scentsx.export_proofs",
     "scentsx.form_8300_cases",
     "scentsx.item_account_map",
+    "scentsx.item_links",
     "scentsx.pagares",
     "scentsx.party_kyc",
     "scentsx.purchase_order_bill_lines",
