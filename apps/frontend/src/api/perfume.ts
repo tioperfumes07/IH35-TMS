@@ -1060,6 +1060,14 @@ export const getPerfumeCustomerRanking = (currency: "USD" | "MXN") =>
   apiRequest<{ currency: string; total_cents: number; customers: number; tiers: { A: number; B: number; C: number }; linked: number; rows: PerfumeRankRow[] }>(
     `/api/v1/perfume/customers/ranking?currency=${currency}`);
 
+/** ROUND L.31 M27 — vendor ranking: ScentsX bills per buying vendor (the books), POs ordered / received, ABC on billed. */
+export type PerfumeVendorRankRow = { vendor_id: string; vendor: string; company_id: string | null; billed_cents: number; billed12_cents: number; bills: number;
+  ordered_cents: number; received_cents: number; pos: number; last_po_date: string | null; last_bill_date: string | null; price_rows: number;
+  tier: "A" | "B" | "C" | null; rank: number | null; share: number };
+export const getPerfumeVendorRanking = () =>
+  apiRequest<{ total_billed_cents: number; vendors: number; bought_from: number; tiers: { A: number; B: number; C: number }; ordered_cents: number; rows: PerfumeVendorRankRow[] }>(
+    "/api/v1/perfume/vendors/ranking");
+
 /** Owner 16:32 CT: one company, many contacts — duplicate companies (same match key) merged into one; the others kept as its locations. */
 export type PerfumeDupMember = { id: string; name: string; role: string | null; city: string | null; state: string | null; people: number; docs: number; sx_link: boolean; account: boolean; created_at: string };
 export type PerfumeDupGroup = { key: string; name: string; keep: PerfumeDupMember; merge: PerfumeDupMember[]; companies: number };

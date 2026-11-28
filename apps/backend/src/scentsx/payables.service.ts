@@ -42,10 +42,10 @@ const SETTLED_SQL = (b: string) => `(
                  WHERE pa.target_kind = 'bill' AND pa.target_id = ${b}.id AND pa.operating_company_id = $1::uuid AND pa.unapplied_at IS NULL
                    AND (pa.applied_at AT TIME ZONE 'UTC')::date <= $2::date), 0))`;
 
-const ON_BOOKS = (b: string) => `${b}.operating_company_id = $1::uuid AND ${b}.bill_date <= $2::date AND ${b}.amount_cents IS NOT NULL
+export const ON_BOOKS = (b: string) => `${b}.operating_company_id = $1::uuid AND ${b}.bill_date <= $2::date AND ${b}.amount_cents IS NOT NULL
       AND (${b}.revoked_at IS NULL OR ${b}.revoked_at::date > $2::date) AND ${b}.status NOT IN ('void', 'voided', 'draft') AND ${b}.is_sample_data = false`;
 
-const VENDOR_OF = (b: string) =>
+export const VENDOR_OF = (b: string) =>
   `CASE WHEN ${b}.vendor_uuid ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$' THEN ${b}.vendor_uuid::uuid ELSE NULL END`;
 
 async function asOfDate(c: Q, asOf?: string) {
