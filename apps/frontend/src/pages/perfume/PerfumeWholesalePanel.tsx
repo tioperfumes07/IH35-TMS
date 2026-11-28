@@ -28,13 +28,13 @@ export function PerfumeWholesalePanel() {
   const fams = useQuery({ queryKey: ["perfume", "families", ""], queryFn: () => listPerfumeFamilies(""), staleTime: 30_000 });
   const [f, setF] = useState<Omit<PerfumeWholesaleFilter, "level_id"> & { level_id: string }>({ level_id: "" });
   const [typed, setTyped] = useState("");
-  const levelId = f.level_id || (levels.data?.levels.find((l) => l.active && l.channel === "wholesale")?.id ?? levels.data?.levels[0]?.id ?? "");
+  const levelId = f.level_id || (levels.data?.levels?.find((l) => l.active && l.channel === "wholesale")?.id ?? levels.data?.levels?.[0]?.id ?? "");
   const filter: PerfumeWholesaleFilter = { ...f, level_id: levelId };
   const list = useQuery({ queryKey: ["perfume", "wholesale-list", filter], queryFn: () => getPerfumeWholesaleList(filter), enabled: Boolean(levelId) });
   if (list.isError) return <ListErrorState title={tr("perfume.wl.error", "Couldn't build the list")} status={0} message={(list.error as Error)?.message} onRetry={() => void list.refetch()} />;
   const rows = list.data?.rows ?? [];
   const tester = list.data?.level.tester_pct ?? 70;
-  const categories = (cats.data?.kinds.find((k) => k.kind === "item_category")?.values ?? []).map((v) => v.value);
+  const categories = (cats.data?.kinds?.find((k) => k.kind === "item_category")?.values ?? []).map((v) => v.value);
   const download = () => void downloadPerfumeFile(perfumeWholesaleExportPath(filter), `TIO Perfumes ${list.data?.level.name ?? ""} price list.xlsx`)
     .catch((e) => pushToast(userFacingApiError(e, "Export failed"), "error"));
   return (

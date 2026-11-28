@@ -84,7 +84,7 @@ export function PerfumePurchasesPanel() {
             { key: "number", label: "PO", sortable: true, render: (r) => <span className="font-semibold">{r.number}</span> },
             { key: "order_date", label: "Date", sortable: true, cellClass: "text-right tabular-nums", render: (r) => usDate(r.order_date) },
             { key: "expected_by", label: "Expected", sortable: true, cellClass: "text-right tabular-nums", render: (r) => usDate(r.expected_by) },
-            { key: "vendor_name", label: "Vendor", sortable: true, render: (r) => <DocLink tab="suppliers" id={r.vendor_id}>{r.vendor_name}</DocLink>, exportValue: (r) => r.vendor_name },
+            { className: "text-left", key: "vendor_name", label: "Vendor", sortable: true, render: (r) => <DocLink tab="suppliers" id={r.vendor_id}>{r.vendor_name}</DocLink>, exportValue: (r) => r.vendor_name },
             { key: "sales_order_number", label: "Sales order", sortable: true, render: (r) => (r.sales_order_id && r.sales_order_number ? <DocLink tab="orders" id={r.sales_order_id}>{r.sales_order_number}</DocLink> : DASH), exportValue: (r) => r.sales_order_number ?? "" },
             { key: "status", label: "Status", sortable: true, render: (r) => <Badge text={STATUS_TEXT[r.status]} color={STATUS_CLASS[r.status]} />, exportValue: (r) => STATUS_TEXT[r.status] },
             { key: "units", label: "Units", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.units.toLocaleString("en-US") },

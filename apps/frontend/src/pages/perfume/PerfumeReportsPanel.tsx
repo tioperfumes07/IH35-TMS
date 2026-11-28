@@ -65,7 +65,7 @@ function ItemPick({ value, onPick, testId }: { value: { id: string; name: string
         <input type="search" className={`${ctl} block w-[320px]`} value={find} onChange={(e) => setFind(e.target.value)} data-testid={testId} aria-label={tr("perfume.reports.item", "Item")}
           placeholder={tr("perfume.reports.find_item", "Name, brand, UPC or POS code")} />
       )}
-      {!value && (items.data?.items.length ?? 0) > 0 ? (
+      {!value && (items.data?.items?.length ?? 0) > 0 ? (
         <ul className="absolute z-20 mt-1 max-h-64 w-[420px] overflow-auto rounded-[3px] border border-[#C6D1DC] bg-white shadow" data-testid={`${testId}-results`}>
           {items.data!.items.map((it) => (
             <li key={it.id}><button type="button" className="block w-full px-2 py-1 text-left hover:bg-[#EEF2F6]" onClick={() => { setFind(""); onPick({ id: it.id, name: it.display_name }); }}>

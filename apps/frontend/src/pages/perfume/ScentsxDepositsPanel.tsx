@@ -12,6 +12,8 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { companyToday } from "../../lib/businessDate";
+import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
+import { getAllAccounts } from "../../api/banking";
 import {
   createBankDeposit,
   listBankDeposits,
@@ -19,7 +21,7 @@ import {
   type BankDepositSummary,
   type UndepositedReceipt,
 } from "../../api/bankDeposits";
-import { getScentsxCompany, listScentsxAccounts } from "../../api/scentsx";
+import { getScentsxCompany } from "../../api/scentsx";
 import { tr } from "./perfumeI18n";
 
 const money = (cents: number | string) =>
@@ -46,13 +48,14 @@ function DepositsContent({ companyId }: { companyId: string }) {
     queryKey: ["scentsx", "deposits", "list", companyId],
     queryFn: () => listBankDeposits(companyId, { limit: 50 }),
   });
-  const accounts = useQuery({ queryKey: ["scentsx", "accounts"], queryFn: listScentsxAccounts });
-
-  // Bank GL accounts: Asset type, account numbers in the 1000–1099 cash/bank range
-  const banks = (accounts.data?.accounts ?? []).filter(
-    (a) => a.account_type === "Asset" && /^10\d\d$/.test(a.account_number ?? "")
-  );
-  const operatingBank = banks.find((a) => a.account_number === "1000");
+  // LEAD fix: the deposit engine (POST /api/v1/accounting/bank-deposits) takes a banking.bank_accounts id — the screen sent a chart
+  // account id, so every deposit 404'd. Where a deposit can go: ScentsX's checking / savings bank accounts (never 1090 Undeposited
+  // Funds, the source, nor the cash registers / petty cash / card) — chosen by bank-account type, not by number.
+  const bankRows = useQuery({ queryKey: ["scentsx", "banks", companyId], queryFn: () => getAllAccounts(companyId) });
+  const banks = (bankRows.data?.accounts ?? [])
+    .filter((r) => /^(checking|savings|money_market)$/i.test(String(r.account_type ?? "")))
+    .map((r) => ({ id: String(r.id), account_name: String(r.account_name ?? r.name ?? ""), ledger_account_id: (r.ledger_account_id as string | null | undefined) ?? null }));
+  const operatingBankId = banks[0]?.id ?? "";
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bankId, setBankId] = useState<string>("");
@@ -63,7 +66,7 @@ function DepositsContent({ companyId }: { companyId: string }) {
   const receipts: UndepositedReceipt[] = undeposited.data?.rows ?? [];
   const totalSelected = receipts.filter((r) => selectedIds.includes(r.id)).reduce((s, r) => s + r.amount_cents, 0);
 
-  const effectiveBankId = bankId || operatingBank?.id || banks[0]?.id || "";
+  const effectiveBankId = bankId || operatingBankId || banks[0]?.id || "";
 
   const deposit = async () => {
     if (!effectiveBankId || selectedIds.length === 0) return;
@@ -133,7 +136,7 @@ function DepositsContent({ companyId }: { companyId: string }) {
                 data-testid="scentsx-deposit-bank"
               >
                 {banks.map((b) => (
-                  <option key={b.id} value={b.id}>{`${b.account_number ?? ""} ${b.name}`.trim()}</option>
+                  <option key={b.id} value={b.id}>{formatAccountDisplayLabel({ account_name: b.account_name })}</option>
                 ))}
               </select>
             </label>

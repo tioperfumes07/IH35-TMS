@@ -244,7 +244,7 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
         emptyText="None yet — press Buy."
         columns={[
           { key: "number", label: "PO", render: (p) => <DocLink tab="purchases" id={p.id} testId={`perfume-order-po-${p.number}`}>{p.number}</DocLink>, exportValue: (p) => p.number },
-          { key: "vendor_name", sortable: true, label: "Vendor", render: (p) => p.vendor_name },
+          { className: "text-left", key: "vendor_name", label: "Vendor", sortable: true, render: (p) => <DocLink tab="suppliers" id={p.vendor_id}>{p.vendor_name}</DocLink>, exportValue: (p) => p.vendor_name },
           { key: "status", label: "Status", render: (p) => <Badge text={PO_STATUS_TEXT[p.status]} color={PO_STATUS_CLASS[p.status]} />, exportValue: (p) => PO_STATUS_TEXT[p.status] },
           { key: "units", sortable: true, label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (p) => p.units.toLocaleString("en-US") },
           { key: "units_received", sortable: true, label: "Received", kind: "number", cellClass: "text-right tabular-nums", render: (p) => p.units_received.toLocaleString("en-US") },

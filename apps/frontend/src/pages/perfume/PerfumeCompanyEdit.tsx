@@ -32,7 +32,7 @@ export function PerfumeCompanyEdit({ id, co, onSaved }: { id: string; co: Co; on
 function EditModal({ id, co, onClose, onSaved }: { id: string; co: Co; onClose: () => void; onSaved: () => void }) {
   const { pushToast } = useToast();
   const cats = useQuery({ queryKey: ["perfume", "catalogs"], queryFn: listPerfumeCatalogs });
-  const values = (kind: string) => (cats.data?.kinds.find((k) => k.kind === kind)?.values ?? []).map((x) => x.value);
+  const values = (kind: string) => (cats.data?.kinds?.find((k) => k.kind === kind)?.values ?? []).map((x) => x.value);
   const [v, setV] = useState<Record<string, string>>(Object.fromEntries([...TEXT.map(([k]) => [k, s(co[k])]), ["segment", s(co["segment"])], ["main_category", s(co["main_category"])]]));
   const [industries, setIndustries] = useState<string[]>(arr(co["categories"]));
   const [tags, setTags] = useState<string[]>(arr(co["review_tags"]));
