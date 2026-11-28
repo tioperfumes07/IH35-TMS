@@ -97,12 +97,28 @@ export function countryCode(country: string | null): string | null {
  *  - (exact name only) the city we have is not a real city — research files wrote "US", "Newark port", "New York (Hauppauge) /
  *    Newark port" — or there is none, and the country does not disagree.
  */
-export function sameCompany(co: { name_key: string | null; city: string | null; country: string | null; address?: string | null }, r: ProspectRow, key: string | null): boolean {
+/**
+ * The name reduced to what identifies the business: words in parentheses ("(distributor)"), legal tails anywhere (FZE, S.A., SAC,
+ * Ltd, Pte, AG, BV, Srl, GmbH, Co, Corp …) and small words (de, the, of, y, and) taken out, accents folded. "Atralia Perfumes FZE"
+ * = "ATRALIA PERFUMES"; "Pernod Ricard de México" = "Pernod Ricard Mexico"; "B&S Group (distributor)" = "B&S Group".
+ */
+export function coreName(name: string | null): string {
+  return (name ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\([^)]*\)/g, " ").replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").split(" ")
+    .filter((w) => w && !CORE_DROP.has(w)).join(" ");
+}
+const CORE_DROP = new Set(["the", "de", "del", "la", "las", "los", "el", "of", "y", "and", "e", "inc", "incorporated", "llc", "ltd", "limited",
+  "co", "corp", "corporation", "company", "cia", "sa", "sac", "sas", "srl", "sl", "spa", "bv", "nv", "ag", "gmbh", "pte", "pty", "plc",
+  "fze", "fzc", "fzco", "fz", "dmcc", "cv", "rl", "s", "c", "v", "lp", "llp", "pc"]);
+
+export function sameCompany(co: { name: string; name_key: string | null; city: string | null; country: string | null; address?: string | null }, r: ProspectRow, key: string | null): boolean {
   if (!key || !co.name_key || key.length < 3) return false;
   const ours = countryCode(co.country), theirs = countryCode(r.country);
   if (ours && theirs && ours !== theirs) return false;
-  const exact = key === co.name_key;
-  if (!exact && !(key.startsWith(co.name_key + " ") || co.name_key.startsWith(key + " "))) return false;
+  const core = coreName(co.name), theirCore = coreName(r.name);
+  const exact = key === co.name_key || (core.length >= 3 && core === theirCore);
+  if (!exact && !(key.startsWith(co.name_key + " ") || co.name_key.startsWith(key + " ")
+    || (core.length >= 3 && theirCore.length >= 3 && (theirCore.startsWith(core + " ") || core.startsWith(theirCore + " "))))) return false;
   const gAddr = `${r.address ?? ""} ${r.city ?? ""}`.toLowerCase();
   const street = (co.address ?? "").toLowerCase().match(/^\s*(\d+[a-z]?)\s+([a-z0-9]+)/);
   if (street && gAddr.includes(street[1]!) && gAddr.includes(street[2]!)) return true;
