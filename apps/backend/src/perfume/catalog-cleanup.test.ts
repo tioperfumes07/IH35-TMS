@@ -37,5 +37,10 @@ describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("catalog cleanup (real Po
     expect((await db.query(`SELECT count(*)::int n FROM perfume.catalog_values WHERE kind = 'product_type' AND value IN ('Regular', 'Kids', 'Dupe', 'Sample', 'Vial') AND archived_at IS NULL`)).rows[0].n).toBe(5);
     expect((await db.query(`SELECT detail->>'via' AS via FROM perfume.item_events WHERE item_id = $1::uuid ORDER BY created_at DESC LIMIT 1`, [item])).rows[0].via).toBe("catalog_cleanup");
     expect((await previewCleanup(db)).rows.find((x) => x.key === "product_type:Tester Man")!.done).toBe(true);
+    // Business type slug → English name (owner 17:35 CT "type and sub type").
+    await db.query(`INSERT INTO perfume.catalog_values (kind, value) SELECT 'segment', 'cervezas' WHERE NOT EXISTS (SELECT 1 FROM perfume.catalog_values WHERE kind = 'segment' AND value = 'cervezas' AND archived_at IS NULL)`);
+    const beer = (await db.query<{ id: string }>(`INSERT INTO perfume.contact_companies (name, source, segment) VALUES ('Zqc Cervezas', 'test', 'cervezas') RETURNING id::text`)).rows[0]!.id;
+    expect((await applyCleanup(db as unknown as pg.PoolClient, TEST_OWNER_USER_ID, ["segment:cervezas"])).applied).toBe(1);
+    expect((await db.query(`SELECT segment FROM perfume.contact_companies WHERE id = $1::uuid`, [beer])).rows[0].segment).toBe("Beer depot");
   });
 });
