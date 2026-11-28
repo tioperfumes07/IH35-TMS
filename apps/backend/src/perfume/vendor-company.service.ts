@@ -18,7 +18,16 @@ export function companyNameOf(listName: string): string {
   return b || a || listName.trim();
 }
 
-type Candidate = { id: string; name: string; role: string | null; city: string | null; state: string | null; country: string | null; people: number; exact: boolean };
+type Candidate = { id: string; name: string; role: string | null; city: string | null; state: string | null; country: string | null; people: number; exact: boolean;
+  /** "email": a person of this company has the address the list came from; "domain": same company domain. */ by_email?: "email" | "domain" };
+const FREE_MAIL = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "aol.com", "icloud.com", "live.com", "msn.com"];
+/** Every email the list came from: the vendor's contact and the addresses in its price-list file names ("… mail x@y.com"). */
+async function vendorEmails(c: pg.PoolClient, vendorId: string): Promise<string[]> {
+  const r = (await c.query<{ t: string }>(
+    `SELECT coalesce(v.contact, '') || ' ' || coalesce((SELECT string_agg(pl.file_name, ' ') FROM perfume.price_lists pl WHERE pl.vendor_id = v.id), '') AS t
+       FROM perfume.vendors v WHERE v.id = $1`, [vendorId])).rows[0]?.t ?? "";
+  return [...new Set((r.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g) ?? []).map((e) => e.toLowerCase()))];
+}
 export type LinkProposal = {
   vendor_id: string; vendor: string; short_name: string | null; kind: string; company_name: string;
   action: "link" | "choose" | "create"; company_id: string | null; candidates: Candidate[];
@@ -48,16 +57,37 @@ export async function vendorLinkPreview(c: pg.PoolClient): Promise<{ proposals: 
                                   FROM perfume.contact_companies cc WHERE cc.id = $1`, [id])).rows[0];
       if (r) candidates.unshift({ ...r, people: Number(r.people), exact: true } as Candidate);
     }
+    // The email the list came from (live preview 11-27: JIZAN's lists come from ardalan@jizanperfumes.com, a person of
+    // "Jizanperfumes"; QFG's from @parlux.com): the strongest proof of which company it is.
+    const emails = await vendorEmails(c, v.id);
+    if (emails.length) {
+      const domains = [...new Set(emails.map((e) => e.split("@")[1]!).filter((d) => !FREE_MAIL.includes(d)))];
+      const hits = (await c.query<{ id: string; name: string; role: string | null; city: string | null; state: string | null; country: string | null; people: number; how: "email" | "domain" }>(
+        `SELECT cc.id, cc.name, cc.role, cc.city, cc.state, cc.country,
+                (SELECT count(*)::int FROM perfume.contact_people x WHERE x.company_id = cc.id AND x.archived_at IS NULL) AS people,
+                CASE WHEN bool_or(lower(p.email) = ANY($1::text[])) THEN 'email' ELSE 'domain' END AS how
+           FROM perfume.contact_people p JOIN perfume.contact_companies cc ON cc.id = p.company_id AND cc.archived_at IS NULL AND cc.merged_into_id IS NULL
+          WHERE p.archived_at IS NULL AND (lower(p.email) = ANY($1::text[]) OR split_part(lower(p.email), '@', 2) = ANY($2::text[]))
+          GROUP BY cc.id`, [emails, domains])).rows;
+      for (const h of hits) {
+        const at = candidates.find((x) => x.id === h.id);
+        if (at) at.by_email = h.how;
+        else { candidates.push({ id: h.id, name: h.name, role: h.role, city: h.city, state: h.state, country: h.country, people: Number(h.people), exact: exactIds.has(h.id), by_email: h.how }); seen.add(h.id); }
+      }
+    }
     // Rank (owner 2026-11-27 17:44 CT review of the live preview: "La Esperanza" must not land on a person named Esperanza,
     // "Premier" on Premier Fragrance LLC, not Premier Beauty Brands): the owner's own note in Contacts ("your vendor",
     // "also your direct vendor") first, then a name that starts with the list's company name, then same name, then people.
     const base = matchKey(company_name);
-    const score = (x: Candidate) => (/your (direct )?vendor/i.test(x.name) ? 4 : 0) + (base.length >= 5 && matchKey(x.name).startsWith(base) ? 2 : 0) + (x.exact ? 2 : 0);
+    const score = (x: Candidate) => (x.by_email === "email" ? 8 : x.by_email === "domain" ? 6 : 0) + (/your (direct )?vendor/i.test(x.name) ? 4 : 0)
+      + (base.length >= 5 && matchKey(x.name).startsWith(base) ? 2 : 0) + (x.exact ? 2 : 0);
     candidates.sort((a, b) => score(b) - score(a) || b.people - a.people || a.name.localeCompare(b.name));
     const exact = candidates.filter((x) => x.exact);
-    const action: LinkProposal["action"] = candidates.length === 0 ? "create" : (exact.length === 1 || candidates.length === 1) ? "link" : "choose";
+    const byMail = candidates.filter((x) => x.by_email);
+    const action: LinkProposal["action"] = candidates.length === 0 ? "create"
+      : (byMail.length === 1 || (byMail.length === 0 && (exact.length === 1 || candidates.length === 1))) ? "link" : "choose";
     // "choose": the proposal is the best-ranked candidate; the owner confirms or changes it (or finds another company).
-    const company_id = action === "create" ? null : (exact.length === 1 && score(exact[0]!) >= score(candidates[0]!) ? exact[0]!.id : candidates[0]!.id);
+    const company_id = action === "create" ? null : candidates[0]!.id;
     proposals.push({ vendor_id: v.id, vendor: v.name, short_name: v.short_name, kind: v.kind, company_name, action, company_id, candidates });
   }
   return { proposals, linked, unlinked: vs.length };

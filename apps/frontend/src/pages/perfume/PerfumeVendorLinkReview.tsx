@@ -66,7 +66,7 @@ export function VendorLinkReview() {
               <div className="flex min-w-0 flex-wrap items-center gap-2 py-1">
                 <select className={`${ctl} min-w-0 max-w-full`} value={v} aria-label={`${tr("perfume.links.company_for", "Company for")} ${x.vendor}`}
                   onChange={(e) => { if (e.target.value === FIND) { setFinding(x.vendor_id); return; } setPick((p) => ({ ...p, [x.vendor_id]: e.target.value })); }} data-testid={`perfume-vendor-link-pick-${x.vendor_id}`}>
-                  {[...x.candidates, ...(extra[x.vendor_id] ?? [])].map((c) => <option key={c.id} value={c.id}>{`${c.name}${place(c) ? ` · ${place(c)}` : ""} · ${c.people} ${c.people === 1 ? "person" : "people"}${c.exact ? " · same name" : ""}`}</option>)}
+                  {[...x.candidates, ...(extra[x.vendor_id] ?? [])].map((c) => <option key={c.id} value={c.id}>{`${c.name}${place(c) ? ` · ${place(c)}` : ""} · ${c.people} ${c.people === 1 ? "person" : "people"}${c.by_email === "email" ? " · their email" : c.by_email === "domain" ? " · their email domain" : ""}${c.exact ? " · same name" : ""}`}</option>)}
                   <option value={NEW}>{tr("perfume.links.new", "New company in Contacts")}</option>
                   <option value={FIND}>{tr("perfume.links.find", "Find another company…")}</option>
                 </select>

@@ -102,4 +102,28 @@ describeIntegration("price-list vendors → one company in Contacts (real Postgr
     expect(by[p]!.company_id).toBe(mine);
     expect(by[e]!.candidates.map((c) => c.id)).toContain(person);
   });
+
+  it("the email a list came from picks the company (a person there has it, or the company domain); free-mail domains never match", async () => {
+    const look = await company("Zqjizan Perfumes LLC", "vendor");
+    const real = await company("Zqjizanperfumes", "both");
+    await db.query(`INSERT INTO perfume.contact_people (company_id, name, email) VALUES ($1, 'Ardalan', 'ardalan@zqjizan.test')`, [real]);
+    const qfgCo = await company("Zqparlux", "both");
+    await db.query(`INSERT INTO perfume.contact_people (company_id, name, email) VALUES ($1, 'G', 'gk@zqparlux.test')`, [qfgCo]);
+    const gm = await company("Zqsomeone Gmail Co", "customer");
+    await db.query(`INSERT INTO perfume.contact_people (company_id, name, email) VALUES ($1, 'X', 'other@gmail.com')`, [gm]);
+    const j = await vendor("ZQJIZAN (Dubai export)", "buy", "ZQJIZAN");
+    await db.query(`INSERT INTO perfume.price_lists (vendor_id, list_date, file_name, source_kind, rows_read, rows_saved, rows_skipped, price_total_file_cents, price_total_saved_cents, is_current)
+                    VALUES ($1, '2026-11-27', 'list.xlsx · mail ardalan@zqjizan.test', 'xlsx', 0, 0, 0, 0, 0, true)`, [j]);
+    const q = await vendor("Zqquality Fragrance Group (ZQFG)", "buy", "ZQFG");
+    await db.query(`INSERT INTO perfume.price_lists (vendor_id, list_date, file_name, source_kind, rows_read, rows_saved, rows_skipped, price_total_file_cents, price_total_saved_cents, is_current)
+                    VALUES ($1, '2026-11-27', 'q.xlsx · mail ss@zqparlux.test', 'xlsx', 0, 0, 0, 0, 0, true)`, [q]);
+    const g = await vendor("Zqgmailonly", "buy", "ZQGM");
+    await db.query(`UPDATE perfume.vendors SET contact = 'me@gmail.com' WHERE id = $1`, [g]);
+    const by = Object.fromEntries((await vendorLinkPreview(db as never)).proposals.map((x) => [x.vendor_id, x]));
+    expect(by[j]!.company_id).toBe(real);
+    expect(by[j]!.action).toBe("link");
+    expect(by[j]!.candidates.map((c) => c.id)).toContain(look);
+    expect(by[q]!.company_id).toBe(qfgCo);
+    expect(by[g]!.candidates.map((c) => c.id)).not.toContain(gm);
+  });
 });
