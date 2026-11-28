@@ -35,7 +35,7 @@ export const PERFUME_MODULES: PerfumeModule[] = [
   // LEAD ROUND L.20 (owner 2026-11-27 13:50 CT "bring what we need from CONTROL"): CONTROL's inquiry screens and reports.
   { id: "reports", label: "Inquiry & reports", Icon: FileSearch, tabs: ["iteminquiry", "salesinquiry", "pricebook", "invstatus", "famreport", "vendortiers"] },
   // Owner 2026-11-26 20:13 CT "Own company, same engine": ScentsX LLC's own books (chart, roles, balances).
-  { id: "books", label: "Books", Icon: Landmark, tabs: ["books", "statements"] },
+  { id: "books", label: "Books", Icon: Landmark, tabs: ["books", "statements", "journal"] },
 ];
 
 /** The module a desk tab belongs to (unknown / missing tab → the price desk). */
