@@ -137,8 +137,16 @@ export function PerfumeBooksPanel() {
             emptyText="No accounts."
             columns={[
               { key: "account_name", label: "Account", sortable: true, render: (a) => (
-                <button type="button" className="font-semibold text-[#14314F] underline" onClick={() => setOpenAcct(openAcct?.id === a.id ? null : a)} data-testid={`scentsx-books-acct-${a.id}`}>
-                  {formatAccountDisplayLabel(a, { showNumber: showNumbers })}</button>) },
+                <span className={a.parent_account_id ? "pl-4" : ""} data-testid={a.parent_account_id ? `scentsx-books-sub-${a.id}` : undefined}>
+                  {a.parent_account_id ? <span aria-hidden="true" className="text-[#64748B]">{"↳ "}</span> : null}
+                  <button type="button" className="font-semibold text-[#14314F] underline" onClick={() => setOpenAcct(openAcct?.id === a.id ? null : a)} data-testid={`scentsx-books-acct-${a.id}`}>
+                    {formatAccountDisplayLabel(a, { showNumber: showNumbers })}</button>
+                </span>) },
+              // QuickBooks "Is sub-account of": the parent each sub-account rolls up to (owner 11-27 22:05 CT inventory / COGS by category).
+              { key: "parent", label: "Sub-account of", sortable: true, render: (a) => {
+                const p = a.parent_account_id ? accts.data?.accounts.find((x) => x.id === a.parent_account_id) : null;
+                return p ? formatAccountDisplayLabel(p, { showNumber: showNumbers }) : DASH;
+              }, exportValue: (a) => accts.data?.accounts.find((x) => x.id === a.parent_account_id)?.account_name ?? "" },
               { key: "account_type", label: "Type", sortable: true },
               { key: "account_subtype", label: "Detail type", sortable: true, render: (a) => a.account_subtype ?? DASH },
               { key: "roles", label: "Poster role", sortable: true, render: (a) => (a.roles.length ? a.roles.join(", ") : DASH) },
