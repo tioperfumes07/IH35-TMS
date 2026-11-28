@@ -33,8 +33,8 @@ const blank = (): Row => ({ account_id: "", side: "debit", cents: null, memo: ""
 
 /** Ready-made entries for the owner's own money (accounts by number in the ScentsX chart). Bank = the account picked in the pop-up. */
 const TEMPLATES: Array<{ key: string; label: string; memo: string; debit: string | "bank"; credit: string | "bank" }> = [
-  { key: "contribution", sortable: true, label: "Owner contribution", memo: "Owner contribution", debit: "bank", credit: "3000" },
-  { key: "draw", sortable: true, label: "Owner draw", memo: "Owner draw", debit: "3100", credit: "bank" },
+  { key: "contribution", label: "Owner contribution", memo: "Owner contribution", debit: "bank", credit: "3000" },
+  { key: "draw", label: "Owner draw", memo: "Owner draw", debit: "3100", credit: "bank" },
 ];
 
 export function PerfumeJournalPanel() {
